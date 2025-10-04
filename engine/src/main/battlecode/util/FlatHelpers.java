@@ -6,12 +6,12 @@ import battlecode.schema.WinType;
 import battlecode.world.DominationFactor;
 import battlecode.schema.Action;
 import com.google.flatbuffers.FlatBufferBuilder;
-import gnu.trove.TByteCollection;
-import gnu.trove.list.TByteList;
-import gnu.trove.list.TFloatList;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.TCharList;
-import gnu.trove.list.array.TByteArrayList;
+// import gnu.trove.TByteCollection;
+// import gnu.trove.TByteList;
+// import gnu.trove.TFloatList;
+import gnu.trove.TIntArrayList;
+// import gnu.trove.TCharList;
+// import gnu.trove.TByteArrayList;
 
 import java.util.List;
 import java.util.function.ObjIntConsumer;
@@ -111,7 +111,7 @@ public class FlatHelpers {
      * int xyzP = intVector(builder, xyz, BufferType::startXyzVector);
      */
     // public static int intVector(FlatBufferBuilder builder,
-    // TIntList arr,
+    // TIntArrayList arr,
     // ObjIntConsumer<FlatBufferBuilder> start) {
     // final int length = arr.size();
     // start.accept(builder, length);
@@ -130,7 +130,7 @@ public class FlatHelpers {
      * Call this when you're adding a table of offsets, not flat ints.
      */
     // public static int offsetVector(FlatBufferBuilder builder,
-    // TIntList arr,
+    // TIntArrayList arr,
     // ObjIntConsumer<FlatBufferBuilder> start) {
     // final int length = arr.size();
     // start.accept(builder, length);
@@ -179,14 +179,14 @@ public class FlatHelpers {
     // return builder.endVector();
     // }
 
-    public static int createVecTable(FlatBufferBuilder builder, TIntList xs, TIntList ys) {
+    public static int createVecTable(FlatBufferBuilder builder, TIntArrayList xs, TIntArrayList ys) {
         if (xs.size() != ys.size()) {
             throw new RuntimeException("Mismatched x/y length: " + xs.size() + " != " + ys.size());
         }
         // int xsP = intVector(builder, xs, VecTable::startXsVector);
         // int ysP = intVector(builder, ys, VecTable::startYsVector);
-        int xsP = VecTable.createXsVector(builder, xs.toArray());
-        int ysP = VecTable.createYsVector(builder, ys.toArray());
+        int xsP = VecTable.createXsVector(builder, xs.toNativeArray());
+        int ysP = VecTable.createYsVector(builder, ys.toNativeArray());
         return VecTable.createVecTable(builder, xsP, ysP);
     }
 

@@ -2,7 +2,7 @@ package battlecode.world;
 
 import battlecode.common.*;
 
-import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.TIntArrayList;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

@@ -4,7 +4,7 @@ import battlecode.common.*;
 import battlecode.schema.*;
 import battlecode.util.FlatHelpers;
 import battlecode.util.TeamMapping;
-import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.TIntArrayList;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 import org.apache.commons.io.IOUtils;

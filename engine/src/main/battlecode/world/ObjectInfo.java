@@ -5,16 +5,16 @@ import battlecode.common.MapLocation;
 import battlecode.common.UnitType;
 import battlecode.common.Team;
 
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TIntObjectProcedure;
-import gnu.trove.procedure.TIntProcedure;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 
-import gnu.trove.procedure.TObjectProcedure;
-import net.sf.jsi.SpatialIndex;
-import net.sf.jsi.rtree.RTree;
-import net.sf.jsi.Rectangle;
-import net.sf.jsi.Point;
+import gnu.trove.TObjectProcedure;
+import com.infomatiq.jsi.SpatialIndex;
+import com.infomatiq.jsi.rtree.RTree;
+import com.infomatiq.jsi.Rectangle;
+import com.infomatiq.jsi.Point;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +93,7 @@ public class ObjectInfo {
      */
     public void eachDynamicBodyByExecOrder(TObjectProcedure<InternalRobot> op) {
         // We can't modify the ArrayList we are looping over
-        int[] spawnOrderArray = dynamicBodyExecOrder.toArray();
+        int[] spawnOrderArray = dynamicBodyExecOrder.toNativeArray();
 
         for (int id : spawnOrderArray) {
             // Check if body still exists.
@@ -112,16 +112,16 @@ public class ObjectInfo {
     /**
      * This allocates; prefer eachRobot()
      */
-    public Collection<InternalRobot> robots() {
-        return gameRobotsByID.valueCollection();
-    }
+    // public Collection<InternalRobot> robots() {
+    //     return gameRobotsByID.valueCollection();
+    // }
 
     /**
      * This allocates; prefer eachRobot()
      */
-    public InternalRobot[] robotsArray() {
-        return gameRobotsByID.values(new InternalRobot[gameRobotsByID.size()]);
-    }
+    // public InternalRobot[] robotsArray() {
+    //     return gameRobotsByID.values(new InternalRobot[gameRobotsByID.size()]);
+    // }
 
     public int getRobotCount(Team team) {
         return robotCount[team.ordinal()];
@@ -183,9 +183,17 @@ public class ObjectInfo {
 
         MapLocation loc = robot.getLocation();
         gameRobotsByID.remove(id);
-        dynamicBodyExecOrder.remove(id);
-        if (loc != null)
-        robotIndex.delete(fromPoint(loc),id);
+        try {
+            dynamicBodyExecOrder.remove(id);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            // This should never happen, but if it does, we don't want to crash.
+            // Just log it and move on.
+            System.err.println("Warning: Tried to remove robot ID " + id + " from dynamicBodyExecOrder, but it was not found.");
+        }
+
+        if (loc != null) {
+            robotIndex.delete(fromPoint(loc),id);
+        }
     }
     
     // ****************************

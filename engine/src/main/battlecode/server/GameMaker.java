@@ -12,8 +12,8 @@ import battlecode.util.FlatHelpers;
 import battlecode.util.TeamMapping;
 import battlecode.world.*;
 import com.google.flatbuffers.FlatBufferBuilder;
-import gnu.trove.list.array.TByteArrayList;
-import gnu.trove.list.array.TIntArrayList;
+import gnu.trove.TByteArrayList;
+import gnu.trove.TIntArrayList;
 import java.util.List;
 import java.util.ArrayList;
 import org.apache.commons.io.FileUtils;
@@ -164,9 +164,9 @@ public class GameMaker {
         if (finishedGame == null) {
             assertState(State.DONE);
 
-            int events = GameWrapper.createEventsVector(fileBuilder, this.events.toArray());
-            int matchHeaders = GameWrapper.createMatchHeadersVector(fileBuilder, this.matchHeaders.toArray());
-            int matchFooters = GameWrapper.createMatchFootersVector(fileBuilder, this.matchFooters.toArray());
+            int events = GameWrapper.createEventsVector(fileBuilder, this.events.toNativeArray());
+            int matchHeaders = GameWrapper.createMatchHeadersVector(fileBuilder, this.matchHeaders.toNativeArray());
+            int matchFooters = GameWrapper.createMatchFootersVector(fileBuilder, this.matchFooters.toNativeArray());
 
             GameWrapper.startGameWrapper(fileBuilder);
             GameWrapper.addEvents(fileBuilder, events);
@@ -316,7 +316,7 @@ public class GameMaker {
             RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.MESSAGE_RADIUS_SQUARED);
             robotTypeMetadataOffsets.add(RobotTypeMetadata.endRobotTypeMetadata(builder));
         }
-        return GameHeader.createRobotTypeMetadataVector(builder, robotTypeMetadataOffsets.toArray());
+        return GameHeader.createRobotTypeMetadataVector(builder, robotTypeMetadataOffsets.toNativeArray());
     }
 
     public void makeGameFooter(Team winner) {
@@ -410,7 +410,7 @@ public class GameMaker {
                         }
 
                         int nameOffset = builder.createString(profiler.getName());
-                        int eventsOffset = ProfilerProfile.createEventsVector(builder, events.toArray());
+                        int eventsOffset = ProfilerProfile.createEventsVector(builder, events.toNativeArray());
 
                         ProfilerProfile.startProfilerProfile(builder);
                         ProfilerProfile.addName(builder, nameOffset);
@@ -418,13 +418,13 @@ public class GameMaker {
                         profiles.add(ProfilerProfile.endProfilerProfile(builder));
                     }
 
-                    int framesOffset = ProfilerFile.createFramesVector(builder, frames.toArray());
-                    int profilesOffset = ProfilerFile.createProfilesVector(builder, profiles.toArray());
+                    int framesOffset = ProfilerFile.createFramesVector(builder, frames.toNativeArray());
+                    int profilesOffset = ProfilerFile.createProfilesVector(builder, profiles.toNativeArray());
 
                     profilerFiles.add(ProfilerFile.createProfilerFile(builder, framesOffset, profilesOffset));
                 }
 
-                int profilerFilesOffset = MatchFooter.createProfilerFilesVector(builder, profilerFiles.toArray());
+                int profilerFilesOffset = MatchFooter.createProfilerFilesVector(builder, profilerFiles.toNativeArray());
 
                 TIntArrayList timelineMarkerOffsets = new TIntArrayList();
                 for (int i = 0; i < this.timelineMarkerRounds.size(); i++){
@@ -432,7 +432,7 @@ public class GameMaker {
                     timelineMarkerColors.get(i), builder.createString(timelineMarkerLabels.get(i)));
                     timelineMarkerOffsets.add(timelineMarkerOffset);
                 }
-                int timelineMarkersOffset = MatchFooter.createTimelineMarkersVector(builder, timelineMarkerOffsets.toArray());
+                int timelineMarkersOffset = MatchFooter.createTimelineMarkersVector(builder, timelineMarkerOffsets.toNativeArray());
 
                 return EventWrapper.createEventWrapper(builder, Event.MatchFooter,
                         MatchFooter.createMatchFooter(builder, TeamMapping.id(winTeam),
@@ -458,11 +458,11 @@ public class GameMaker {
         public void endRound(){
             createEvent((builder) -> {
                 // Round statistics
-                int teamIDsP = Round.createTeamIdsVector(builder, teamIDs.toArray());
-                int teamCoverageAmountsP = Round.createTeamCoverageAmountsVector(builder, teamPaintCoverageAmounts.toArray());
-                int teamMoneyAmountsP = Round.createTeamResourceAmountsVector(builder, teamMoneyAmounts.toArray());
-                int teamResourcePatternAmountsP = Round.createTeamResourcePatternAmountsVector(builder, teamResourcePatternAmounts.toArray());
-                int diedIdsP = Round.createDiedIdsVector(builder, diedIds.toArray());
+                int teamIDsP = Round.createTeamIdsVector(builder, teamIDs.toNativeArray());
+                int teamCoverageAmountsP = Round.createTeamCoverageAmountsVector(builder, teamPaintCoverageAmounts.toNativeArray());
+                int teamMoneyAmountsP = Round.createTeamResourceAmountsVector(builder, teamMoneyAmounts.toNativeArray());
+                int teamResourcePatternAmountsP = Round.createTeamResourcePatternAmountsVector(builder, teamResourcePatternAmounts.toNativeArray());
+                int diedIdsP = Round.createDiedIdsVector(builder, diedIds.toNativeArray());
 
                 builder.startRound();
 
