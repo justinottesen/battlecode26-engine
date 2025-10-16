@@ -163,13 +163,9 @@ export class CurrentMap {
                         ctx.fillStyle = teamColors[0]
                         const label = markerA === 1 ? '1' : '2' // Primary/secondary
                         ctx.font = '1px monospace'
-                        ctx.shadowColor = 'black'
-                        ctx.shadowBlur = 4
                         ctx.scale(0.5, 0.5)
                         ctx.fillText(label, (coords.x + 0.05) * 2, (coords.y + 0.95) * 2)
                         ctx.scale(2, 2)
-                        ctx.shadowColor = ''
-                        ctx.shadowBlur = 0
                     }
 
                     const markerB = this.markers[1][schemaIdx]
@@ -177,13 +173,9 @@ export class CurrentMap {
                         ctx.fillStyle = teamColors[1]
                         const label = markerB === 3 ? '1' : '2' // Primary/secondary
                         ctx.font = '1px monospace'
-                        ctx.shadowColor = 'black'
-                        ctx.shadowBlur = 4
                         ctx.scale(0.5, 0.5)
                         ctx.fillText(label, (coords.x + 0.65) * 2, (coords.y + 0.95) * 2)
                         ctx.scale(2, 2)
-                        ctx.shadowColor = ''
-                        ctx.shadowBlur = 0
                     }
                 }
             }
