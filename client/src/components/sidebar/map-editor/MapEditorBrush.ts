@@ -1,6 +1,7 @@
 import { StaticMap, CurrentMap } from '../../../playback/Map'
 
 export type UndoFunction = (() => void) | undefined
+
 export abstract class MapEditorBrush {
     abstract name: string
     abstract fields: Record<string, MapEditorBrushField>
@@ -13,6 +14,29 @@ export abstract class MapEditorBrush {
         return newBrush
     }
 }
+
+export abstract class SinglePointMapEditorBrush<MapType extends CurrentMap | StaticMap> extends MapEditorBrush {
+    abstract singleApply(
+        x: number,
+        y: number,
+        fields: Record<string, MapEditorBrushField>,
+        robotOne: boolean
+    ): UndoFunction | null
+
+    constructor(protected readonly map: MapType) {
+        super()
+    }
+
+    apply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean): UndoFunction {
+        const undo = this.singleApply(x, y, fields, robotOne)
+
+        // Return early if brush could not be applied
+        if (!undo) return () => {}
+
+        return () => undo()
+    }
+}
+
 /**
  * A brush that applies the exact same operation to both the given point and its symmetric counterpart.
  */
