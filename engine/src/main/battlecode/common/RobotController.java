@@ -667,6 +667,24 @@ public interface RobotController {
      */
     void completeResourcePattern(MapLocation loc) throws GameActionException;
 
+    /**
+     * Tests whether this robot can place dirt at the given location.
+     * @param loc
+     * @throws GameActionException
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    public boolean canPlaceDirt(MapLocation loc);
+
+     /**
+     * Tests whether this robot can place dirt at the given location.
+     * @param loc
+     * @throws GameActionException
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    public boolean canRemoveDirt(MapLocation loc);
+
     // ****************************
     // ***** ATTACK / HEAL ********
     // ****************************
@@ -692,38 +710,6 @@ public interface RobotController {
      * @battlecode.doc.costlymethod
      */
     boolean canAttack(MapLocation loc);
-
-    /**
-     * Tests whetehr this robot can place dirt at the given location.
-     * @param loc
-     * @throws GameActionException
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    public boolean canPlaceDirt(MapLocation loc);
-
-     /**
-     * Tests whether this robot can place dirt at the given location.
-     * @param loc
-     * @throws GameActionException
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    public boolean canRemoveDirt(MapLocation loc);
-
-    
-
-    /** 
-     * Performs the specific attack for this robot type.
-     *
-     * @param loc the target location to attack (for splashers, the center location)
-     *      Note: for a tower, leaving loc null represents an area attack
-     * @param useSecondaryColor whether or not the attack should use a secondary color
-     * @throws GameActionException if conditions for attacking are not satisfied
-     *
-     * @battlecode.doc.costlymethod
-     */
-    void attack(MapLocation loc, boolean useSecondaryColor) throws GameActionException;
     
     /** 
      * Performs the specific attack for this robot type, defaulting to the
