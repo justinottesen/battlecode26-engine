@@ -594,10 +594,8 @@ public class GameWorld {
                 MapLocation newLocation = new MapLocation(x, y);
                 int xDiff = newLocation.x - center.x;
                 int yDiff = newLocation.y - center.y;
-                System.out.println("a");
                 double angle = Math.abs(Math.acos((xDiff * lookDirection.dx + yDiff * lookDirection.dy) / Math.sqrt((xDiff * xDiff + yDiff * yDiff) * (lookDirection.dx * lookDirection.dx + lookDirection.dy * lookDirection.dy))));
-                System.out.println("Angle to (" + x + ", " + y + "): " + angle);
-                if (center.isWithinDistanceSquared(newLocation, radiusSquared) && Math.abs(angle)-0.01 <= totalAngle/2) // TODO this 0.01 is a bit of a kludge to fix floating point errors
+                if (center.isWithinDistanceSquared(newLocation, radiusSquared) && Math.abs(angle)-0.001 <= totalAngle/2) // TODO this 0.001 is a bit of a kludge to fix floating point errors
                     returnLocations.add(newLocation);
             }
         }
