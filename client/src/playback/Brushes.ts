@@ -1,10 +1,11 @@
 import { schema } from 'battlecode-schema'
 import {
-    MapEditorBrush,
     MapEditorBrushField,
     MapEditorBrushFieldType,
+    SinglePointMapEditorBrush,
     SymmetricMapEditorBrush
 } from '../components/sidebar/map-editor/MapEditorBrush'
+import { ACTION_DEFINITIONS } from './Actions'
 import Bodies from './Bodies'
 import { CurrentMap, StaticMap } from './Map'
 import { Vector } from './Vector'
@@ -66,6 +67,175 @@ const checkValidCheeseMinePlacement = (check: Vector, map: StaticMap, bodies: Bo
     }
 
     return true
+}
+
+// Create minimal editor-only action data so the real Action
+// subclasses in ACTION_DEFINITIONS can draw their visuals.
+const makeEditorActionData = (map: StaticMap, atype: schema.Action, tx: number, ty: number, targetId?: number) => {
+    const mapWidth = map.width
+    const mapHeight = map.height
+
+    let targetX = tx
+    let targetY = ty
+    let validLocFound = false
+    // find the first offset that yields a valid square inside the map
+    while (!validLocFound) {
+        const nx = tx + Math.random() * 3 - 1
+        const ny = ty + Math.random() * 3 - 1
+        if (nx >= 0 && nx < mapWidth && ny >= 0 && ny < mapHeight) {
+            targetX = nx
+            targetY = ny
+            break
+        }
+    }
+
+    const loc = map.locationToIndex(targetX, targetY)
+
+    // Update these action data based on action type; change this when the game changes
+    switch (atype) {
+        case schema.Action.PaintAction:
+            return { loc: () => loc, isSecondary: () => 0 }
+        case schema.Action.UnpaintAction:
+            return { loc: () => loc }
+        case schema.Action.SplashAction:
+            return { loc: () => loc }
+        case schema.Action.AttackAction:
+            return { id: () => targetId }
+        case schema.Action.TransferAction:
+            return { id: () => targetId, amount: () => 1 }
+        case schema.Action.MopAction:
+            return { id0: () => targetId, id1: () => 0, id2: () => 0 }
+        case schema.Action.BuildAction:
+            return { id: () => targetId, loc: () => loc }
+        default:
+            return {}
+    }
+}
+
+const findNearestRobotId = (bodies: Bodies, id: number, x: number, y: number): number | null => {
+    // Find the nearest existing body (excluding the one we just spawned)
+    let nearestId: number | null = null
+    let nearestDist = Number.POSITIVE_INFINITY
+    for (const b of bodies.bodies.values()) {
+        if (b.id === id) continue
+        const dx = b.pos.x - x
+        const dy = b.pos.y - y
+        const d2 = dx * dx + dy * dy
+        if (d2 < nearestDist) {
+            nearestDist = d2
+            nearestId = b.id
+        }
+    }
+    return nearestId
+}
+
+export class RobotBrush extends SinglePointMapEditorBrush<StaticMap> {
+    private readonly bodies: Bodies
+    public readonly name = 'Robots'
+    public readonly fields = {
+        isRobot: {
+            type: MapEditorBrushFieldType.ADD_REMOVE,
+            value: true
+        },
+        team: {
+            type: MapEditorBrushFieldType.TEAM,
+            value: 0
+        },
+        robotType: {
+            type: MapEditorBrushFieldType.SINGLE_SELECT,
+            value: schema.RobotType.SOLDIER,
+            label: 'Robot Type',
+            options: [
+                { value: schema.RobotType.SOLDIER, label: 'Soldier' },
+                { value: schema.RobotType.SPLASHER, label: 'Splasher' },
+                { value: schema.RobotType.MOPPER, label: 'Mopper' }
+            ]
+        },
+        actionType: {
+            type: MapEditorBrushFieldType.SINGLE_SELECT,
+            value: 0,
+            label: 'Action Type',
+            options: [
+                { value: null, label: 'None' },
+                { value: schema.Action.TransferAction, label: 'Transfer' },
+                { value: schema.Action.AttackAction, label: 'Attack' },
+                { value: schema.Action.PaintAction, label: 'Paint' },
+                { value: schema.Action.UnpaintAction, label: 'Unpaint' },
+                { value: schema.Action.SplashAction, label: 'Splash' },
+                { value: schema.Action.MopAction, label: 'Mop' },
+                { value: schema.Action.BuildAction, label: 'Build' }
+            ]
+        }
+    }
+
+    constructor(round: Round) {
+        super(round.map.staticMap)
+        this.bodies = round.bodies
+    }
+
+    public singleApply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean) {
+        const robotType: schema.RobotType = fields.robotType.value
+        const actionType: schema.Action = fields.actionType.value
+        const isRobot: boolean = fields.isRobot.value
+
+        const add = (x: number, y: number, team: Team) => {
+            const pos = { x, y }
+
+            const id = this.bodies.getNextID()
+            this.bodies.spawnBodyFromValues(id, robotType, team, pos)
+
+            return id
+        }
+
+        const remove = (x: number, y: number) => {
+            const body = this.bodies.getBodyAtLocation(x, y)
+
+            if (!body) return null
+
+            const team = body.team
+            this.bodies.removeBody(body.id)
+
+            return team
+        }
+
+        if (isRobot) {
+            let teamIdx = robotOne ? 0 : 1
+            if (fields.team.value === 1) teamIdx = 1 - teamIdx
+            const team = this.bodies.game.teams[teamIdx]
+            const id = add(x, y, team)
+            if (id && actionType) {
+                const ActionCtor = ACTION_DEFINITIONS[actionType]
+                if (ActionCtor) {
+                    const targetIdToUse = findNearestRobotId(this.bodies, id, x, y) ?? id
+                    const adata = makeEditorActionData(this.map, actionType, x, y, targetIdToUse)
+                    const actionInstance = new ActionCtor(id, adata as any)
+                    const actionsArray = this.bodies.game?.currentMatch?.currentRound?.actions?.actions
+                    const currentRound = this.bodies.game?.currentMatch?.currentRound
+
+                    if (actionsArray && currentRound) {
+                        // Apply immediately for stateful actions (e.g., PaintAction) so map state changes in editor
+                        actionInstance.apply(currentRound)
+                        actionsArray.push(actionInstance)
+
+                        return () => {
+                            const arr = this.bodies.game?.currentMatch?.currentRound?.actions?.actions
+                            if (arr) {
+                                const idx = arr.indexOf(actionInstance)
+                                if (idx >= 0) arr.splice(idx, 1)
+                            }
+                            this.bodies.removeBody(id)
+                        }
+                    }
+                }
+            }
+            if (id) return () => this.bodies.removeBody(id)
+            return null
+        } else {
+            const team = remove(x, y)
+            if (!team) return null
+            return () => add(x, y, team)
+        }
+    }
 }
 
 export class WallsBrush extends SymmetricMapEditorBrush<StaticMap> {

@@ -17,6 +17,7 @@ import {
 } from '../constants'
 import Match from './Match'
 import { ClientConfig } from '../client-config'
+import { RobotBrush, TowerBrush } from './Brushes'
 import { getImageIfLoaded } from '../util/ImageLoader'
 
 export default class Bodies {
@@ -146,7 +147,10 @@ export default class Bodies {
         bodyCtx: CanvasRenderingContext2D | null,
         overlayCtx: CanvasRenderingContext2D | null,
         config: ClientConfig,
+        // multiSelectMode: boolean = false,
         selectedBodyID?: number,
+        selectedBodyIDs?:  Array<number>,
+        focusedBodyIDs?:  Array<number>,
         hoveredTile?: Vector
     ): void {
         for (const body of this.bodies.values()) {
@@ -154,10 +158,11 @@ export default class Bodies {
                 body.draw(match, bodyCtx)
             }
 
-            const selected = selectedBodyID === body.id
+            const selected = (selectedBodyID === body.id || !!selectedBodyIDs?.includes(body.id))
             const hovered = !!hoveredTile && vectorEq(body.pos, hoveredTile)
+            const focused = !!focusedBodyIDs?.includes(body.id)
             if (overlayCtx) {
-                body.drawOverlay(match, overlayCtx, config, selected, hovered)
+                body.drawOverlay(match, overlayCtx, config, selected && focused, hovered || (selected && !focused))
             }
         }
     }
@@ -188,7 +193,7 @@ export default class Bodies {
     }
 
     getEditorBrushes(round: Round): MapEditorBrush[] {
-        return []
+        return [new TowerBrush(round), new RobotBrush(round)]
     }
 
     toInitialBodyTable(builder: flatbuffers.Builder): number {
