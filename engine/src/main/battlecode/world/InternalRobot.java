@@ -500,7 +500,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 canGrab = true; // We can always grab robots facing away from us
             }else if(this.team == this.gameWorld.getRobot(loc).getTeam()) {
                 canGrab = true; // We can always grab allied robots
-            }else if(this.gameWorld.getRobot(loc).getHealth() < health) {
+            }else if(this.gameWorld.getRobot(loc).getHealth() + GameConstants.HEALTH_GRAB_THRESHOLD < health) {
                 canGrab = true; // We can grab enemy robots with lower strength than us
             }
 

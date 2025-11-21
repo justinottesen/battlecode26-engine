@@ -236,6 +236,9 @@ public class GameConstants {
     /** The amount added to the action cooldown counter after transferring paint */
     public static final int PAINT_TRANSFER_COOLDOWN = 10;
 
+    /** The minimum gap between an enemy robot's health and our own before we can grab it from all angles */
+    public static final int HEALTH_GRAB_THRESHOLD = 0;
+
     /** The total time a rat can travel for while thrown (rats are stunned while thrown) */
     public static final int THROW_DURATION = 40;
 
