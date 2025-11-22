@@ -36,8 +36,8 @@ public class GameWorld {
     private int[] colorLocations; // No color = 0, Team A color 1 = 1, Team A color 2 = 2, Team B color 1 = 3,
                                   // Team B color 2 = 4
     private InternalRobot[][] robots;
-    private ArrayList<Trap>[] trapTriggers;
     private Trap[] trapLocations;
+    private HashMap<TrapType, Integer> trapCounts;
     private int trapId;
     private final LiveMap gameMap;
     private final TeamInfo teamInfo;
@@ -81,6 +81,9 @@ public class GameWorld {
         this.gameMap = gm;
         this.objectInfo = new ObjectInfo(gm);
         this.colorLocations = new int[numSquares];
+        this.trapCounts = new HashMap<>();
+        trapCounts.put(TrapType.CATTRAP, 0);
+        trapCounts.put(TrapType.RATTRAP, 0);
 
         for (boolean wall : walls) {
             if (wall) {
@@ -727,45 +730,50 @@ public class GameWorld {
         return (this.trapLocations[locationToIndex(loc)] != null);
     }
 
-    public ArrayList<Trap> getTrapTriggers(MapLocation loc) {
-        return this.trapTriggers[locationToIndex(loc)];
+    public boolean hasRatTrap(MapLocation loc) {
+        Trap trap = this.trapLocations[locationToIndex(loc)];
+        return (trap != null && trap.getType() == TrapType.RATTRAP);
+    }
+
+    public boolean hasCatTrap(MapLocation loc) {
+        Trap trap = this.trapLocations[locationToIndex(loc)];
+        return (trap != null && trap.getType() == TrapType.CATTRAP);
     }
 
     public void placeTrap(MapLocation loc, TrapType type, Team team) {
         Trap trap = new Trap(loc, type, team, trapId);
-        trapId++;
+        
+        int idx = locationToIndex(loc);
+        this.trapLocations[idx] = trap;
+        this.cheeseAmounts[idx] = Math.max(this.cheeseAmounts[idx], type.spawnCheeseAmount);
+
         matchMaker.addTrap(trap);
-        this.trapLocations[locationToIndex(loc)] = trap;
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, 1)) {
-            this.trapTriggers[locationToIndex(adjLoc)].add(trap);
-        }
+        this.trapCounts.put(type, this.trapCounts.get(type) + 1);
+        trapId++;
     }
 
-    // TODO: need to seperate out cat/rat types
-    public void triggerTrap(Trap trap, InternalRobot robot, boolean entered) {
+    public void removeTrap(MapLocation loc) {
+        Trap trap = this.trapLocations[locationToIndex(loc)];
+        if (trap == null) {
+            return;
+        }
+        TrapType type = trap.getType();
+        this.trapCounts.put(type, this.trapCounts.get(type) - 1);
+        this.trapLocations[locationToIndex(loc)] = null;
+    } 
+
+    public int getTrapCount(TrapType type) {
+        return this.trapCounts.get(type);
+    }
+
+    public void trapTriggered(Trap trap, InternalRobot robot, boolean entered) {
         MapLocation loc = trap.getLocation();
         TrapType type = trap.getType();
-        switch (type) {
-            case RATTRAP:
-                for (InternalRobot rob : getAllRobotsWithinRadiusSquared(loc, 1,
-                        trap.getTeam().opponent())) {
-                    rob.setMovementCooldownTurns(type.stunTime);
-                    rob.setActionCooldownTurns(type.stunTime);
-                    rob.takeDamage(type.damage);
-                }
-                break;
-            case CATTRAP:
-                for (InternalRobot rob : getAllRobotsWithinRadiusSquared(loc, 1,
-                        trap.getTeam().opponent())) {
-                    rob.setMovementCooldownTurns(type.stunTime);
-                    rob.setActionCooldownTurns(type.stunTime);
-                    rob.takeDamage(type.damage);
-                }
-                break;
-        }
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, 2)) {
-            this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
-        }
+        
+        robot.setMovementCooldownTurns(type.stunTime);
+        robot.addHealth(-type.damage);
+        //TODO once the cat exists, alert cat of trap trigger
+
         this.trapLocations[locationToIndex(loc)] = null;
         matchMaker.addTriggeredTrap(trap.getId());
         matchMaker.addAction(robot.getID(), FlatHelpers.getTrapActionFromTrapType(type),
