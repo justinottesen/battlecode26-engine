@@ -572,77 +572,20 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     /**
-     * Special action exclusive to moppers.
-     * Given a cardinal direction, apply swing to adjacent square in that direction and that direction's diagonal directions.
-     * Also apply to squares directly behind those three.
-     * Example EAST SWING: mopper m, unaffected o, affected x.
-     * oooo
-     * oxxo
-     * mxxo
-     * oxxo
-     * oooo
-     */
-    public void mopSwing(Direction dir) {
-        // swing even if robots in the swing map locations are missing, remove hp from the present enemy robots
-        if(this.type != UnitType.MOPPER)
-            throw new RuntimeException("Unit must be a mopper");
-        if(!(dir == Direction.SOUTH || dir == Direction.NORTH || dir == Direction.WEST || dir == Direction.EAST))
-            throw new RuntimeException("Direction must be a cardinal direction");
-
-        // NORTH, SOUTH, EAST, WEST
-        int[][] dx = {{-1, 0, 1, -1, 0, 1}, {-1, 0, 1, -1, 0, 1}, {1, 1, 1, 2, 2, 2}, {-1, -1, -1, -2, -2, -2}};
-        int[][] dy = {{1, 1, 1, 2, 2, 2}, {-1, -1, -1, -2, -2, -2}, {-1, 0, 1, -1, 0, 1}, {-1, 0, 1, -1, 0, 1}};
-        int dirIdx = 0;
-        if(dir == Direction.SOUTH) dirIdx = 1;
-        else if(dir == Direction.EAST) dirIdx = 2;
-        else if(dir == Direction.WEST) dirIdx = 3;
-        ArrayList<Integer> affectedIDs = new  ArrayList<>();
-
-        for(int i = 0; i < 6; i ++) { // check all six affected MapLocations
-            int x = this.getLocation().x + dx[dirIdx][i], y = this.getLocation().y + dy[dirIdx][i];
-            MapLocation newLoc = new MapLocation(x, y);
-            if(!this.gameWorld.getGameMap().onTheMap(newLoc)) continue;
-
-            // Attack if it's a robot (only if different team)
-            if(this.gameWorld.getRobot(newLoc) != null && this.gameWorld.getRobot(newLoc).getType().isRobotType()) {
-                InternalRobot robot = this.gameWorld.getRobot(newLoc);
-                if(this.team != robot.getTeam()){
-                    robot.addPaint(-GameConstants.MOPPER_SWING_PAINT_DEPLETION);
-                    affectedIDs.add(robot.ID);
-                    this.gameWorld.getMatchMaker().addRemovePaintAction(robot.getID(), GameConstants.MOPPER_SWING_PAINT_DEPLETION);
-                }
-            }
-        }
-        for (int i = 0; i < 6; i++) affectedIDs.add(0);
-        this.gameWorld.getMatchMaker().addMopAction(affectedIDs.get(0), affectedIDs.get(1), affectedIDs.get(2));
-        this.gameWorld.getMatchMaker().addMopAction(affectedIDs.get(3), affectedIDs.get(4), affectedIDs.get(5));
-    }
-
-    /**
      * Attacks another location.
      * The type of attack is based on the robot type (specific methods above)
      * 
      * @param loc the location of the bot
-     * @param useSecondaryColor whether to use secondary color or not
      */
-    public void attack(MapLocation loc, boolean useSecondaryColor) {
+    public void attack(MapLocation loc) {
         switch(this.getType()) {
-            case SOLDIER:
-                soldierAttack(loc, useSecondaryColor);
-                break;
-            case SPLASHER:
-                splasherAttack(loc, useSecondaryColor);
-                break;
-            case MOPPER:
-                mopperAttack(loc, useSecondaryColor);
+            case RAT:
+                // TODO bite(loc);
                 break; 
             default:
-                towerAttack(loc);
+                // TODO
                 break;
         }
-    }
-    public void attack(MapLocation loc) {
-        attack(loc, false);
     }
 
     // *********************************

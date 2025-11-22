@@ -932,47 +932,11 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
-    public void attack(MapLocation loc, boolean useSecondaryColor) throws GameActionException {
+    public void attack(MapLocation loc) throws GameActionException {
         assertCanAttack(loc);
         if (this.robot.getType().isRobotType())
             this.robot.addActionCooldownTurns(this.robot.getType().actionCooldown);
-        this.robot.attack(loc, useSecondaryColor);
-    }
-
-    @Override
-    public void attack(MapLocation loc) throws GameActionException {
-        attack(loc, false);
-    }
-
-    private void assertCanMopSwing(Direction dir) throws GameActionException {
-        assertNotNull(dir);
-        assertIsActionReady();
-        if (!(dir == Direction.SOUTH || dir == Direction.NORTH || dir == Direction.WEST || dir == Direction.EAST)){
-            throw new GameActionException(CANT_DO_THAT, "Must pass in a cardinal direction to mop swing");
-        }
-        if (this.robot.getType() != UnitType.MOPPER){
-            throw new GameActionException(CANT_DO_THAT, "Unit must be a mopper!");
-        }
-        MapLocation nextLoc = this.robot.getLocation().add(dir);
-        if (!onTheMap(nextLoc)){
-            throw new GameActionException(CANT_DO_THAT, "Can't do a mop swing off the edge of the map!");
-        }
-
-    }
-
-    @Override
-    public boolean canMopSwing(Direction dir) {
-        try {
-            assertCanMopSwing(dir);
-            return true;
-        } catch (GameActionException e) { return false; }  
-    }
-
-    @Override
-    public void mopSwing(Direction dir) throws GameActionException {
-        assertCanMopSwing(dir);
-        this.robot.addActionCooldownTurns(GameConstants.ATTACK_MOPPER_SWING_COOLDOWN);
-        this.robot.mopSwing(dir);
+        this.robot.attack(loc);
     }
 
     // ***********************************
