@@ -27,8 +27,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private UnitType type;
 
     private final int ID;
+
     private Team team;
     private MapLocation location;
+    private Direction dir;
     private MapLocation diedLocation;
     private int health;
 
@@ -64,14 +66,16 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param loc  the location of the robot
      * @param team the team of the robot
      */
-    public InternalRobot(GameWorld gw, int id, Team team, UnitType type, MapLocation loc) {
+    public InternalRobot(GameWorld gw, int id, Team team, UnitType type, MapLocation loc, Direction dir) {
         this.gameWorld = gw;
 
         this.ID = id;
+
         this.team = team;
         this.type = type;
 
         this.location = loc;
+        this.dir = dir;
         this.diedLocation = null;
         this.health = type.health;
         this.incomingMessages = new LinkedList<>();
@@ -93,6 +97,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.indicatorString = "";
 
         this.controller = new RobotControllerImpl(gameWorld, this);
+
+        
     }
 
     // ******************************************
@@ -111,6 +117,16 @@ public class InternalRobot implements Comparable<InternalRobot> {
         return ID;
     }
 
+
+    // public boolean isCenterRobot(){
+    //     return this.offsetToCenter == Direction.CENTER;
+    // }
+
+    // public InternalRobot getCenterRobot(){
+    //     MapLocation centerLocation = this.location.add(offsetToCenter);
+    //     return this.gameWorld.getRobot(centerLocation);
+    // }
+
     public Team getTeam() {
         return team;
     }
@@ -121,6 +137,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     public MapLocation getLocation() {
         return location;
+    }
+    
+    public Direction getDirection() {
+        return dir;
+    }
+
+    public MapLocation[] getAllPartLocations(){ 
+        return this.getType().getAllLocations(this.location);
     }
 
     public MapLocation getDiedLocation() {
@@ -179,6 +203,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public RobotInfo getRobotInfo() {
+        // We use the ID of the center of a big robot for sensing related methods 
+        // so that IDs are consistent regardless of which part of the robot is sensed
+
         if (cachedRobotInfo != null
                 && cachedRobotInfo.ID == ID
                 && cachedRobotInfo.team == team
@@ -228,7 +255,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * Returns the robot's vision radius squared.
      */
     public int getVisionRadiusSquared() {
-        return GameConstants.VISION_RADIUS_SQUARED;
+        return this.type.getVisionRadius();
+    }
+
+    /**
+     * Returns the vision cone's theta
+     */
+    public int getVisionConeAngle() {
+        return this.type.getVisionAngle();
     }
 
     /**
@@ -273,6 +307,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.location = loc;
     }
 
+    public void setInternalLocationOnly(MapLocation loc) {
+        this.location = loc;
+    }
+
     /**
      * Upgrades the level of a tower.
      * 
@@ -289,11 +327,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
      */
     public void addActionCooldownTurns(int numActionCooldownToAdd) {
         int paintPercentage = (int) Math.round(this.paintAmount * 100.0/ this.type.paintCapacity);
+        /* TODO this is paint depletion logic and can probably be removed
         if (paintPercentage < GameConstants.INCREASED_COOLDOWN_THRESHOLD && type.isRobotType()) {
             numActionCooldownToAdd += (int) Math.round(numActionCooldownToAdd
                     * (GameConstants.INCREASED_COOLDOWN_INTERCEPT + GameConstants.INCREASED_COOLDOWN_SLOPE * paintPercentage)
                     / 100.0);
         }
+        */
         setActionCooldownTurns(this.actionCooldownTurns + numActionCooldownToAdd);
     }
 
@@ -303,11 +343,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void addMovementCooldownTurns() {
         int movementCooldown = GameConstants.MOVEMENT_COOLDOWN;
         int paintPercentage = (int) Math.round(this.paintAmount * 100.0/ this.type.paintCapacity);
+        /* TODO this is paint depletion logic and can probably be removed
         if (paintPercentage < GameConstants.INCREASED_COOLDOWN_THRESHOLD && type.isRobotType()) {
             movementCooldown += (int) Math.round(movementCooldown
                     * (GameConstants.INCREASED_COOLDOWN_INTERCEPT + GameConstants.INCREASED_COOLDOWN_SLOPE * paintPercentage)
                     / 100.0);
         }
+        */
         this.setMovementCooldownTurns(this.movementCooldownTurns + movementCooldown);
     }
 
@@ -335,10 +377,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param healthAmount the amount to change health by (can be negative)
      */
     public void addHealth(int healthAmount) {
-        this.health += healthAmount;
-        this.health = Math.min(this.health, this.type.health);
-        if (this.health <= 0) {
-            this.gameWorld.destroyRobot(this.ID, false, true);
+        InternalRobot centerRobot = this.getCenterRobot();
+        centerRobot.health += healthAmount;
+        centerRobot.health = Math.min(this.health, this.type.health);
+        if (centerRobot.health <= 0) {
+            this.gameWorld.destroyRobot(centerRobot.ID, false, true);
         }
     }
 
@@ -525,9 +568,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.indicatorString = "";
         this.diedLocation = null;
         if (this.type.paintPerTurn != 0 )
-            addPaint(this.type.paintPerTurn + this.gameWorld.extraResourcesFromPatterns(this.team));
+            addPaint(this.type.paintPerTurn);
         if (this.type.moneyPerTurn != 0)
-            this.gameWorld.getTeamInfo().addMoney(this.team, this.type.moneyPerTurn+this.gameWorld.extraResourcesFromPatterns(this.team));
+            this.gameWorld.getTeamInfo().addMoney(this.team, this.type.moneyPerTurn);
 
         // Add upgrade action for initially upgraded starting towers
         if (this.type.isTowerType() && this.gameWorld.getCurrentRound() == 1 && this.type.level == 2) {
