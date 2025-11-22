@@ -105,6 +105,25 @@ public class GameConstants {
     public static final int MAX_MESSAGES_SENT_ROBOT = 1; // TODO need to spec messages as a whole!
 
     /** The maximum number of messages a tower can send per turn */
+    public static final int MAX_MESSAGES_SENT_TOWER = 20;
+
+    /** A robot takes this much damage every time it ends a turn with 0 paint */
+    public static final int NO_PAINT_DAMAGE = 20;
+
+    /** The damage a thrown rat takes upon hitting the ground or a target */
+    public static final int THROW_DAMAGE = 20;
+
+    /** The damage a thrown rat takes per tile it impacts early (i.e. rats that hit a wall after 1 turn take 45 damage) */
+    public static final int THROW_DAMAGE_PER_TURN = 5;
+
+    /** The damage a robot takes after being scratched by a cat */
+    public static final int CAT_SCRATCH_DAMAGE = 50;
+
+    /** The minimum gap between an enemy robot's health and our own before we can grab it from all angles */
+    public static final int HEALTH_GRAB_THRESHOLD = 0;
+
+    /** The area effected by the splasher's attack. Within this radius, empty tiles are painted and towers are damaged */
+    public static final int SPLASHER_ATTACK_AOE_RADIUS_SQUARED = 4;
     public static final int MAX_MESSAGES_SENT_TOWER = 20; // TODO need to spec messages as a whole!
 
     /** The area effected by the cat's attack. */
@@ -148,5 +167,11 @@ public class GameConstants {
 
     /** The amount added to the action cooldown counter after building a tile of dirt */
     public static final int BUILD_COOLDOWN = 35; // TODO need to specify!
+
+    /** The total time a rat can travel for while thrown (rats are stunned while thrown) */
+    public static final int THROW_DURATION = 40;
+
+    /** The total time a rat is stunned after hitting the ground or a target */
+    public static final int THROW_STUN_DURATION = 30;
 
 }

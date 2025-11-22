@@ -25,7 +25,15 @@ public enum UnitType {
     public final int actionCooldown;
 
     public boolean isRobotType(){
-        return this == RAT || this == RAT_KING || this == CAT;
+        return this == RAT || this == CAT || this == KING_RAT;
+    }
+
+    public boolean isThrowableType(){
+        return this == RAT;
+    }
+
+    public boolean isThrowingType(){
+        return this == RAT;
     }
 
     public boolean isRatType(){
