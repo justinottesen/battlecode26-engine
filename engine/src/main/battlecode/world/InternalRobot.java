@@ -27,6 +27,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     private Team team;
     private MapLocation location;
+    private Direction dir;
     private MapLocation diedLocation;
     private int health;
 
@@ -60,7 +61,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param loc  the location of the robot
      * @param team the team of the robot
      */
-    public InternalRobot(GameWorld gw, int id, Team team, UnitType type, MapLocation loc, Direction offsetToCenter) {
+    public InternalRobot(GameWorld gw, int id, Team team, UnitType type, MapLocation loc, Direction dir) {
         this.gameWorld = gw;
 
         this.ID = id;
@@ -69,6 +70,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.type = type;
 
         this.location = loc;
+        this.dir = dir;
         this.diedLocation = null;
         this.health = type.health;
         this.incomingMessages = new LinkedList<>();
@@ -108,14 +110,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
 
-    public boolean isCenterRobot(){
-        return this.offsetToCenter == Direction.CENTER;
-    }
+    // public boolean isCenterRobot(){
+    //     return this.offsetToCenter == Direction.CENTER;
+    // }
 
-    public InternalRobot getCenterRobot(){
-        MapLocation centerLocation = this.location.add(offsetToCenter);
-        return this.gameWorld.getRobot(centerLocation);
-    }
+    // public InternalRobot getCenterRobot(){
+    //     MapLocation centerLocation = this.location.add(offsetToCenter);
+    //     return this.gameWorld.getRobot(centerLocation);
+    // }
 
     public Team getTeam() {
         return team;
@@ -127,6 +129,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     public MapLocation getLocation() {
         return location;
+    }
+    
+    public Direction getDirection() {
+        return dir;
     }
 
     public MapLocation[] getAllPartLocations(){ 
@@ -185,10 +191,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public RobotInfo getRobotInfo() {
-        if (!this.isCenterRobot()){
-            return this.getCenterRobot().getRobotInfo();
-        }
-
         // We use the ID of the center of a big robot for sensing related methods 
         // so that IDs are consistent regardless of which part of the robot is sensed
 
@@ -227,7 +229,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * Returns the robot's vision radius squared.
      */
     public int getVisionRadiusSquared() {
-        return GameConstants.VISION_RADIUS_SQUARED;
+        return this.type.getVisionRadius();
+    }
+
+    /**
+     * Returns the vision cone's theta
+     */
+    public int getVisionConeAngle() {
+        return this.type.getVisionAngle();
     }
 
     /**
@@ -694,7 +703,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     // *********************************
 
     public boolean canExecuteCode() {
-        return this.isCenterRobot();
+        return true;
     }
 
     public void setBytecodesUsed(int numBytecodes) {
