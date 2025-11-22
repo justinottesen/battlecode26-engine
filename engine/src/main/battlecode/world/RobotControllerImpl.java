@@ -618,8 +618,13 @@ public final class RobotControllerImpl implements RobotController {
         for (int i = 0; i < newLocs.length; i++){
             MapLocation newLoc = newLocs[i];
             this.gameWorld.addRobot(newLoc, this.robot);
-        }
 
+            for(Trap t : this.gameWorld.getTrapTriggers(newLoc)){
+                if(t.getType() == TrapType.RATTRAP && t.getTeam() != this.getTeam()){
+                    this.gameWorld.trapTriggered(t, robot);
+                }
+            }
+        }
         this.robot.addMovementCooldownTurns();
     }
 

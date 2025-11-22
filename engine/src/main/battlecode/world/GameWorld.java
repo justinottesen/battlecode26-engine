@@ -37,6 +37,7 @@ public class GameWorld {
                                   // Team B color 2 = 4
     private InternalRobot[][] robots;
     private Trap[] trapLocations;
+    private ArrayList<Trap>[] trapTriggers;
     private HashMap<TrapType, Integer> trapCounts;
     private int trapId;
     private final LiveMap gameMap;
@@ -84,6 +85,7 @@ public class GameWorld {
         this.trapCounts = new HashMap<>();
         trapCounts.put(TrapType.CATTRAP, 0);
         trapCounts.put(TrapType.RATTRAP, 0);
+        trapTriggers = new ArrayList[numSquares];
 
         for (boolean wall : walls) {
             if (wall) {
@@ -740,12 +742,20 @@ public class GameWorld {
         return (trap != null && trap.getType() == TrapType.CATTRAP);
     }
 
+    public ArrayList<Trap> getTrapTriggers(MapLocation loc) {
+        return this.trapTriggers[locationToIndex(loc)];
+    }
+
     public void placeTrap(MapLocation loc, TrapType type, Team team) {
         Trap trap = new Trap(loc, type, team, trapId);
         
         int idx = locationToIndex(loc);
         this.trapLocations[idx] = trap;
         this.cheeseAmounts[idx] = Math.max(this.cheeseAmounts[idx], type.spawnCheeseAmount);
+
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+            this.trapTriggers[locationToIndex(adjLoc)].add(trap);
+        }
 
         matchMaker.addTrap(trap);
         this.trapCounts.put(type, this.trapCounts.get(type) + 1);
@@ -760,19 +770,28 @@ public class GameWorld {
         TrapType type = trap.getType();
         this.trapCounts.put(type, this.trapCounts.get(type) - 1);
         this.trapLocations[locationToIndex(loc)] = null;
+
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+            this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
+        }
     } 
 
     public int getTrapCount(TrapType type) {
         return this.trapCounts.get(type);
     }
 
-    public void trapTriggered(Trap trap, InternalRobot robot, boolean entered) {
+    public void trapTriggered(Trap trap, InternalRobot robot) {
         MapLocation loc = trap.getLocation();
         TrapType type = trap.getType();
         
         robot.setMovementCooldownTurns(type.stunTime);
         robot.addHealth(-type.damage);
         //TODO once the cat exists, alert cat of trap trigger
+        //TODO once backstab status exists, update that
+
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+            this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
+        }
 
         this.trapLocations[locationToIndex(loc)] = null;
         matchMaker.addTriggeredTrap(trap.getId());

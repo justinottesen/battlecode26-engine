@@ -9,17 +9,17 @@ public enum TrapType {
     /**
      * Traps enemy rats
      */
-    RATTRAP(5, 5, 2, 25, 5, 5, 25),
+    RATTRAP(5, 5, 20, 25, 5, 0, 25, 2),
 
     /**
      * Traps the cat
      */
-    CATTRAP(10, 0, 9, 5, 10, 10, 5),
+    CATTRAP(10, 0, 20, 5, 10, 0, 5, 2),
 
     /**
      * No trap
      */
-    NONE(0, 0, 0, 0, 0, 0, 0);
+    NONE(0, 0, 0, 0, 0, 0, 0, 0);
 
     /**
      * Crumbs cost of each trap
@@ -56,7 +56,13 @@ public enum TrapType {
      */
     public final int maxCount;
 
-    TrapType(int buildCost, int damage, int stunTime, int trapLimit, int actionCooldown, int spawnCheeseAmount, int maxCount) {
+    /**
+     * The radius within which the trap is triggered
+     */
+    public final int triggerRadiusSquared;
+    
+
+    TrapType(int buildCost, int damage, int stunTime, int trapLimit, int actionCooldown, int spawnCheeseAmount, int maxCount, int triggerRadiusSquared) {
         this.buildCost = buildCost;
         this.damage = damage;
         this.stunTime = stunTime;
@@ -64,5 +70,6 @@ public enum TrapType {
         this.actionCooldown = actionCooldown;
         this.spawnCheeseAmount = spawnCheeseAmount;
         this.maxCount = maxCount;
+        this.triggerRadiusSquared = triggerRadiusSquared;
     }
 }
