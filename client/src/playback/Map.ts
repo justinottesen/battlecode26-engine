@@ -31,10 +31,17 @@ type ResourcePatternData = {
     createRound: number
 }
 
+type TrapData = {
+    location: Vector
+    team: number
+}
+
 export class CurrentMap {
     public readonly staticMap: StaticMap
     public readonly dirt: Int8Array
     public readonly markers: [Int8Array, Int8Array] // Each team has markers
+    public readonly trapData: Map<number, TrapData>
+    public readonly cheeseData: Map<number, boolean> = new Map()
     public readonly resourcePatterns: ResourcePatternData[]
 
     get width(): number {
@@ -48,7 +55,7 @@ export class CurrentMap {
     }
 
     constructor(from: StaticMap | CurrentMap) {
-        //this.flagData = new Map()
+        this.trapData = new Map()
         if (from instanceof StaticMap) {
             // Create current map from static map
 
@@ -319,7 +326,7 @@ export class StaticMap {
         if (walls.some((x) => x !== 0 && x !== 1)) {
             throw new Error('Invalid walls value')
         }
-        if (initialDirt.some((x) => x < 0 || x > 4)) {
+        if (initialDirt.some((x) => x !== 0 && x !== 1)) {
             throw new Error('Invalid dirt value')
         }
     }

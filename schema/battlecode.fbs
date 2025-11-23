@@ -12,6 +12,10 @@ table VecTable {
     ys: [int];
 }
 
+enum TrapType: byte {
+    RAT_TRAP,
+    CAT_TRAP
+}
 
 enum RobotType: byte {
     NONE,
@@ -92,7 +96,6 @@ struct RatNap {
 
 /// Rat Collision
 struct RatCollision {
-    id: ushort;
     loc: ushort;
 }
 
@@ -135,33 +138,18 @@ struct CatPounce {
 }
 
 
-/// Place a rat trap at location
-struct PlaceRatTrap {
+/// Place a trap at location
+struct PlaceTrap {
     loc: ushort;
     team: byte;
 }
 
 
-/// Place a cat trap at location
-struct PlaceCatTrap {
+/// Triggers the trap
+struct TriggerTrap {
     loc: ushort;
     team: byte;
 }
-
-
-/// Happens when a rat tries to pick up cheese on a trap
-struct TriggerRatTrap {
-    loc: ushort;
-    team: byte;
-}
-
-
-/// Happens when a cat tries to pounce on a trap
-struct TriggerCatTrap {
-    loc: ushort;
-    team: byte;
-}
-
 
 /// Generic action representing damage to a robot
 struct DamageAction {
@@ -222,10 +210,8 @@ union Action {
     CheeseSpawn,
     CatScratch,
     CatPounce,
-    PlaceRatTrap,
-    PlaceCatTrap,
-    TriggerRatTrap,
-    TriggerCatTrap,
+    PlaceTrap,
+    TriggerTrap,
     DamageAction,
     SpawnAction,
     DieAction,

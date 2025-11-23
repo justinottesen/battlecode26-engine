@@ -1,11 +1,12 @@
 import Round from './Round'
 import { schema } from 'battlecode-schema'
 import { unionToAction } from 'battlecode-schema/js/battlecode/schema/action'
-import assert from 'assert'
+import assert, { match } from 'assert'
 import * as renderUtils from '../util/RenderUtil'
 import { vectorAdd, vectorLength, vectorMultiply, vectorSub, vectorMultiplyInPlace, Vector } from './Vector'
 import Match from './Match'
 import { getImageIfLoaded } from '../util/ImageLoader'
+import { Colors } from '../colors'
 
 type ActionUnion = Exclude<ReturnType<typeof unionToAction>, null>
 
@@ -95,11 +96,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
     },
     [schema.Action.CatFeed]: class CatFeedAction extends Action<schema.CatFeed> {
-        apply(round: Round): void {
-            const src = round.bodies.getById(this.robotId) // cat
-            const target = round.bodies.getById(this.actionData.id()) // rat being eaten
-        }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // chomping animation
             const src = match.currentRound.bodies.getById(this.robotId) // cat
             const target = match.currentRound.bodies.getById(this.actionData.id()) // rat being eaten
         }
@@ -161,51 +159,65 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     },
     [schema.Action.RatNap]: class RatNapAction extends Action<schema.RatNap> {
         apply(round: Round): void {
+            // move the target onto the source adjust target's size using scale factor
             const src = round.bodies.getById(this.robotId)
             const target = round.bodies.getById(this.actionData.id()) // rat getting napped
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            //target rat moves onto src rat, circle around carried group thing
             const src = match.currentRound.bodies.getById(this.robotId)
             const target = match.currentRound.bodies.getById(this.actionData.id()) // rat getting napped
         }
     },
     [schema.Action.RatCollision]: class RatCollisionAction extends Action<schema.RatCollision> {
-        apply(round: Round): void {
-            const src = round.bodies.getById(this.robotId)
-            const target = round.bodies.getById(this.actionData.id()) // ???
-            const pos = round.map.indexToLocation(this.actionData.loc())
-        }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // animation for colliding time (rubble or something)
             const src = match.currentRound.bodies.getById(this.robotId)
-            const target = match.currentRound.bodies.getById(this.actionData.id()) // ???
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
         }
     },
     [schema.Action.PlaceDirt]: class PlaceDirtAction extends Action<schema.PlaceDirt> {
         apply(round: Round): void {
-            const pos = round.map.indexToLocation(this.actionData.loc())
+            // make dirt boolean
+            round.map.dirt[this.actionData.loc()] = 1
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+            const body = match.currentRound.bodies.getById(this.robotId)
+            const pos = body.getInterpolatedCoords(match)
+
+            const target = match.map.indexToLocation(this.actionData.loc())
+            renderUtils.renderLine(
+                ctx,
+                renderUtils.getRenderCoords(pos.x, pos.y, match.currentRound.map.staticMap.dimension),
+                renderUtils.getRenderCoords(target.x, target.y, match.currentRound.map.staticMap.dimension),
+                {
+                    color: Colors.DIRT_COLOR,
+                    lineWidth: 0.04,
+                    opacity: 0.4
+                }
+            )
         }
     },
     [schema.Action.BreakDirt]: class BreakDirtAction extends Action<schema.BreakDirt> {
         apply(round: Round): void {
+            // remove the dirt
             const pos = round.map.indexToLocation(this.actionData.loc())
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // dirt breaking animation
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
         }
     },
     [schema.Action.CheesePickup]: class CheesePickupAction extends Action<schema.CheesePickup> {
         apply(round: Round): void {
+            // remove cheese from map and increment body cheese count
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // cheese pickup animation
             const body = match.currentRound.bodies.getById(this.robotId)
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
@@ -213,35 +225,39 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     },
     [schema.Action.CheeseSpawn]: class CheeseSpawnAction extends Action<schema.CheeseSpawn> {
         apply(round: Round): void {
+            // add cheese to map
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
-            const amount = this.actionData.amount()
-        }
-        draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
             const amount = this.actionData.amount()
         }
     },
     [schema.Action.CatScratch]: class CatScratchAction extends Action<schema.CatScratch> {
-        apply(round: Round): void {
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-        }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // cat scratching animation
+
             const body = match.currentRound.bodies.getById(this.robotId)
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+
+            ctx.strokeStyle = body.team.color
+            ctx.globalAlpha = 0.3
+            ctx.fillStyle = body.team.color
+            ctx.beginPath()
+            ctx.arc(coords.x, coords.y, 2, 0, 2 * Math.PI)
+            ctx.fill()
+            ctx.stroke()
+            ctx.globalAlpha = 1
         }
     },
     [schema.Action.CatPounce]: class CatPounceAction extends Action<schema.CatPounce> {
         apply(round: Round): void {
+            // maybe move cat to target loc
             const body = round.bodies.getById(this.robotId)
             const startPos = round.map.indexToLocation(this.actionData.startLoc())
             const endPos = round.map.indexToLocation(this.actionData.endLoc())
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // cat pouncing animation
             const body = match.currentRound.bodies.getById(this.robotId)
             const startPos = match.map.indexToLocation(this.actionData.startLoc())
             const endPos = match.map.indexToLocation(this.actionData.endLoc())
@@ -249,52 +265,23 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const endCoords = renderUtils.getRenderCoords(endPos.x, endPos.y, match.map.dimension, true)
         }
     },
-    [schema.Action.PlaceRatTrap]: class PlaceRatTrapAction extends Action<schema.PlaceRatTrap> {
+    [schema.Action.PlaceTrap]: class PlaceTrapAction extends Action<schema.PlaceTrap> {
         apply(round: Round): void {
+            // add a trap to map
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
             const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
-        }
-        draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
-            const teamId = body.team.id
         }
     },
-    [schema.Action.PlaceCatTrap]: class PlaceCatTrapAction extends Action<schema.PlaceCatTrap> {
+    [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {
         apply(round: Round): void {
+            // remove trap from map
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
             const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
-            const teamId = body.team.id
-        }
-    },
-    [schema.Action.TriggerRatTrap]: class TriggerRatTrapAction extends Action<schema.TriggerRatTrap> {
-        apply(round: Round): void {
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-            const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
-        }
-        draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
-            const teamId = body.team.id
-        }
-    },
-    [schema.Action.TriggerCatTrap]: class TriggerCatTrapAction extends Action<schema.TriggerCatTrap> {
-        apply(round: Round): void {
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-            const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
-        }
-        draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // trap triggering animation
             const body = match.currentRound.bodies.getById(this.robotId)
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
