@@ -17,7 +17,7 @@ import {
 } from '../constants'
 import Match from './Match'
 import { ClientConfig } from '../client-config'
-import { RobotBrush, TowerBrush } from './Brushes'
+import { RobotBrush } from './Brushes'
 import { getImageIfLoaded } from '../util/ImageLoader'
 
 export default class Bodies {
@@ -149,8 +149,8 @@ export default class Bodies {
         config: ClientConfig,
         // multiSelectMode: boolean = false,
         selectedBodyID?: number,
-        selectedBodyIDs?:  Array<number>,
-        focusedBodyIDs?:  Array<number>,
+        selectedBodyIDs?: Array<number>,
+        focusedBodyIDs?: Array<number>,
         hoveredTile?: Vector
     ): void {
         for (const body of this.bodies.values()) {
@@ -158,7 +158,7 @@ export default class Bodies {
                 body.draw(match, bodyCtx)
             }
 
-            const selected = (selectedBodyID === body.id || !!selectedBodyIDs?.includes(body.id))
+            const selected = selectedBodyID === body.id || !!selectedBodyIDs?.includes(body.id)
             const hovered = !!hoveredTile && vectorEq(body.pos, hoveredTile)
             const focused = !!focusedBodyIDs?.includes(body.id)
             if (overlayCtx) {
@@ -193,7 +193,7 @@ export default class Bodies {
     }
 
     getEditorBrushes(round: Round): MapEditorBrush[] {
-        return [new TowerBrush(round), new RobotBrush(round)]
+        return [new RobotBrush(round)]
     }
 
     toInitialBodyTable(builder: flatbuffers.Builder): number {
@@ -340,10 +340,10 @@ export class Body {
     }
 
     private getAllLocationsWithinFOVAndRadiusSquared(
-        match: Match, 
-        location: Vector, 
-        radius: number, 
-        direction: number, 
+        match: Match,
+        location: Vector,
+        radius: number,
+        direction: number,
         fov: number
     ) {
         const ceiledRadius = Math.ceil(Math.sqrt(radius)) + 1
@@ -370,7 +370,7 @@ export class Body {
                 }
             }
         }
-        
+
         return coords
     }
 

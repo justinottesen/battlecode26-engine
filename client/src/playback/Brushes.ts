@@ -93,20 +93,40 @@ const makeEditorActionData = (map: StaticMap, atype: schema.Action, tx: number, 
 
     // Update these action data based on action type; change this when the game changes
     switch (atype) {
-        case schema.Action.PaintAction:
-            return { loc: () => loc, isSecondary: () => 0 }
-        case schema.Action.UnpaintAction:
+        case schema.Action.BreakDirt:
             return { loc: () => loc }
-        case schema.Action.SplashAction:
+        case schema.Action.CatFeed:
             return { loc: () => loc }
-        case schema.Action.AttackAction:
+        case schema.Action.CatPounce:
+            return { loc: () => loc }
+        case schema.Action.CatScratch:
             return { id: () => targetId }
-        case schema.Action.TransferAction:
+        case schema.Action.CheesePickup:
             return { id: () => targetId, amount: () => 1 }
-        case schema.Action.MopAction:
+        case schema.Action.CheeseSpawn:
             return { id0: () => targetId, id1: () => 0, id2: () => 0 }
-        case schema.Action.BuildAction:
+        case schema.Action.DamageAction:
             return { id: () => targetId, loc: () => loc }
+        case schema.Action.DieAction:
+            return { id: () => targetId }
+        case schema.Action.PlaceCatTrap:
+            return { loc: () => loc }
+        case schema.Action.PlaceDirt:
+            return { loc: () => loc }
+        case schema.Action.PlaceRatTrap:
+            return { loc: () => loc }
+        case schema.Action.RatAttack:
+            return { id: () => targetId }
+        case schema.Action.RatCollision:
+            return { id0: () => targetId, id1: () => 0 }
+        case schema.Action.RatNap:
+            return { id: () => targetId }
+        case schema.Action.SpawnAction:
+            return { loc: () => loc, id: () => targetId }
+        case schema.Action.TriggerCatTrap:
+            return { id: () => targetId }
+        case schema.Action.TriggerRatTrap:
+            return { id: () => targetId }
         default:
             return {}
     }
@@ -143,12 +163,12 @@ export class RobotBrush extends SinglePointMapEditorBrush<StaticMap> {
         },
         robotType: {
             type: MapEditorBrushFieldType.SINGLE_SELECT,
-            value: schema.RobotType.SOLDIER,
+            value: schema.RobotType.RAT,
             label: 'Robot Type',
             options: [
-                { value: schema.RobotType.SOLDIER, label: 'Soldier' },
-                { value: schema.RobotType.SPLASHER, label: 'Splasher' },
-                { value: schema.RobotType.MOPPER, label: 'Mopper' }
+                { value: schema.RobotType.RAT, label: 'Rat' },
+                { value: schema.RobotType.RAT_KING, label: 'Rat King' },
+                { value: schema.RobotType.CAT, label: 'Cat' }
             ]
         },
         actionType: {
@@ -157,13 +177,23 @@ export class RobotBrush extends SinglePointMapEditorBrush<StaticMap> {
             label: 'Action Type',
             options: [
                 { value: null, label: 'None' },
-                { value: schema.Action.TransferAction, label: 'Transfer' },
-                { value: schema.Action.AttackAction, label: 'Attack' },
-                { value: schema.Action.PaintAction, label: 'Paint' },
-                { value: schema.Action.UnpaintAction, label: 'Unpaint' },
-                { value: schema.Action.SplashAction, label: 'Splash' },
-                { value: schema.Action.MopAction, label: 'Mop' },
-                { value: schema.Action.BuildAction, label: 'Build' }
+                { value: schema.Action.BreakDirt, label: 'Break Dirt' },
+                { value: schema.Action.CatFeed, label: 'Cat Feed' },
+                { value: schema.Action.CatPounce, label: 'Cat Pounce' },
+                { value: schema.Action.CatScratch, label: 'Cat Scratch' },
+                { value: schema.Action.CheesePickup, label: 'Cheese Pickup' },
+                { value: schema.Action.CheeseSpawn, label: 'Cheese Spawn' },
+                { value: schema.Action.DamageAction, label: 'Damage' },
+                { value: schema.Action.DieAction, label: 'Die' },
+                { value: schema.Action.PlaceCatTrap, label: 'Place Cat Trap' },
+                { value: schema.Action.PlaceDirt, label: 'Place Dirt' },
+                { value: schema.Action.PlaceRatTrap, label: 'Place Rat Trap' },
+                { value: schema.Action.RatAttack, label: 'Rat Attack' },
+                { value: schema.Action.RatCollision, label: 'Rat Collision' },
+                { value: schema.Action.RatNap, label: 'Rat Nap' },
+                { value: schema.Action.SpawnAction, label: 'Spawn Action' },
+                { value: schema.Action.TriggerCatTrap, label: 'Trigger Cat Trap' },
+                { value: schema.Action.TriggerRatTrap, label: 'Trigger Rat Trap' }
             ]
         }
     }

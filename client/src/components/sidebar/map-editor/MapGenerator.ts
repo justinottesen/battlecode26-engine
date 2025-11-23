@@ -25,8 +25,13 @@ export function loadFileAsMap(file: File): Promise<Game> {
 
 export function exportMap(round: Round, name: string) {
     Array.from(round.bodies.bodies.values())
-        .filter(body => body.robotType === RobotType.SOLDIER || body.robotType === RobotType.MOPPER || body.robotType === RobotType.SPLASHER)
-        .forEach(body => round.bodies.removeBody(body.id))
+        .filter(
+            (body) =>
+                body.robotType === RobotType.RAT ||
+                body.robotType === RobotType.RAT_KING ||
+                body.robotType === RobotType.CAT
+        )
+        .forEach((body) => round.bodies.removeBody(body.id))
     const mapError = verifyMap(round.map, round.bodies)
     if (mapError) return mapError
 
