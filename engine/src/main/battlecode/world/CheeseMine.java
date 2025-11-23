@@ -24,6 +24,11 @@ public class CheeseMine {
         return pair;
     }
 
+    public void setPair(CheeseMine mine){
+        this.pair = mine;
+    }
+
+
     public MapLocation getLocation() {
         return this.loc;
     }

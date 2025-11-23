@@ -67,12 +67,45 @@ public class GameWorld {
     private final GameMaker.MatchMaker matchMaker;
     private int areaWithoutWalls;
 
-    // List of all ruins, not indexed by location
-    private ArrayList<MapLocation> allCheeseMines;
     // Whether there is a ruin on each tile, indexed by location
     private boolean[] allCheeseMinesByLoc;
     // list of all cheese mines
     private ArrayList<CheeseMine> CheeseMines;
+    private CheeseMine[] cheeseMineLocs;
+
+    public int symmetricY(int y) {
+        return symmetricY(y, gameMap.getSymmetry());
+    }
+
+    public int symmetricX(int x) {
+        return symmetricX(x, gameMap.getSymmetry());
+    }
+
+    public int symmetricY(int y, MapSymmetry symmetry) {
+        switch (symmetry) {
+            case VERTICAL:
+                return y;
+            case HORIZONTAL:
+            case ROTATIONAL:
+            default:
+                return gameMap.getHeight() - 1 - y;
+        }
+    }
+
+    public int symmetricX(int x, MapSymmetry symmetry) {
+        switch (symmetry) {
+            case HORIZONTAL:
+                return x;
+            case VERTICAL:
+            case ROTATIONAL:
+            default:
+                return gameMap.getWidth() - 1 - x;
+        }
+    }
+
+    public MapLocation symmetryLocation(MapLocation p) {
+        return new MapLocation(symmetricX(p.x), symmetricY(p.y));
+    }
 
     @SuppressWarnings("unchecked")
     public GameWorld(LiveMap gm, RobotControlProvider cp, GameMaker.MatchMaker matchMaker) {
@@ -118,11 +151,19 @@ public class GameWorld {
         this.matchMaker.makeMatchHeader(this.gameMap);
 
         this.allCheeseMinesByLoc = gm.getCheeseMineArray();
-        this.allCheeseMines = new ArrayList<MapLocation>();
+        this.CheeseMines = new ArrayList<CheeseMine>();
+        this.cheeseMineLocs = new CheeseMine[numSquares];
         for (int i = 0; i < numSquares; i++) {
             if (this.allCheeseMinesByLoc[i]) {
-                this.allCheeseMines.add(indexToLocation(i));
+                CheeseMine newMine = new CheeseMine(indexToLocation(i), GameConstants.SQ_CHEESE_SPAWN_RADIUS, null);
+                this.CheeseMines.add(newMine);
+                cheeseMineLocs[i] = newMine;
             }
+        }
+
+        for (CheeseMine mine : this.CheeseMines) {
+            MapLocation symLoc = symmetryLocation(mine.getLocation());
+            mine.setPair(cheeseMineLocs[locationToIndex(symLoc)]);
         }
 
         // ignore patterns passed in with map and use hardcoded values
@@ -262,64 +303,6 @@ public class GameWorld {
                 int paint = getPaint(center.translate(dx, dy));
                 if (paint != (bit == 1 ? secondary : primary))
                     return false;
-                // Remove symmetry logic as all patterns are symmetric
-                // for (int sym = 0; sym < 8; sym++) {
-                // if (possibleSymmetries[sym]) {
-                // int dx2;
-                // int dy2;
-
-                // switch (sym) {
-                // case 0:
-                // dx2 = dx;
-                // dy2 = dy;
-                // break;
-                // case 1:
-                // dx2 = -dy;
-                // dy2 = dx;
-                // break;
-                // case 2:
-                // dx2 = -dx;
-                // dy2 = -dy;
-                // break;
-                // case 3:
-                // dx2 = dy;
-                // dy2 = -dx;
-                // break;
-                // case 4:
-                // dx2 = -dx;
-                // dy2 = dy;
-                // break;
-                // case 5:
-                // dx2 = dy;
-                // dy2 = dx;
-                // break;
-                // case 6:
-                // dx2 = dx;
-                // dy2 = -dy;
-                // break;
-                // case 7:
-                // dx2 = -dy;
-                // dy2 = -dx;
-                // break;
-                // default:
-                // dx2 = 0;
-                // dy2 = 0;
-                // break;
-                // }
-
-                // int bit = getPatternBit(pattern, dx, dy);
-                // int paint = getPaint(center.translate(dx2, dy2));
-
-                // if (paint != (bit == 1 ? secondary : primary)) {
-                // possibleSymmetries[sym] = false;
-                // numRemainingSymmetries -= 1;
-                // }
-                // }
-                // }
-
-                // if (numRemainingSymmetries == 0) {
-                // return false;
-                // }
             }
         }
 
@@ -536,11 +519,6 @@ public class GameWorld {
         return this.currentDamageIncreases[team.ordinal()];
     }
 
-    public void upgradeTower(UnitType newType, Team team) {
-        if (newType == UnitType.LEVEL_TWO_DEFENSE_TOWER || newType == UnitType.LEVEL_THREE_DEFENSE_TOWER)
-            this.currentDamageIncreases[team.ordinal()] += GameConstants.EXTRA_TOWER_DAMAGE_LEVEL_INCREASE;
-    }
-
     /**
      * Returns the resource pattern corresponding to the map,
      * stored as the bits of an int between 0 and
@@ -554,18 +532,6 @@ public class GameWorld {
         return this.patternArray[RESOURCE_INDEX];
     }
 
-    /**
-     * Returns the tower pattern corresponding to the map,
-     * stored as the bits of an int between 0 and
-     * 2^({@value GameConstants#PATTERN_SIZE}^2) - 1.
-     * The bit at (a, b) (zero-indexed) in the tower pattern
-     * is stored in the place value 2^({@value GameConstants#PATTERN_SIZE} * a + b).
-     * 
-     * @return the tower pattern for this map
-     */
-    public int getTowerPattern(UnitType towerType) {
-        return this.patternArray[towerTypeToPatternIndex(towerType)];
-    }
 
     public boolean isValidPatternCenter(MapLocation loc, boolean isTower) {
         return (!(loc.x < GameConstants.PATTERN_SIZE / 2
@@ -1000,9 +966,8 @@ public class GameWorld {
     }
 
     public void processEndOfRound() {
-        for (MapLocation mineLocation : this.allCheeseMines) {
-            //TODO: get cheese mine given location
-            spawnCheese(mineLocation);
+        for (CheeseMine mine : this.CheeseMines) {
+            spawnCheese(mine);
         }
 
         int teamACoverage = (int) Math
