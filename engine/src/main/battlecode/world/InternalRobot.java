@@ -508,7 +508,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
         this.setLocation(newLoc);
         
-        if (this.actionCooldownTurns <= GameConstants.THROW_STUN_DURATION) {
+        if (this.throwDuration == 1 && isSecondMove) {
             this.hitGround();
         }
     }
