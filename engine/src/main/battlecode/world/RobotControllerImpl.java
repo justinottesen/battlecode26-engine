@@ -177,24 +177,15 @@ public final class RobotControllerImpl implements RobotController {
                     "Target location not within vision range");
     }
 
-    private void assertCanActLocation(MapLocation loc, int maxRadiusSquared, int maxAngle) throws GameActionException {
-        assertNotNull(loc);
-        if (!getLocation().isWithinDistanceSquared(loc, maxRadiusSquared, this.robot.getDirection(), maxAngle))
+    private void assertCanActLocation(MapLocation loc, int maxRadiusSquared) throws GameActionException {
+        // assumes maxRadiusSquared <= visionRadiusSquared. 
+        // This handles the angle checking, so we only check distance.
+        assertCanSenseLocation(loc);
+        int distance = (this.getType().usesTopRightLocationForDistance()) ? (getLocation().topRightDistanceSquaredTo(loc)) : (getLocation().distanceSquaredTo(loc));
+        if (distance > maxRadiusSquared)
             throw new GameActionException(OUT_OF_RANGE,
                     "Target location not within action range");
-        if (!this.gameWorld.getGameMap().onTheMap(loc))
-            throw new GameActionException(CANT_SENSE_THAT,
-                    "Target location is not on the map");
     }
-
-    private void assertCanActOffCenterLocation(MapLocation loc, int maxRadiusSquared) throws GameActionException {
-        assertNotNull(loc);
-        if (getLocation().topRightDistanceSquaredTo(loc) > maxRadiusSquared)
-            throw new GameActionException(OUT_OF_RANGE,
-                    "Target location not within action range");
-        if (!this.gameWorld.getGameMap().onTheMap(loc))
-            throw new GameActionException(CANT_SENSE_THAT,
-                    "Target location is not on the map");
     
     private void assertCanPlaceDirt(MapLocation loc) throws GameActionException {
         assertIsRobotType(this.robot.getType());
@@ -743,7 +734,7 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanAttackCat(MapLocation loc) throws GameActionException {
         assertIsActionReady();
-        assertCanActOffCenterLocation(loc, UnitType.CAT.actionRadiusSquared);
+        assertCanActLocation(loc, UnitType.CAT.actionRadiusSquared);
         if (!this.gameWorld.isPassable(loc))
             throw new GameActionException(CANT_DO_THAT, "Cats cannot attack squares with walls or dirt on them!");
     }
