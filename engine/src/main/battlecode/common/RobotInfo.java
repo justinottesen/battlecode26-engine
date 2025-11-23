@@ -33,7 +33,7 @@ public class RobotInfo {
     public final MapLocation location;
 
     /**
-     * Whether or not the robot is crouching
+     * Whether or not the robot is a cat and is crouching
      */
     public final boolean crouching;
 
@@ -44,7 +44,7 @@ public class RobotInfo {
         this.type = type;
         this.health = health;
         this.location = location;
-        this.crouching = crouching;
+        this.crouching = type.isRatType() && crouching;
     }
 
     /**
@@ -95,10 +95,10 @@ public class RobotInfo {
     /**
      * Returns whether or not the robot is crouching
      *
-     * @return if the robot is a cat and is crouching
+     * @return if the robot is crouching
      */
     public boolean isCrouching(){
-        return this.type.isCatType() && crouching;
+        return crouching;
     }
 
 
