@@ -52,6 +52,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     private String indicatorString;
 
+    private ArrayList<Trap> trapsToTrigger;
+    private ArrayList<Boolean> enteredTraps;
+
+
     /**
      * Create a new internal representation of a robot
      *
@@ -73,6 +77,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.health = type.health;
         this.incomingMessages = new LinkedList<>();
         this.towerHasSingleAttacked = this.towerHasAreaAttacked = false;
+
+        this.trapsToTrigger = new ArrayList<>();
+        this.enteredTraps = new ArrayList<>();
 
         this.cheeseAmount = 0;
 
@@ -145,7 +152,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void addCheese(int amount) {
-        this.cheeseAmount += amount;
+        if (this.cheeseAmount + amount >= 0) {
+            this.cheeseAmount += amount;
+        } else {
+            amount += this.cheeseAmount;
+            this.cheeseAmount = 0;
+            this.gameWorld.getTeamInfo().addCheese(getTeam(), amount);
+        }
     }
 
     public boolean hasTowerSingleAttacked() {
@@ -349,6 +362,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
         if (centerRobot.health <= 0) {
             this.gameWorld.destroyRobot(centerRobot.ID, false, true);
         }
+    }
+
+    public void addTrapTrigger(Trap t, boolean entered) {
+        this.trapsToTrigger.add(t);
+        this.enteredTraps.add(entered);
     }
 
     // *********************************
@@ -644,6 +662,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     // ****************************
     // ****** GETTER METHODS ******
     // ****************************
+    
 
     // *********************************
     // ****** GAMEPLAY METHODS *********
@@ -681,10 +700,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // eat cheese if ratking
         if (this.type.isRatKingType()) {
             // ratking starves
-            if (this.getPaint() < GameConstants.RATKING_CHEESE_CONSUMPTION) {
+            if (this.gameWorld.getTeamInfo().getCheese(team) < GameConstants.RATKING_CHEESE_CONSUMPTION) {
                 this.addHealth(-GameConstants.RATKING_HEALTH_LOSS);
             } else {
-                this.addPaint(-GameConstants.RATKING_CHEESE_CONSUMPTION);
+                this.addCheese(-GameConstants.RATKING_CHEESE_CONSUMPTION);
             }
         }
 
@@ -701,22 +720,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
             for (InternalRobot robot : this.gameWorld.getAllRobotsWithinRadiusSquared(this.location, 2, this.team)) {
                 if (robot.ID != this.ID)
                     allyRobotCount++;
-            }
-
-            if (owningTeam == Team.NEUTRAL) {
-                this.addPaint(-GameConstants.PENALTY_NEUTRAL_TERRITORY * mopperMultiplier);
-                this.addPaint(-allyRobotCount);
-            } else if (owningTeam == this.getTeam().opponent()) {
-                this.addPaint(-GameConstants.PENALTY_ENEMY_TERRITORY * mopperMultiplier);
-                this.addPaint(-2 * allyRobotCount);
-            } else {
-                this.addPaint(-allyRobotCount);
-            }
         }
 
-        if (this.cheeseAmount == 0 && type.isRobotType()) {
-            this.addHealth(-GameConstants.NO_PAINT_DAMAGE);
+        for (int i = 0; i < trapsToTrigger.size(); i++) {
+            this.gameWorld.triggerTrap(trapsToTrigger.get(i), this, enteredTraps.get(i));
         }
+        this.trapsToTrigger = new ArrayList<>();
+        this.enteredTraps = new ArrayList<>();
+
 
         this.gameWorld.getMatchMaker().endTurn(this.ID, this.health, this.cheeseAmount, this.movementCooldownTurns,
                 this.actionCooldownTurns, this.bytecodesUsed, this.location);
