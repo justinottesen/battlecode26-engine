@@ -203,6 +203,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         apply(round: Round): void {
             // remove the dirt
             const pos = round.map.indexToLocation(this.actionData.loc())
+
+            round.map.dirt[this.actionData.loc()] = 0;
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // dirt breaking animation
@@ -215,6 +217,9 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             // remove cheese from map and increment body cheese count
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
+            
+            const amt = round.map.cheeseData[this.actionData.loc()]
+
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // cheese pickup animation
@@ -229,6 +234,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
             const amount = this.actionData.amount()
+
+            round.map.cheeseData[this.actionData.loc()] = amount;
         }
     },
     [schema.Action.CatScratch]: class CatScratchAction extends Action<schema.CatScratch> {
@@ -271,6 +278,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
             const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
+
+            round.map.trapData[this.actionData.loc()] = 1+body.team.id; // 1 for team 0, 2 for team 1
         }
     },
     [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {
@@ -279,6 +288,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const body = round.bodies.getById(this.robotId)
             const pos = round.map.indexToLocation(this.actionData.loc())
             const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
+
+            round.map.trapData[this.actionData.loc()] = 0; // remove trap
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // trap triggering animation
@@ -286,6 +297,16 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
             const teamId = body.team.id
+
+            ctx.strokeStyle = body.team.color
+            ctx.globalAlpha = 0.3
+            ctx.fillStyle = body.team.color
+            ctx.beginPath()
+            ctx.arc(coords.x, coords.y-.25, .5, Math.PI, (1+.5*match.getInterpolationFactor())*Math.PI)
+            ctx.arc(coords.x, coords.y-.25, .5, 0, .5*match.getInterpolationFactor()*Math.PI, true)
+            ctx.fill()
+            ctx.stroke()
+            ctx.globalAlpha = 1
         }
     },
     [schema.Action.DamageAction]: class DamageAction extends Action<schema.DamageAction> {

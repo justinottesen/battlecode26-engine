@@ -31,17 +31,12 @@ type ResourcePatternData = {
     createRound: number
 }
 
-type TrapData = {
-    location: Vector
-    team: number
-}
-
 export class CurrentMap {
     public readonly staticMap: StaticMap
     public readonly dirt: Int8Array
     public readonly markers: [Int8Array, Int8Array] // Each team has markers
-    public readonly trapData: Map<number, TrapData>
-    public readonly cheeseData: Map<number, boolean> = new Map()
+    public readonly trapData: Int8Array
+    public readonly cheeseData: Int8Array
     public readonly resourcePatterns: ResourcePatternData[]
 
     get width(): number {
@@ -55,7 +50,7 @@ export class CurrentMap {
     }
 
     constructor(from: StaticMap | CurrentMap) {
-        this.trapData = new Map()
+
         if (from instanceof StaticMap) {
             // Create current map from static map
 
@@ -73,6 +68,9 @@ export class CurrentMap {
             // Assumes ResourcePatternData is immutable
             this.resourcePatterns = [...from.resourcePatterns]
         }
+
+        this.trapData = new Int8Array(this.width * this.height);
+        this.cheeseData = new Int8Array(this.width * this.height);
     }
 
     indexToLocation(index: number): { x: number; y: number } {
