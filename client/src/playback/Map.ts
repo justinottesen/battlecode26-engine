@@ -148,13 +148,13 @@ export class CurrentMap {
                             this,
                             this.dirt,
                             () => {
-                                ctx.fillStyle = Colors.DIRT_COLOR
+                                ctx.fillStyle = currentColors[Colors.DIRT_COLOR]
                                 ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
                             },
                             { x: true, y: false }
                         )
                     } else {
-                        ctx.fillStyle = Colors.DIRT_COLOR
+                        ctx.fillStyle = currentColors[Colors.DIRT_COLOR]
                         ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
                     }
                 }
@@ -440,6 +440,13 @@ export class StaticMap {
                 if (this.walls[schemaIdx]) {
                     renderUtils.renderRounded(ctx, i, j, this, this.walls, () => {
                         ctx.fillStyle = currentColors[Colors.WALLS_COLOR]
+                        ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
+                    })
+                }
+
+                if (this.initialDirt[schemaIdx]) {
+                    renderUtils.renderRounded(ctx, i, j, this, this.initialDirt, () => {
+                        ctx.fillStyle = currentColors[Colors.DIRT_COLOR]
                         ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
                     })
                 }

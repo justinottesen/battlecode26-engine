@@ -28,7 +28,7 @@ export const DEFAULT_GLOBAL_COLORS = {
     // [Colors.PAINT_TEAMTWO_ONE]: '#b28b52',
     // [Colors.PAINT_TEAMTWO_TWO]: '#997746',
     [Colors.WALLS_COLOR]: '#547f31',
-    [Colors.DIRT_COLOR]: '#3B6B4C',
+    [Colors.DIRT_COLOR]: '#3b6b4c',
     [Colors.TILE_COLOR]: '#4c301e',
     [Colors.GAMEAREA_BACKGROUND]: '#2e2323',
     [Colors.SIDEBAR_BACKGROUND]: '#3f3131'
