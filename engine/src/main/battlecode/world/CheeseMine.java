@@ -24,10 +24,9 @@ public class CheeseMine {
         return pair;
     }
 
-    public void setPair(CheeseMine mine){
+    public void setPair(CheeseMine mine) {
         this.pair = mine;
     }
-
 
     public MapLocation getLocation() {
         return this.loc;
@@ -44,9 +43,9 @@ public class CheeseMine {
      * @param currentRound The current round number
      * @return The probability of spawning cheese this round
      */
-    public float generationProbability(int currentRound) {
+    public double generationProbability(int currentRound) {
         int roundsSinceLastSpawn = currentRound - last_spawn_round;
-        float prob = 1 - (float) Math.pow(1 - GameConstants.CHEESE_MINE_SPAWN_PROBABILITY,
+        double prob = 1 - (double) Math.pow(1 - GameConstants.CHEESE_MINE_SPAWN_PROBABILITY,
                 roundsSinceLastSpawn);
         return prob;
     }
