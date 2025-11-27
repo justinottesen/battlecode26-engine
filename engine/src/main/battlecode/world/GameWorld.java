@@ -45,9 +45,8 @@ public class GameWorld {
     private final ObjectInfo objectInfo;
 
     private final static int RESOURCE_INDEX = 0, DEFENSE_INDEX = 1, MONEY_INDEX = 2, PAINT_INDEX = 3;
-    // 0 = resource pattern, 1 = defense tower, 2 = money tower, 3 = paint tower
-    private int[] patternArray = { GameConstants.RESOURCE_PATTERN, GameConstants.DEFENSE_TOWER_PATTERN,
-            GameConstants.MONEY_TOWER_PATTERN, GameConstants.PAINT_TOWER_PATTERN };
+     // 0 = resource pattern, 1 = defense tower, 2 = money tower, 3 = paint tower
+
 
     private ArrayList<MapLocation> resourcePatternCenters;
     private Team[] resourcePatternCentersByLoc;
@@ -138,7 +137,6 @@ public class GameWorld {
             InternalRobot robot = getRobot(newLocation);
             UnitType newType = robot.getType().getNextLevel();
             robot.upgradeTower(newType);
-            upgradeTower(newType, robot.getTeam());
         }
     }
 
@@ -191,138 +189,8 @@ public class GameWorld {
         });
     }
 
-    private void updateResourcePatterns() {
-        ArrayList<MapLocation> newResourcePatternCenters = new ArrayList<>();
-        for (MapLocation center : resourcePatternCenters) {
-            int locIdx = locationToIndex(center);
-            Team team = resourcePatternCentersByLoc[locIdx];
-            boolean stillActive = checkResourcePattern(team, center);
-
-            if (!stillActive) {
-                resourcePatternCentersByLoc[locationToIndex(center)] = Team.NEUTRAL;
-                resourcePatternLifetimes[locIdx] = 0;
-            } else {
-                newResourcePatternCenters.add(center);
-                resourcePatternLifetimes[locIdx]++;
-            }
-        }
-        this.resourcePatternCenters = newResourcePatternCenters;
-    }
-
-    public int getResourcePatternBit(int dx, int dy) {
-        return getPatternBit(this.patternArray[RESOURCE_INDEX], dx, dy);
-    }
-
-    public int getTowerPatternBit(int dx, int dy, UnitType towerType) {
-        return getPatternBit(this.patternArray[towerTypeToPatternIndex(towerType)], dx, dy);
-    }
-
     public int getAreaWithoutWalls() {
         return this.areaWithoutWalls;
-    }
-
-    public int getPatternBit(int pattern, int dx, int dy) {
-        int bitNum = GameConstants.PATTERN_SIZE * (dx + GameConstants.PATTERN_SIZE / 2)
-                + dy + GameConstants.PATTERN_SIZE / 2;
-        int bit = (pattern >> bitNum) & 1;
-        return bit;
-    }
-
-    public boolean[][] patternToBooleanArray(int pattern) {
-        boolean[][] boolArray = new boolean[5][5];
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                boolArray[i][j] = getPatternBit(pattern, i - 2, j - 2) == 1;
-            }
-        }
-        return boolArray;
-    }
-
-    public boolean checkResourcePattern(Team team, MapLocation center) {
-        return checkPattern(this.patternArray[RESOURCE_INDEX], team, center, false);
-    }
-
-    public boolean checkTowerPattern(Team team, MapLocation center, UnitType towerType) {
-        return checkPattern(this.patternArray[towerTypeToPatternIndex(towerType)], team, center, true);
-    }
-
-    public boolean checkPattern(int pattern, Team team, MapLocation center, boolean isTowerPattern) {
-        int primary = getPrimaryPaint(team);
-        int secondary = getSecondaryPaint(team);
-        // boolean[] possibleSymmetries = new boolean[8];
-        // for (int i = 0; i < 8; i++) possibleSymmetries[i] = true;
-        // int numRemainingSymmetries = 8;
-        for (int dx = -GameConstants.PATTERN_SIZE / 2; dx < (GameConstants.PATTERN_SIZE + 1) / 2; dx++) {
-            for (int dy = -GameConstants.PATTERN_SIZE / 2; dy < (GameConstants.PATTERN_SIZE + 1) / 2; dy++) {
-                // ignore checking paint for center ruin location
-                if (dx == 0 && dy == 0 && isTowerPattern)
-                    continue;
-                int bit = getPatternBit(pattern, dx, dy);
-                int paint = getPaint(center.translate(dx, dy));
-                if (paint != (bit == 1 ? secondary : primary))
-                    return false;
-                // Remove symmetry logic as all patterns are symmetric
-                // for (int sym = 0; sym < 8; sym++) {
-                // if (possibleSymmetries[sym]) {
-                // int dx2;
-                // int dy2;
-
-                // switch (sym) {
-                // case 0:
-                // dx2 = dx;
-                // dy2 = dy;
-                // break;
-                // case 1:
-                // dx2 = -dy;
-                // dy2 = dx;
-                // break;
-                // case 2:
-                // dx2 = -dx;
-                // dy2 = -dy;
-                // break;
-                // case 3:
-                // dx2 = dy;
-                // dy2 = -dx;
-                // break;
-                // case 4:
-                // dx2 = -dx;
-                // dy2 = dy;
-                // break;
-                // case 5:
-                // dx2 = dy;
-                // dy2 = dx;
-                // break;
-                // case 6:
-                // dx2 = dx;
-                // dy2 = -dy;
-                // break;
-                // case 7:
-                // dx2 = -dy;
-                // dy2 = -dx;
-                // break;
-                // default:
-                // dx2 = 0;
-                // dy2 = 0;
-                // break;
-                // }
-
-                // int bit = getPatternBit(pattern, dx, dy);
-                // int paint = getPaint(center.translate(dx2, dy2));
-
-                // if (paint != (bit == 1 ? secondary : primary)) {
-                // possibleSymmetries[sym] = false;
-                // numRemainingSymmetries -= 1;
-                // }
-                // }
-                // }
-
-                // if (numRemainingSymmetries == 0) {
-                // return false;
-                // }
-            }
-        }
-
-        return true;
     }
 
     public void completeTowerPattern(Team team, UnitType type, MapLocation center) {
@@ -563,6 +431,9 @@ public class GameWorld {
         return this.towersByLoc[locationToIndex(loc)];
     }
 
+    public int getDefenseTowerDamageIncrease(Team team){
+        return this.currentDamageIncreases[team.ordinal()];
+    }
     public int getNumResourcePatterns(Team team) {
         int numPatterns = 0;
         for (MapLocation loc : this.resourcePatternCenters) {
@@ -834,6 +705,20 @@ public class GameWorld {
         return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
     }
 
+    public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection, double totalAngle, int radiusSquared) {
+        return getAllRobotsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared, null);
+    }
+
+    public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection, double totalAngle, int radiusSquared, Team team) {
+        ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
+        for (MapLocation newLocation : getAllLocationsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared))
+            if (getRobot(newLocation) != null) {
+                if (team == null || getRobot(newLocation).getTeam() == team)
+                    returnRobots.add(getRobot(newLocation));
+            }
+        return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
+    }
+
     public InternalRobot[] getAllRobots(Team team) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
         for (MapLocation newLocation : getAllLocations()) {
@@ -892,6 +777,38 @@ public class GameWorld {
         }
         return returnLocations.toArray(new MapLocation[returnLocations.size()]);
     }
+    
+    public MapLocation[] getAllLocationsWithinConeRadiusSquared(MapLocation center, Direction lookDirection, double totalAngle, int radiusSquared) {
+        return getAllLocationsWithinConeRadiusSquaredWithoutMap(
+            this.gameMap.getOrigin(),
+            this.gameMap.getWidth(),
+            this.gameMap.getHeight(),
+            center,
+            lookDirection,
+            totalAngle, radiusSquared
+        );
+    }
+
+    public static MapLocation[] getAllLocationsWithinConeRadiusSquaredWithoutMap(MapLocation origin,
+                                                                            int width, int height,
+                                                                            MapLocation center,
+                                                                            Direction lookDirection,
+                                                                            double angle, int radiusSquared) {
+        ArrayList<MapLocation> returnLocations = new ArrayList<MapLocation>();
+        int ceiledRadius = (int) Math.ceil(Math.sqrt(radiusSquared)) + 1; // add +1 just to be safe
+        int minX = Math.max(center.x - ceiledRadius, origin.x);
+        int minY = Math.max(center.y - ceiledRadius, origin.y);
+        int maxX = Math.min(center.x + ceiledRadius, origin.x + width - 1);
+        int maxY = Math.min(center.y + ceiledRadius, origin.y + height - 1);
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                MapLocation newLocation = new MapLocation(x, y);
+                if (center.isWithinDistanceSquared(newLocation, radiusSquared, lookDirection, angle))
+                    returnLocations.add(newLocation);
+            }
+        }
+        return returnLocations.toArray(new MapLocation[returnLocations.size()]);
+    }
 
     /**
      * @return all of the locations on the grid
@@ -906,7 +823,6 @@ public class GameWorld {
 
     public void processBeginningOfRound() {
         currentRound++;
-        updateResourcePatterns();
 
         this.getMatchMaker().startRound(currentRound);
         // Process beginning of each robot's round
@@ -1063,14 +979,8 @@ public class GameWorld {
     }
 
     public void processEndOfRound() {
-        int teamACoverage = (int) Math
-                .round(this.teamInfo.getNumberOfPaintedSquares(Team.A) * 1000.0 / this.areaWithoutWalls);
-        this.matchMaker.addTeamInfo(Team.A, this.teamInfo.getMoney(Team.A), teamACoverage,
-                getNumResourcePatterns(Team.A));
-        int teamBCoverage = (int) Math
-                .round(this.teamInfo.getNumberOfPaintedSquares(Team.B) * 1000.0 / this.areaWithoutWalls);
-        this.matchMaker.addTeamInfo(Team.B, this.teamInfo.getMoney(Team.B), teamBCoverage,
-                getNumResourcePatterns(Team.B));
+        int teamACoverage = (int) Math.round(this.teamInfo.getNumberOfPaintedSquares(Team.A) * 1000.0 / this.areaWithoutWalls);
+        int teamBCoverage = (int) Math.round(this.teamInfo.getNumberOfPaintedSquares(Team.B) * 1000.0 / this.areaWithoutWalls);
         this.teamInfo.processEndOfRound();
 
         this.getMatchMaker().endRound();
@@ -1080,7 +990,7 @@ public class GameWorld {
         if (gameStats.getWinner() != null)
             running = false;
     }
-
+    
     // *********************************
     // ****** SPAWNING *****************
     // *********************************
@@ -1094,11 +1004,10 @@ public class GameWorld {
         controlProvider.robotSpawned(robot);
         if (type.isTowerType()) {
             this.teamInfo.addTowers(1, team);
-            robot.addPaint(GameConstants.INITIAL_TOWER_PAINT_AMOUNT);
-        } else
-            robot.addPaint((int) Math.round(type.paintCapacity * GameConstants.INITIAL_ROBOT_PAINT_PERCENTAGE / 100.0));
-        if (type == UnitType.LEVEL_ONE_DEFENSE_TOWER)
-            this.currentDamageIncreases[team.ordinal()] += GameConstants.EXTRA_DAMAGE_FROM_DEFENSE_TOWER;
+            // TODO robot.addPaint(GameConstants.INITIAL_TOWER_PAINT_AMOUNT);
+        }
+        else
+            robot.addPaint((int) Math.round(type.paintCapacity)); // TODO * GameConstants.INITIAL_ROBOT_PAINT_PERCENTAGE / 100.0)); 
         this.currentNumberUnits[team.ordinal()] += 1;
         return ID;
     }
