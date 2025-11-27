@@ -314,6 +314,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             + GameConstants.INCREASED_COOLDOWN_SLOPE * paintPercentage)
                     / 100.0);
         }
+        */
         setActionCooldownTurns(this.actionCooldownTurns + numActionCooldownToAdd);
     }
 
@@ -329,6 +330,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             + GameConstants.INCREASED_COOLDOWN_SLOPE * paintPercentage)
                     / 100.0);
         }
+        */
         this.setMovementCooldownTurns(this.movementCooldownTurns + movementCooldown);
     }
 
@@ -420,9 +422,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // This attack costs some paint
         addPaint(-UnitType.SPLASHER.attackCost);
 
-        MapLocation[] allLocs = this.gameWorld.getAllLocationsWithinRadiusSquared(loc,
-                GameConstants.SPLASHER_ATTACK_AOE_RADIUS_SQUARED);
-        for (MapLocation newLoc : allLocs) {
+        MapLocation[] allLocs = this.gameWorld.getAllLocationsWithinRadiusSquared(loc, GameConstants.CAT_ATTACK_AOE_RADIUS_SQUARED);
+        for(MapLocation newLoc : allLocs) {
             // Attack if it's a tower (only if different team)
             if (this.gameWorld.getRobot(newLoc) != null && this.gameWorld.getRobot(newLoc).getType().isTowerType()) {
                 InternalRobot tower = this.gameWorld.getRobot(newLoc);
@@ -440,10 +441,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 this.gameWorld.setPaint(newLoc, paintType);
                 this.gameWorld.getMatchMaker().addPaintAction(newLoc, useSecondaryColor);
             } else { // If the tile has opposite enemy team, paint only if within sqrt(2) radius
-                if (loc.isWithinDistanceSquared(newLoc, GameConstants.SPLASHER_ATTACK_ENEMY_PAINT_RADIUS_SQUARED)) {
+                /* TODO
+                if(loc.isWithinDistanceSquared(newLoc, GameConstants.SPLASHER_ATTACK_ENEMY_PAINT_RADIUS_SQUARED)){
                     this.gameWorld.setPaint(newLoc, paintType);
                     this.gameWorld.getMatchMaker().addPaintAction(newLoc, useSecondaryColor);
                 }
+                */
             }
         }
     }
@@ -466,12 +469,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // ours
         if (this.gameWorld.getRobot(loc) != null && this.gameWorld.getRobot(loc).getType().isRobotType()) {
             InternalRobot robot = this.gameWorld.getRobot(loc);
-            if (this.team != robot.getTeam()) {
+            if(this.team != robot.getTeam()) {
+                /* TODO
                 robot.addPaint(-GameConstants.MOPPER_ATTACK_PAINT_DEPLETION);
                 addPaint(GameConstants.MOPPER_ATTACK_PAINT_ADDITION);
                 this.gameWorld.getMatchMaker().addAttackAction(robot.getID());
-                this.gameWorld.getMatchMaker().addRemovePaintAction(robot.getID(),
-                        GameConstants.MOPPER_ATTACK_PAINT_DEPLETION);
+                this.gameWorld.getMatchMaker().addRemovePaintAction(robot.getID(), GameConstants.MOPPER_ATTACK_PAINT_DEPLETION);
+                */
             }
         }
 
@@ -495,9 +499,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         boolean hitRobot = false;
         if (loc == null) { // area attack
             this.towerHasAreaAttacked = true;
-            int aoeDamage = this.type.aoeAttackStrength
-                    + (int) Math.round(this.gameWorld.getDefenseTowerDamageIncrease(team)
-                            * GameConstants.DEFENSE_ATTACK_BUFF_AOE_EFFECTIVENESS / 100.0);
+            int aoeDamage = this.type.aoeAttackStrength;
 
             MapLocation[] allLocs = this.gameWorld.getAllLocationsWithinRadiusSquared(this.getLocation(),
                     this.type.actionRadiusSquared);
@@ -575,11 +577,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
             // Attack if it's a robot (only if different team)
             if (this.gameWorld.getRobot(newLoc) != null && this.gameWorld.getRobot(newLoc).getType().isRobotType()) {
                 InternalRobot robot = this.gameWorld.getRobot(newLoc);
-                if (this.team != robot.getTeam()) {
+                if(this.team != robot.getTeam()){
+                    /* TODO
                     robot.addPaint(-GameConstants.MOPPER_SWING_PAINT_DEPLETION);
                     affectedIDs.add(robot.ID);
-                    this.gameWorld.getMatchMaker().addRemovePaintAction(robot.getID(),
-                            GameConstants.MOPPER_SWING_PAINT_DEPLETION);
+                    this.gameWorld.getMatchMaker().addRemovePaintAction(robot.getID(), GameConstants.MOPPER_SWING_PAINT_DEPLETION);
+                    */
                 }
             }
         }
@@ -673,11 +676,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.cleanMessages();
         this.indicatorString = "";
         this.diedLocation = null;
-        if (this.type.paintPerTurn != 0)
-            addPaint(this.type.paintPerTurn + this.gameWorld.extraResourcesFromPatterns(this.team));
+        if (this.type.paintPerTurn != 0 )
+            addPaint(this.type.paintPerTurn);
         if (this.type.moneyPerTurn != 0)
-            this.gameWorld.getTeamInfo().addMoney(this.team,
-                    this.type.moneyPerTurn + this.gameWorld.extraResourcesFromPatterns(this.team));
+            this.gameWorld.getTeamInfo().addMoney(this.team, this.type.moneyPerTurn);
 
         // Add upgrade action for initially upgraded starting towers
         if (this.type.isTowerType() && this.gameWorld.getCurrentRound() == 1 && this.type.level == 2) {

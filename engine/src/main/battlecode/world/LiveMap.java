@@ -430,26 +430,11 @@ public class LiveMap {
                         "Expected initial body team " + initialBody.team + " to be team A or team B!");
             }
         }
-        if (initialBodyCountTeamA != GameConstants.NUMBER_INITIAL_TOWERS) {
-            throw new RuntimeException("Expected to have " + GameConstants.NUMBER_INITIAL_TOWERS + " team A towers!");
+        if (initialBodyCountTeamA != GameConstants.NUMBER_INITIAL_RAT_KINGS) {
+            throw new RuntimeException("Expected to have "  + GameConstants.NUMBER_INITIAL_RAT_KINGS + " team A towers!");
         }
-        if (initialBodyCountTeamB != GameConstants.NUMBER_INITIAL_TOWERS) {
-            throw new RuntimeException("Expected to have " + GameConstants.NUMBER_INITIAL_TOWERS + " team B towers!");
-        }
-        if (towerCountA[FlatHelpers.getRobotTypeFromUnitType(UnitType.LEVEL_ONE_PAINT_TOWER)
-                - 1] != GameConstants.NUMBER_INITIAL_PAINT_TOWERS) {
-            throw new RuntimeException(
-                    "Expected to have " + GameConstants.NUMBER_INITIAL_PAINT_TOWERS + " paint towers!");
-        }
-        if (towerCountA[FlatHelpers.getRobotTypeFromUnitType(UnitType.LEVEL_ONE_MONEY_TOWER)
-                - 1] != GameConstants.NUMBER_INITIAL_MONEY_TOWERS) {
-            throw new RuntimeException(
-                    "Expected to have " + GameConstants.NUMBER_INITIAL_MONEY_TOWERS + " money towers!");
-        }
-        if (towerCountA[FlatHelpers.getRobotTypeFromUnitType(UnitType.LEVEL_ONE_DEFENSE_TOWER)
-                - 1] != GameConstants.NUMBER_INITIAL_DEFENSE_TOWERS) {
-            throw new RuntimeException(
-                    "Expected to have " + GameConstants.NUMBER_INITIAL_DEFENSE_TOWERS + " defense towers!");
+        if (initialBodyCountTeamB != GameConstants.NUMBER_INITIAL_RAT_KINGS) {
+            throw new RuntimeException("Expected to have "  + GameConstants.NUMBER_INITIAL_RAT_KINGS + " team B towers!");
         }
         for (int i = 0; i < towerCountA.length; i++) {
             if (towerCountA[i] != towerCountB[i]) {

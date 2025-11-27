@@ -14,6 +14,7 @@ public class TeamInfo {
 
     private GameWorld gameWorld;
     private int[] globalCheese;
+    private int[] dirtCounts;
     private int[] totalPaintedSquares;
     private int[] totalNumberOfTowers;
     private int[] oldCheeseCounts;
@@ -26,6 +27,7 @@ public class TeamInfo {
     public TeamInfo(GameWorld gameWorld) {
         this.gameWorld = gameWorld;
         this.globalCheese = new int[2];
+        this.dirtCounts = new int[2];
         this.oldCheeseCounts = new int[2];
         this.totalPaintedSquares = new int[2];
         this.totalNumberOfTowers = new int[2];
@@ -42,8 +44,18 @@ public class TeamInfo {
      * @return the team's cheese count
      */
 
-    public int getCheese(Team team) {
-        return this.globalCheese[team.ordinal()];
+    public int getMoney(Team team) {
+        return this.moneyCounts[team.ordinal()];
+    }
+
+    /**
+     * Get the amount of dirt.
+     * 
+     * @param team the team to query
+     * @return the team's dirt count
+     */
+    public int getDirt(Team team) {
+        return this.dirtCounts[team.ordinal()];
     }
 
     /**
@@ -77,11 +89,7 @@ public class TeamInfo {
     public void addPaintedSquares(int num, Team team) {
         this.totalPaintedSquares[team.ordinal()] += num;
         int areaWithoutWalls = this.gameWorld.getAreaWithoutWalls();
-        if (this.totalPaintedSquares[team.ordinal()] / (double) areaWithoutWalls
-                * 100 >= GameConstants.PAINT_PERCENT_TO_WIN) {
-            checkWin(team);
-        }
-    }
+    }    
 
     /**
      * Change the total number of towers belonging to a team
@@ -112,10 +120,22 @@ public class TeamInfo {
         this.globalCheese[team.ordinal()] += amount;
     }
 
+    /**
+     * Update the amount of dirt. 
+     * 
+     * @param team   the team to query
+     * @param isPlace whether dirt is being placed (true) or removed (false)
+     */
+    public void updateDirt(Team team, boolean isPlace) {
+        if (isPlace) {
+            this.dirtCounts[team.ordinal()] -= 1;
+        } else {
+            this.dirtCounts[team.ordinal()] += 1;
+        }
+    }
+
     private void checkWin(Team team) {
-        int areaWithoutWalls = this.gameWorld.getAreaWithoutWalls();
-        if (this.totalPaintedSquares[team.ordinal()] / (double) areaWithoutWalls
-                * 100 < GameConstants.PAINT_PERCENT_TO_WIN) {
+        if (true) { // TODO: replace with a condition for winning (e.g. all rat kings dead)
             throw new InternalError("Reporting incorrect win");
         }
         this.gameWorld.gameStats.setWinner(team);

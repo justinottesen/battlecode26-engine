@@ -364,12 +364,10 @@ public final class GameMapIO {
                 if (teamsReversed) {
                     bodyTeam = bodyTeam.opponent();
                 }
-                int initialPaint = GameConstants.INITIAL_TOWER_PAINT_AMOUNT;
+                int initialPaint = 0; // TODO GameConstants.INITIAL_TOWER_PAINT_AMOUNT;
                 if (bodyType.isRobotType())
-                    initialPaint = (int) Math
-                            .round(bodyType.paintCapacity * GameConstants.INITIAL_ROBOT_PAINT_PERCENTAGE / 100.0);
-                initialBodies.add(new RobotInfo(curId, bodyTeam, bodyType, bodyType.health,
-                        new MapLocation(bodyX, bodyY), initialPaint));
+                    initialPaint = 0; // TODO (int) Math.round(bodyType.paintCapacity * GameConstants.INITIAL_ROBOT_PAINT_PERCENTAGE / 100.0);
+                initialBodies.add(new RobotInfo(curId, bodyTeam, bodyType, bodyType.health, new MapLocation(bodyX, bodyY), initialPaint));
             }
         }
 
