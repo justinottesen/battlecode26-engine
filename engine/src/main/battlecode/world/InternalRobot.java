@@ -51,6 +51,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
     // the number of messages this robot/tower has sent this turn
     private int sentMessagesCount;
 
+    private boolean crouching;
+
     /**
      * Used to avoid recreating the same RobotInfo object over and over.
      */
@@ -271,7 +273,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param toSense the MapLocation to sense
      */
     public boolean canSenseLocation(MapLocation toSense) {
-        return this.location.distanceSquaredTo(toSense) <= getVisionRadiusSquared();
+        return this.location.isWithinDistanceSquared(toSense, getVisionRadiusSquared(), this.dir, getVisionConeAngle(), this.type.usesTopRightLocationForDistance());
     }
 
     /**
