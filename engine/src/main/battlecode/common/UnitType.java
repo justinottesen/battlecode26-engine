@@ -24,6 +24,10 @@ public enum UnitType {
     // number of turns before unit can act again
     public final int actionCooldown;
 
+    public boolean usesTopRightLocationForDistance(){
+        return this.size % 2 == 0;
+    }
+
     public boolean isRobotType(){
         return this == RAT || this == CAT || this == KING_RAT;
     }
