@@ -13,12 +13,15 @@ public class MapInfo {
     //You can only see traps from your own team
     private TrapType trap;
 
-    public MapInfo(MapLocation loc, boolean isPassable, boolean isWall, boolean isDirt, TrapType trap) {
+    private boolean hasCheeseMine;
+
+    public MapInfo(MapLocation loc, boolean isPassable, boolean isWall, boolean isDirt, TrapType trap, boolean hasCheeseMine) {
         this.loc = loc;
         this.isPassable = isPassable;
         this.isWall = isWall;
         this.isDirt = isDirt;
         this.trap = trap;
+        this.hasCheeseMine = hasCheeseMine;
     }
 
     /**
@@ -55,6 +58,17 @@ public class MapInfo {
     }
 
     /**
+     * Returns if this square has a cheese mine.
+     * 
+     * @return whether this square has a cheese mine
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    public boolean hasCheeseMine() {
+        return hasCheeseMine;
+    }
+
+    /**
      * Returns the trap on this square, or TrapType.NONE if there is no trap.
      * 
      * @return the trap on this square
@@ -76,11 +90,12 @@ public class MapInfo {
         return loc;
     }
 
-    public String toString(){
+    public String toString() {
         return "Location{" +
                 "loc=" + loc.toString() +
                 (isWall ? ", wall" : "") +
                 (isDirt ? ", dirt" : "") +
+                (hasCheeseMine ? ", with cheese mine" : "") +
                 (isPassable ? ", passable" : ", not passable") +
                 ", trap=" + trap +
                 "}";

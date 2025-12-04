@@ -27,6 +27,9 @@ public class GameConstants {
     /** The maximum possible map width. */
     public static final int MAP_MAX_WIDTH = 60;
 
+    /** The minimum distance between cheese mines on the map */
+    public static final int MIN_CHEESE_MINE_SPACING_SQUARED = 25;
+
     /** The maximum percentage of the map that can be walls */
     public static final int MAX_WALL_PERCENTAGE = 20;
 
@@ -64,9 +67,11 @@ public class GameConstants {
     /** The maximum number of rat kings that a team can have. */
     public static final int MAX_NUMBER_OF_RAT_KINGS = 5; // TODO need to specify!
 
-    /** 
-     * The maximum execution time that can be spent on a team in one match. If the total time spent executing a team's bots
-     * exceeds this limit, the team will immediately lose the game. Execution time is measured in ns.
+    /**
+     * The maximum execution time that can be spent on a team in one match. If the
+     * total time spent executing a team's bots
+     * exceeds this limit, the team will immediately lose the game. Execution time
+     * is measured in ns.
      */
     public static final long MAX_TEAM_EXECUTION_TIME = 1200000000000L;
 
@@ -74,12 +79,31 @@ public class GameConstants {
     // ****** GAME MECHANICS ***********
     // *********************************
 
+    /** The amount of cheese the ratking consumes each round. */
+    public static final int RATKING_CHEESE_CONSUMPTION = 10;
+
+    /** The amount of health the ratking loses by not eating cheese. */
+    public static final int RATKING_HEALTH_LOSS = 10;
+
+    /** Probability parameter for cheese spawn at a mine. **/
+    public static final float CHEESE_MINE_SPAWN_PROBABILITY = 0.15f;
+
+    /** Cheese will spawn within a [-radius, radius] square of the cheese mine **/
+    public static final int SQ_CHEESE_SPAWN_RADIUS = 5;
+
+    /** How much cheese each mine spawns at once */
+    public static final int CHEESE_SPAWN_AMOUNT = 2;
+
     /** The number of rat kings a player starts with. */
     public static final int NUMBER_INITIAL_RAT_KINGS = 1;
 
     /** The maximum distance for marking a map location or removing a marker */
     public static final int MARK_RADIUS_SQUARED = 2;
 
+    /**
+     * The maximum distance for transferring paint from/to an ally robot or tower
+     */
+    public static final int PAINT_TRANSFER_RADIUS_SQUARED = 2;
     /** The maximum distance for transferring cheese to an allied rat king or dropping it on the ground */
     public static final int CHEESE_DROP_RADIUS_SQUARED = 2;
 
@@ -159,7 +183,7 @@ public class GameConstants {
     /**
      * The amount added to the movement cooldown counter when moving
      */
-     public static final int MOVEMENT_COOLDOWN = 10;
+    public static final int MOVEMENT_COOLDOWN = 10;
 
     /**
      * The amount added to the movement cooldown counter when a king moves
@@ -174,7 +198,7 @@ public class GameConstants {
     /**
      * The amount added to the action cooldown counter after a king builds a robot
      */
-     public static final int BUILD_ROBOT_COOLDOWN = 10;
+    public static final int BUILD_ROBOT_COOLDOWN = 10;
 
     /** The amount added to the action cooldown counter after dropping/transferring cheese */
     public static final int CHEESE_TRANSFER_COOLDOWN = 10;

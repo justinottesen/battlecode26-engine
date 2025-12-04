@@ -3,6 +3,7 @@ package battlecode.world;
 import battlecode.common.*;
 import battlecode.instrumenter.profiler.ProfilerCollection;
 import battlecode.schema.Action;
+import battlecode.schema.GameMap;
 import battlecode.server.ErrorReporter;
 import battlecode.server.GameMaker;
 import battlecode.server.GameState;
@@ -35,8 +36,11 @@ public class GameWorld {
     private int[] markersB;
     private int[] colorLocations; // No color = 0, Team A color 1 = 1, Team A color 2 = 2, Team B color 1 = 3,
                                   // Team B color 2 = 4
+
+    private int[] cheeseAmounts;
     private InternalRobot[][] robots;
     private Trap[] trapLocations;
+    private CheeseMine[] cheeseMines;
     private ArrayList<Trap>[] trapTriggers;
     private HashMap<TrapType, Integer> trapCounts;
     private int trapId;
@@ -63,14 +67,56 @@ public class GameWorld {
     private final GameMaker.MatchMaker matchMaker;
     private int areaWithoutWalls;
 
+    // Whether there is a ruin on each tile, indexed by location
+    private boolean[] allCheeseMinesByLoc;
+    // list of all cheese mines
+    private ArrayList<CheeseMine> CheeseMines;
+    private CheeseMine[] cheeseMineLocs;
+
+    public int symmetricY(int y) {
+        return symmetricY(y, gameMap.getSymmetry());
+    }
+
+    public int symmetricX(int x) {
+        return symmetricX(x, gameMap.getSymmetry());
+    }
+
+    public int symmetricY(int y, MapSymmetry symmetry) {
+        switch (symmetry) {
+            case VERTICAL:
+                return y;
+            case HORIZONTAL:
+            case ROTATIONAL:
+            default:
+                return gameMap.getHeight() - 1 - y;
+        }
+    }
+
+    public int symmetricX(int x, MapSymmetry symmetry) {
+        switch (symmetry) {
+            case HORIZONTAL:
+                return x;
+            case VERTICAL:
+            case ROTATIONAL:
+            default:
+                return gameMap.getWidth() - 1 - x;
+        }
+    }
+
+    public MapLocation symmetryLocation(MapLocation p) {
+        return new MapLocation(symmetricX(p.x), symmetricY(p.y));
+    }
+
     @SuppressWarnings("unchecked")
     public GameWorld(LiveMap gm, RobotControlProvider cp, GameMaker.MatchMaker matchMaker) {
         int width = gm.getWidth();
         int height = gm.getHeight();
+        MapSymmetry symmetry = gm.getSymmetry();
         int numSquares = width * height;
         int numWalls = 0;
         this.walls = gm.getWallArray();
         this.dirt = gm.getDirtArray();
+        this.cheeseAmounts = gm.getCheeseArray();
         this.markersA = new int[numSquares];
         this.markersB = new int[numSquares];
         this.robots = new InternalRobot[width][height]; // if represented in cartesian, should be height-width, but this
@@ -102,11 +148,27 @@ public class GameWorld {
         this.controlProvider.matchStarted(this);
 
         this.teamInfo = new TeamInfo(this);
-        this.teamInfo.addMoney(Team.A, GameConstants.INITIAL_TEAM_MONEY);
-        this.teamInfo.addMoney(Team.B, GameConstants.INITIAL_TEAM_MONEY);
+        this.teamInfo.addCheese(Team.A, GameConstants.INITIAL_TEAM_MONEY);
+        this.teamInfo.addCheese(Team.B, GameConstants.INITIAL_TEAM_MONEY);
 
         // Write match header at beginning of match
         this.matchMaker.makeMatchHeader(this.gameMap);
+
+        this.allCheeseMinesByLoc = gm.getCheeseMineArray();
+        this.CheeseMines = new ArrayList<CheeseMine>();
+        this.cheeseMineLocs = new CheeseMine[numSquares];
+        for (int i = 0; i < numSquares; i++) {
+            if (this.allCheeseMinesByLoc[i]) {
+                CheeseMine newMine = new CheeseMine(indexToLocation(i), GameConstants.SQ_CHEESE_SPAWN_RADIUS, null);
+                this.CheeseMines.add(newMine);
+                cheeseMineLocs[i] = newMine;
+            }
+        }
+
+        for (CheeseMine mine : this.CheeseMines) {
+            MapLocation symLoc = symmetryLocation(mine.getLocation());
+            mine.setPair(cheeseMineLocs[locationToIndex(symLoc)]);
+        }
 
         // ignore patterns passed in with map and use hardcoded values
         // this.patternArray = gm.getPatternArray();
@@ -131,12 +193,6 @@ public class GameWorld {
             spawnRobot(robotInfo.ID, robotInfo.type, newLocation, robotInfo.team);
             this.towerLocations.add(newLocation);
             towersByLoc[locationToIndex(newLocation)] = robotInfo.team;
-
-            // Start initial towers at level 2. Defer upgrade action until the tower's first
-            // turn since client only supports actions this way
-            InternalRobot robot = getRobot(newLocation);
-            UnitType newType = robot.getType().getNextLevel();
-            robot.upgradeTower(newType);
         }
     }
 
@@ -345,70 +401,23 @@ public class GameWorld {
      * @author: Augusto Schwanz
      */
     public void setDirt(MapLocation loc, boolean val) {
-        if (loc == null) return;
+        if (loc == null)
+            return;
         int mapIndex = locationToIndex(loc);
-        this.dirt[mapIndex] = val; 
-        
+        this.dirt[mapIndex] = val;
+
     }
 
-    public void markPattern(int pattern, Team team, MapLocation center, int rotationAngle, boolean reflect, boolean isTowerPattern) {
-        for (int dx = -GameConstants.PATTERN_SIZE / 2; dx < (GameConstants.PATTERN_SIZE + 1) / 2; dx++) {
-            for (int dy = -GameConstants.PATTERN_SIZE / 2; dy < (GameConstants.PATTERN_SIZE + 1) / 2; dy++) {
-                // int symmetry = 4 * (reflect ? 1 : 0) + rotationAngle;
-                int dx2 = dx;
-                int dy2 = dy;
-                // Remove symmetry logic as all patterns are symmetric
-                // switch (symmetry) {
-                // case 0:
-                // dx2 = dx;
-                // dy2 = dy;
-                // break;
-                // case 1:
-                // dx2 = -dy;
-                // dy2 = dx;
-                // break;
-                // case 2:
-                // dx2 = -dx;
-                // dy2 = -dy;
-                // break;
-                // case 3:
-                // dx2 = dy;
-                // dy2 = -dx;
-                // break;
-                // case 4:
-                // dx2 = -dx;
-                // dy2 = dy;
-                // break;
-                // case 5:
-                // dx2 = dy;
-                // dy2 = dx;
-                // break;
-                // case 6:
-                // dx2 = dx;
-                // dy2 = -dy;
-                // break;
-                // case 7:
-                // dx2 = -dy;
-                // dy2 = -dx;
-                // break;
-                // default:
-                // throw new RuntimeException("THIS ERROR SHOULD NEVER HAPPEN! checkPattern is
-                // broken");
-                // }
-
-                int bit = getPatternBit(pattern, dx, dy);
-                MapLocation loc = center.translate(dx2, dy2);
-                setMarker(team, loc, bit + 1);
-            }
-        }
+    public int getCheeseAmount(MapLocation loc) {
+        return this.cheeseAmounts[locationToIndex(loc)];
     }
 
-    public void markTowerPattern(UnitType type, Team team, MapLocation loc, int rotationAngle, boolean reflect) {
-        markPattern(this.getTowerPattern(type), team, loc, rotationAngle, reflect, true);
+    public void removeCheese(MapLocation loc) {
+        this.cheeseAmounts[locationToIndex(loc)] = 0;
     }
 
-    public void markResourcePattern(Team team, MapLocation loc, int rotationAngle, boolean reflect) {
-        markPattern(this.getResourcePattern(), team, loc, rotationAngle, reflect, false);
+    public void addCheese(MapLocation loc, int amount) {
+        this.cheeseAmounts[locationToIndex(loc)] += amount;
     }
 
     public boolean hasTower(MapLocation loc) {
@@ -453,11 +462,6 @@ public class GameWorld {
         return this.currentDamageIncreases[team.ordinal()];
     }
 
-    public void upgradeTower(UnitType newType, Team team) {
-        if (newType == UnitType.LEVEL_TWO_DEFENSE_TOWER || newType == UnitType.LEVEL_THREE_DEFENSE_TOWER)
-            this.currentDamageIncreases[team.ordinal()] += GameConstants.EXTRA_TOWER_DAMAGE_LEVEL_INCREASE;
-    }
-
     /**
      * Returns the resource pattern corresponding to the map,
      * stored as the bits of an int between 0 and
@@ -471,18 +475,6 @@ public class GameWorld {
         return this.patternArray[RESOURCE_INDEX];
     }
 
-    /**
-     * Returns the tower pattern corresponding to the map,
-     * stored as the bits of an int between 0 and
-     * 2^({@value GameConstants#PATTERN_SIZE}^2) - 1.
-     * The bit at (a, b) (zero-indexed) in the tower pattern
-     * is stored in the place value 2^({@value GameConstants#PATTERN_SIZE} * a + b).
-     * 
-     * @return the tower pattern for this map
-     */
-    public int getTowerPattern(UnitType towerType) {
-        return this.patternArray[towerTypeToPatternIndex(towerType)];
-    }
 
     public boolean isValidPatternCenter(MapLocation loc, boolean isTower) {
         return (!(loc.x < GameConstants.PATTERN_SIZE / 2
@@ -506,13 +498,12 @@ public class GameWorld {
 
     public boolean isPassable(MapLocation loc) {
         return !(this.walls[locationToIndex(loc)]
-        || this.dirt[locationToIndex(loc)]);
+                || this.dirt[locationToIndex(loc)]);
     }
 
     public boolean isPaintable(MapLocation loc) {
         return isPassable(loc);
     }
-
 
     public boolean hasResourcePatternCenter(MapLocation loc, Team team) {
         return resourcePatternCentersByLoc[locationToIndex(loc)] == team;
@@ -548,31 +539,6 @@ public class GameWorld {
         return 0;
     }
 
-    private int towerTypeToPatternIndex(UnitType towerType) {
-        switch (towerType) {
-            case LEVEL_ONE_DEFENSE_TOWER:
-                return DEFENSE_INDEX;
-            case LEVEL_TWO_DEFENSE_TOWER:
-                return DEFENSE_INDEX;
-            case LEVEL_THREE_DEFENSE_TOWER:
-                return DEFENSE_INDEX;
-            case LEVEL_ONE_MONEY_TOWER:
-                return MONEY_INDEX;
-            case LEVEL_TWO_MONEY_TOWER:
-                return MONEY_INDEX;
-            case LEVEL_THREE_MONEY_TOWER:
-                return MONEY_INDEX;
-            case LEVEL_ONE_PAINT_TOWER:
-                return PAINT_INDEX;
-            case LEVEL_TWO_PAINT_TOWER:
-                return PAINT_INDEX;
-            case LEVEL_THREE_PAINT_TOWER:
-                return PAINT_INDEX;
-            default:
-                return -1;
-        }
-    }
-
     /**
      * Helper method that converts a location into an index.
      * 
@@ -589,6 +555,37 @@ public class GameWorld {
      */
     public MapLocation indexToLocation(int idx) {
         return gameMap.indexToLocation(idx);
+    }
+
+    // ***********************************
+    // ****** CHEESE METHODS *************
+    // ***********************************
+    public void spawnCheese(CheeseMine mine) {
+        boolean spawn = rand.nextFloat() < mine.generationProbability(currentRound);
+        if (spawn) {
+            int dx = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
+            int dy = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
+
+            // if rotational, flip both symmetries, if vertical/horizontal, only flip the
+            // corresponding one
+            int pair_dx = gameMap.getSymmetry() == MapSymmetry.VERTICAL ? dx : -dx;
+            int pair_dy = gameMap.getSymmetry() == MapSymmetry.HORIZONTAL ? dy : -dy;
+            CheeseMine pairedMine = mine.getPair();
+
+            int cheeseX = mine.getLocation().x + dx;
+            int cheeseY = mine.getLocation().y + dy;
+
+            int pairedX = pairedMine.getLocation().x + pair_dx;
+            int pairedY = pairedMine.getLocation().y + pair_dy;
+
+            addCheese(new MapLocation(cheeseX, cheeseY), GameConstants.CHEESE_SPAWN_AMOUNT);
+            addCheese(new MapLocation(pairedX, pairedY), GameConstants.CHEESE_SPAWN_AMOUNT);
+
+            mine.setLastRound(this.currentRound);
+            pairedMine.setLastRound(this.currentRound)
+
+            // matchMaker.addCheeseSpawnAction(mine, loc); TODO: ADD MATCHMAKER
+        }
     }
 
     // ***********************************
@@ -979,8 +976,18 @@ public class GameWorld {
     }
 
     public void processEndOfRound() {
-        int teamACoverage = (int) Math.round(this.teamInfo.getNumberOfPaintedSquares(Team.A) * 1000.0 / this.areaWithoutWalls);
-        int teamBCoverage = (int) Math.round(this.teamInfo.getNumberOfPaintedSquares(Team.B) * 1000.0 / this.areaWithoutWalls);
+        for (CheeseMine mine : this.CheeseMines) {
+            spawnCheese(mine);
+        }
+
+        int teamACoverage = (int) Math
+                .round(this.teamInfo.getNumberOfPaintedSquares(Team.A) * 1000.0 / this.areaWithoutWalls);
+        this.matchMaker.addTeamInfo(Team.A, this.teamInfo.getMoney(Team.A), teamACoverage,
+                getNumResourcePatterns(Team.A));
+        int teamBCoverage = (int) Math
+                .round(this.teamInfo.getNumberOfPaintedSquares(Team.B) * 1000.0 / this.areaWithoutWalls);
+        this.matchMaker.addTeamInfo(Team.B, this.teamInfo.getMoney(Team.B), teamBCoverage,
+                getNumResourcePatterns(Team.B));
         this.teamInfo.processEndOfRound();
 
         this.getMatchMaker().endRound();
@@ -997,7 +1004,7 @@ public class GameWorld {
 
     public int spawnRobot(int ID, UnitType type, MapLocation location, Team team) {
         InternalRobot robot = new InternalRobot(this, ID, team, type, location);
-        for (MapLocation loc : type.getAllLocations(location)){
+        for (MapLocation loc : type.getAllLocations(location)) {
             addRobot(loc, robot);
         }
         objectInfo.createRobot(robot);
@@ -1062,7 +1069,7 @@ public class GameWorld {
                 default:
                     break;
             }
-            for (MapLocation robotLoc: robot.getAllPartLocations()){
+            for (MapLocation robotLoc : robot.getAllPartLocations()) {
                 removeRobot(robotLoc);
             }
         }
