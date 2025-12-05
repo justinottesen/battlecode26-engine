@@ -15,8 +15,6 @@ public class TeamInfo {
     private GameWorld gameWorld;
     private int[] globalCheese;
     private int[] dirtCounts;
-    private int[] totalPaintedSquares;
-    private int[] totalNumberOfTowers;
     private int[] oldCheeseCounts;
     private int[] totalNumRats;
 
@@ -30,8 +28,6 @@ public class TeamInfo {
         this.globalCheese = new int[2];
         this.dirtCounts = new int[2];
         this.oldCheeseCounts = new int[2];
-        this.totalPaintedSquares = new int[2];
-        this.totalNumberOfTowers = new int[2];
         this.totalNumRats = new int[2];
     }
 
@@ -60,28 +56,6 @@ public class TeamInfo {
         return this.dirtCounts[team.ordinal()];
     }
 
-    /**
-     * Get the total number of squares painted by the team over the game
-     * 
-     * @param team the team to query
-     * @return the number of squares painted
-     */
-
-    public int getNumberOfPaintedSquares(Team team) {
-        return this.totalPaintedSquares[team.ordinal()];
-    }
-
-    /**
-     * Get the total number of towers belonging to a team
-     * 
-     * @param team the team to query
-     * @return the number of towers the team has
-     */
-
-    public int getTotalNumberOfTowers(Team team) {
-        return this.totalNumberOfTowers[team.ordinal()];
-    }
-
      /**
      * Get the total number of rats belonging to a team
      * @param team the team to query
@@ -89,27 +63,6 @@ public class TeamInfo {
      */
     public int getNumRats(Team team){
         return this.totalNumRats[team.ordinal()];
-    }
-
-    /**
-     * Change the total number of squares painted by the team over the game
-     * 
-     * @param team the team to query
-     */
-
-    public void addPaintedSquares(int num, Team team) {
-        this.totalPaintedSquares[team.ordinal()] += num;
-        int areaWithoutWalls = this.gameWorld.getAreaWithoutWalls();
-    }    
-
-    /**
-     * Change the total number of towers belonging to a team
-     * 
-     * @param team the team to query
-     */
-
-    public void addTowers(int num, Team team) {
-        this.totalNumberOfTowers[team.ordinal()] += num;
     }
 
     /**
