@@ -527,7 +527,7 @@ public final class RobotControllerImpl implements RobotController {
             newLocs[i] = curLoc.add(dir);
             this.gameWorld.removeRobot(curLoc);
         }
-        this.robot.setLocation(this.getLocation().add(dir)); 
+        this.robot.setLocation(dir.dx, dir.dy); 
         for (int i = 0; i < newLocs.length; i++){
             MapLocation newLoc = newLocs[i];
             this.gameWorld.addRobot(newLoc, this.robot);
