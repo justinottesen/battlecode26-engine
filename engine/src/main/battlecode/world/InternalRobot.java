@@ -10,6 +10,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Message;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
+import battlecode.common.TrapType;
 import battlecode.common.UnitType;
 
 /**
@@ -62,7 +63,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     private ArrayList<Trap> trapsToTrigger;
     private ArrayList<Boolean> enteredTraps;
-
 
     /**
      * Create a new internal representation of a robot
@@ -222,7 +222,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
             return cachedRobotInfo;
         }
 
-        this.cachedRobotInfo = new RobotInfo(ID, team, type, health, location, cheeseAmount, carryingRobot != null ? carryingRobot.getRobotInfo() : null, crouching);
+        this.cachedRobotInfo = new RobotInfo(ID, team, type, health, location, cheeseAmount,
+                carryingRobot != null ? carryingRobot.getRobotInfo() : null, crouching);
         return this.cachedRobotInfo;
     }
 
@@ -278,7 +279,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param toSense the MapLocation to sense
      */
     public boolean canSenseLocation(MapLocation toSense) {
-        return this.location.isWithinDistanceSquared(toSense, getVisionRadiusSquared(), this.dir, getVisionConeAngle(), this.type.usesTopRightLocationForDistance());
+        return this.location.isWithinDistanceSquared(toSense, getVisionRadiusSquared(), this.dir, getVisionConeAngle(),
+                this.type.usesTopRightLocationForDistance());
     }
 
     /**
@@ -321,7 +323,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param dy # amount to translate in y direction
      */
     public void setLocation(int dx, int dy) {
-        for(MapLocation partLoc : this.getAllPartLocations()){
+        for (MapLocation partLoc : this.getAllPartLocations()) {
             this.gameWorld.moveRobot(partLoc, partLoc.translate(dx, dy));
         }
         // this.gameWorld.getObjectInfo().moveRobot(this, loc);
@@ -427,29 +429,33 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     /**
      * Method callable by (baby) rat robots to deal small
-     * damage to opponent team's (baby) rat robots. 
+     * damage to opponent team's (baby) rat robots.
      *
      * @param loc the MapLocation to attempt to bite
      */
-    public void bite(MapLocation loc) {
+    public void bite(MapLocation loc, int cheeseConsumed) {
+        if (this.gameWorld.getTeamInfo().getCheese(this.team) + this.getCheese() < cheeseConsumed) {
+            throw new RuntimeException("Not enough cheese to bite!");
+        }
+
         if (this.type != UnitType.RAT) {
             throw new RuntimeException("Unit must be a rat to bite!");
         }
 
         if (!this.canSenseLocation(loc)) {
-            return; 
+            return;
         }
 
         // Must be an immediate neighbor
         int distSq = this.location.distanceSquaredTo(loc);
         if (distSq > 2 || distSq <= 0) {
-            return; 
+            return;
         }
 
         // Determine the direction from this rat to the target tile.
         Direction toTarget = this.location.directionTo(loc);
         if (toTarget == Direction.CENTER) {
-            return; 
+            return;
         }
 
         // If the rat has no facing direction, disallow biting
@@ -463,7 +469,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
             // Only bite enemy rats
             if (this.team != targetRobot.getTeam() && targetRobot.getType() == UnitType.RAT) {
-                targetRobot.addHealth(-GameConstants.RAT_BITE_DAMAGE);
+                this.addCheese(-cheeseConsumed);
+                targetRobot.addHealth(-GameConstants.RAT_BITE_DAMAGE -
+                        (int) Math.ceil(Math.log(cheeseConsumed)));
                 this.gameWorld.getMatchMaker().addAttackAction(targetRobot.getID());
             }
         }
@@ -565,7 +573,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
 
         this.setLocation(this.thrownDir.dx, this.thrownDir.dy);
-        
+
         if (this.actionCooldownTurns <= GameConstants.THROW_STUN_DURATION) {
             this.hitGround();
         }
@@ -636,7 +644,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     // ****************************
     // ****** GETTER METHODS ******
     // ****************************
-    
 
     // *********************************
     // ****** GAMEPLAY METHODS *********
