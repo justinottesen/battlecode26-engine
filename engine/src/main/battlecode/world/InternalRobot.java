@@ -92,7 +92,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.cheeseAmount = 0;
 
         this.controlBits = 0;
-        this.currentBytecodeLimit = GameConstants.ROBOT_BYTECODE_LIMIT;
+        this.currentBytecodeLimit = type.bytecodeLimit;
         this.bytecodesUsed = 0;
 
         this.roundsAlive = 0;
@@ -623,8 +623,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 this.travelFlying(); // This will call hitGround if we hit something or run out of time
             }
         }
-        // TODO: maybe rat kings should have higher bytecode limits?
-        this.currentBytecodeLimit = GameConstants.ROBOT_BYTECODE_LIMIT;
+        this.currentBytecodeLimit = this.getType().bytecodeLimit;
         this.gameWorld.getMatchMaker().startTurn(this.ID);
     }
 

@@ -316,8 +316,7 @@ public class GameMaker {
             RobotTypeMetadata.addActionCooldown(builder, type.actionCooldown);
             RobotTypeMetadata.addActionRadiusSquared(builder, type.actionRadiusSquared);
             RobotTypeMetadata.addBaseHealth(builder, type.health);
-            RobotTypeMetadata.addBytecodeLimit(builder,
-                    type.isRobotType() ? GameConstants.ROBOT_BYTECODE_LIMIT : GameConstants.TOWER_BYTECODE_LIMIT);
+            RobotTypeMetadata.addBytecodeLimit(builder, type.bytecodeLimit);
             RobotTypeMetadata.addMovementCooldown(builder, GameConstants.MOVEMENT_COOLDOWN);
             RobotTypeMetadata.addVisionRadiusSquared(builder, GameConstants.VISION_RADIUS_SQUARED);
             RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.MESSAGE_RADIUS_SQUARED);
