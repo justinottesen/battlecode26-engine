@@ -457,17 +457,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
             return;
         }
 
-        // Check the target is in the rat's facing direction (dot product)
-        int dxFacing = this.dir.getDeltaX();
-        int dyFacing = this.dir.getDeltaY();
-        int dxTarget = toTarget.getDeltaX();
-        int dyTarget = toTarget.getDeltaY();
-        int dot = dxFacing * dxTarget + dyFacing * dyTarget;
-        if (dot < 1) {
-            // target is not in front (it's behind or strictly sideways)
-            return;
-        }
-
         // Check if there's a robot at that tile
         if (this.gameWorld.getRobot(loc) != null) {
             InternalRobot targetRobot = this.gameWorld.getRobot(loc);
