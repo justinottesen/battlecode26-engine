@@ -1,4 +1,4 @@
-package battlecode.common;
+package battlecode.world;
 
 public enum CatStateType {
     EXPLORE,

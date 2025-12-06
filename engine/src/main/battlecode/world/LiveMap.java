@@ -57,11 +57,6 @@ public class LiveMap {
     private int[] cheeseArray;
 
     /**
-     * The patterns for resources and towers.
-     */
-    private int[] patternArray;
-
-    /**
      * The waypoints for the cats.
      */
     private ArrayList<int[]> catWaypoints;
@@ -108,7 +103,6 @@ public class LiveMap {
         this.wallArray = new boolean[numSquares];
         this.cheeseMineArray = new boolean[numSquares];
         this.cheeseArray = new int[numSquares];
-        this.patternArray = new int[4];
         this.catWaypoints = new ArrayList<int[]>();
 
         // invariant: bodies is sorted by id
@@ -126,7 +120,6 @@ public class LiveMap {
             boolean[] dirtArray,
             boolean[] cheeseMineArray,
             int[] cheeseArray,
-            int[] patternArray,
             ArrayList<int[]> catWaypoints,
             RobotInfo[] initialBodies) {
         this.width = width;
@@ -148,11 +141,6 @@ public class LiveMap {
         for (int i = 0; i < cheeseMineArray.length; i++) {
             this.cheeseMineArray[i] = cheeseMineArray[i];
         }
-        this.patternArray = new int[patternArray.length];
-        for (int i = 0; i < patternArray.length; i++) {
-            this.patternArray[i] = patternArray[i];
-        }
-
         for (int i = 0; i < cheeseArray.length; i++) {
             this.cheeseArray[i] = cheeseArray[i];
         }
@@ -170,7 +158,7 @@ public class LiveMap {
      */
     public LiveMap(LiveMap gm) {
         this(gm.width, gm.height, gm.origin, gm.seed, gm.rounds, gm.mapName, gm.symmetry,
-                gm.wallArray, gm.dirtArray, gm.paintArray, gm.cheeseMineArray, gm.cheeseArray, gm.patternArray,
+                gm.wallArray, gm.dirtArray, gm.cheeseMineArray, gm.cheeseArray,
                 gm.catWaypoints,
                 gm.initialBodies);
     }
@@ -365,13 +353,6 @@ public class LiveMap {
      */
     public int[] getCheeseArray() {
         return cheeseArray;
-    }
-
-    /**
-     * @return the pattern array of the map
-     */
-    public int[] getPatternArray() {
-        return patternArray;
     }
 
     /**
