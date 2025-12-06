@@ -30,8 +30,8 @@ public class GameConstants {
     /** The minimum distance between cheese mines on the map */
     public static final int MIN_CHEESE_MINE_SPACING_SQUARED = 25;
 
-    /** The maximum percentage of the map that can be walls */
-    public static final int MAX_WALL_PERCENTAGE = 20;
+    /** The maximum percentage of the map that can be dirtt */
+    public static final int MAX_DIRT_PERCENTAGE = 20;
 
     // *********************************
     // ****** GAME PARAMETERS **********
@@ -56,7 +56,7 @@ public class GameConstants {
     public static final int EXCEPTION_BYTECODE_PENALTY = 500;
 
     /** The amount of cheese each team starts with. */
-    public static final int INITIAL_TEAM_CHEESE = 2500; // TODO need to specify!
+    public static final int INITIAL_TEAM_CHEESE = 2500; 
 
     /** The maximum number of rat kings that a team can have. */
     public static final int MAX_NUMBER_OF_RAT_KINGS = 5; // TODO need to specify!
@@ -105,10 +105,10 @@ public class GameConstants {
     public static final int BUILD_ROBOT_RADIUS_SQUARED = 4;
 
     /** The base cheese cost for spawning a rat */
-    public static final int BUILD_ROBOT_BASE_COST = 4;
+    public static final int BUILD_ROBOT_BASE_COST = 10;
 
     /** The amount by which the cost to spawn a rat increases by for every NUM_ROBOTS_FOR_COST_INCREASE allied rats */
-    public static final int BUILD_ROBOT_COST_INCREASE = 4;
+    public static final int BUILD_ROBOT_COST_INCREASE = 10;
 
     /** The number of allied rats needed to increase the base cost of a rat by BUILD_ROBOT_COST_INCREASE */
     public static final int NUM_ROBOTS_FOR_COST_INCREASE = 4;
@@ -157,6 +157,9 @@ public class GameConstants {
 
     /** The cheese cost to place a tile of dirt */
     public static final int PLACE_DIRT_CHEESE_COST = 20;
+
+    /** After this many turns, cats will begin moving if they haven't already. */
+    public static final int CAT_GRACE_PERIOD = 100;
 
     // *********************************
     // ****** COOLDOWNS ****************

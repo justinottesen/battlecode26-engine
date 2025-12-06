@@ -505,6 +505,15 @@ public interface RobotController {
     // ***********************************
 
     /**
+     * Returns the current cheese cost for an allied rat king to spawn a rat.
+     * 
+     * @return the amount of cheese that would be needed to spawn another rat
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    int getCurrentRatCost();
+
+    /**
      * Checks if a rat king can spawn a robot at the given location.
      * Robots can spawn within a circle of radius of sqrt(4) of the rat king.
      * 

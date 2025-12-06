@@ -706,6 +706,12 @@ public final class RobotControllerImpl implements RobotController {
     // ******** BUILDING METHODS *********
     // ***********************************
 
+    @Override
+    public int getCurrentRatCost(){
+        return GameConstants.BUILD_ROBOT_BASE_COST + 
+        GameConstants.BUILD_ROBOT_COST_INCREASE*(this.gameWorld.getTeamInfo().getNumRats(getTeam())/GameConstants.NUM_ROBOTS_FOR_COST_INCREASE);
+    }
+
     private void assertIsRobotType(UnitType type) throws GameActionException {
         if (!type.isRobotType()) {
             throw new GameActionException(CANT_DO_THAT, "Given type " + type + " is not a robot type!");
@@ -719,8 +725,7 @@ public final class RobotControllerImpl implements RobotController {
         if (!this.robot.getType().isRatKingType()){
             throw new GameActionException(CANT_DO_THAT, "Only rat kings can spawn other robots!");
         }
-        int cost = GameConstants.BUILD_ROBOT_BASE_COST + 
-        GameConstants.BUILD_ROBOT_COST_INCREASE*(this.gameWorld.getTeamInfo().getNumRats(getTeam())/GameConstants.NUM_ROBOTS_FOR_COST_INCREASE);
+        int cost = getCurrentRatCost();
 
         if (this.gameWorld.getTeamInfo().getCheese(this.robot.getTeam()) < cost) {
             throw new GameActionException(CANT_DO_THAT, "Not enough cheese to build new robot!");
@@ -750,8 +755,7 @@ public final class RobotControllerImpl implements RobotController {
         assertCanBuildRobot(loc);
         this.robot.addActionCooldownTurns(GameConstants.BUILD_ROBOT_COOLDOWN);
         this.gameWorld.spawnRobot(UnitType.RAT, loc, this.robot.getTeam());
-        int cost = GameConstants.BUILD_ROBOT_BASE_COST + 
-        GameConstants.BUILD_ROBOT_COST_INCREASE*(this.gameWorld.getTeamInfo().getNumRats(getTeam())/GameConstants.NUM_ROBOTS_FOR_COST_INCREASE);
+        int cost = getCurrentRatCost();
         this.robot.addCheese(-cost);
         InternalRobot robotSpawned = this.gameWorld.getRobot(loc);
         this.gameWorld.getMatchMaker().addSpawnAction(robotSpawned.getID(), loc, getTeam(), UnitType.RAT);

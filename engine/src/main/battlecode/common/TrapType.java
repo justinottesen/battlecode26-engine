@@ -14,7 +14,7 @@ public enum TrapType {
     /**
      * Traps the cat
      */
-    CATTRAP(10, 0, 20, 5, 10, 0, 5, 2),
+    CATTRAP(10, 10, 20, 5, 10, 0, 5, 2),
 
     /**
      * No trap
