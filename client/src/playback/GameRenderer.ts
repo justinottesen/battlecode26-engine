@@ -13,6 +13,8 @@ export enum CanvasLayers {
 }
 
 class GameRendererClass {
+    public disableCanvasClick: boolean = false
+
     private canvases: Record<CanvasLayers, HTMLCanvasElement>
     private mouseTile?: Vector = undefined
     private mouseDownStartPos?: Vector = undefined
@@ -259,6 +261,7 @@ class GameRendererClass {
     }
 
     private canvasClick(e: MouseEvent) {
+        if (this.disableCanvasClick) return
         // Don't trigger the click if it moved too far away from the origin
         const maxDist = 25
         if (

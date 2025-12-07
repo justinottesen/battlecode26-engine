@@ -209,6 +209,23 @@ export class CurrentMap {
                 }
             })
         }
+
+        const bodies = match.currentRound.bodies
+        if (
+            selectedBodyID &&
+            bodies.hasId(selectedBodyID) &&
+            bodies.getById(selectedBodyID).robotType === schema.RobotType.CAT
+        ) {
+            console.log('Rendering cat waypoints')
+            const waypoints = this.staticMap.catWaypoints.get(selectedBodyID)
+            waypoints?.forEach((waypoint, idx) => {
+                const coords = renderUtils.getRenderCoords(waypoint.x, waypoint.y, this.dimension)
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.5)'
+                ctx.beginPath()
+                ctx.arc(coords.x + 0.5, coords.y + 0.5, 0.3, 0, 2 * Math.PI)
+                ctx.fill()
+            })
+        }
     }
 
     getTooltipInfo(square: Vector, match: Match): string[] {
@@ -243,6 +260,9 @@ export class CurrentMap {
         }
         if (cheeseMine) {
             info.push('Cheese Mine')
+        }
+        if (dirt) {
+            info.push('Dirt')
         }
         if (srp) {
             const roundsRemaining = Math.max(srp.createRound + 50 - match.currentRound.roundNumber, 0)

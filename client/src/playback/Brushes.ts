@@ -13,6 +13,9 @@ import { Vector } from './Vector'
 import { Team } from './Game'
 import Round from './Round'
 import { GameRenderer } from './GameRenderer'
+import { once } from 'process'
+import { assert } from 'console'
+import { current } from 'tailwindcss/colors'
 
 const applyInRadius = (
     map: CurrentMap | StaticMap,
@@ -68,6 +71,10 @@ const checkValidCheeseMinePlacement = (check: Vector, map: StaticMap, bodies: Bo
         return false
     }
 
+    return true
+}
+
+const checkValidCatPlacement = (check: Vector, map: StaticMap, bodies: Bodies) => {
     return true
 }
 
@@ -420,72 +427,92 @@ export class DirtBrush extends SymmetricMapEditorBrush<CurrentMap> {
     }
 }
 
-// export class TowerBrush extends SymmetricMapEditorBrush<StaticMap> {
-//     private readonly bodies: Bodies
-//     public readonly name = 'Towers'
-//     public readonly fields = {
-//         isTower: {
-//             type: MapEditorBrushFieldType.ADD_REMOVE,
-//             value: true
-//         },
-//         team: {
-//             type: MapEditorBrushFieldType.TEAM,
-//             value: 0
-//         },
-//         towerType: {
-//             type: MapEditorBrushFieldType.SINGLE_SELECT,
-//             value: schema.RobotType.,
-//             label: 'Tower Type',
-//             options: [
-//                 { value: schema.RobotType.PAINT_TOWER, label: 'Paint Tower' },
-//                 { value: schema.RobotType.MONEY_TOWER, label: 'Money Tower' }
-//             ]
-//         }
-//     }
+export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
+    public clickBehavior = MapEditorBrushClickBehavior.NO_DESELECT
+    private readonly bodies: Bodies
+    public readonly name = 'Cat'
+    public readonly fields = {
+        isCat: {
+            type: MapEditorBrushFieldType.ADD_REMOVE,
+            value: true
+        },
+        catOrWaypointMode: {
+            type: MapEditorBrushFieldType.SINGLE_SELECT,
+            value: 0,
+            label: 'Mode',
+            options: [
+                { value: 0, label: 'Cat' },
+                { value: 1, label: 'Waypoint' }
+            ]
+        }
+    }
 
-//     constructor(round: Round) {
-//         super(round.map.staticMap)
-//         this.bodies = round.bodies
-//     }
+    constructor(round: Round) {
+        super(round.map.staticMap)
+        this.bodies = round.bodies
+    }
 
-//     public symmetricApply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean) {
-//         const towerType: schema.RobotType = fields.towerType.value
-//         const isTower: boolean = fields.isTower.value
+    public lastSelectedCat = -1
 
-//         const add = (x: number, y: number, team: Team) => {
-//             const pos = { x, y }
-//             if (!checkValidRuinPlacement(pos, this.map, this.bodies)) {
-//                 return null
-//             }
+    public symmetricApply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean) {
+        const isCat: boolean = fields.isCat.value
+        const selectedBodyID = GameRenderer.getSelectedRobot()
 
-//             const id = this.bodies.getNextID()
-//             this.bodies.spawnBodyFromValues(id, towerType, team, pos)
+        if (selectedBodyID !== null && selectedBodyID !== undefined) {
+            const body = this.bodies.bodies.get(selectedBodyID)
+            if (body && body.robotType === schema.RobotType.CAT) {
+                this.lastSelectedCat = selectedBodyID
+            }
+        }
 
-//             return id
-//         }
+        if (fields.catOrWaypointMode.value === 1) {
+            // Waypoint mode
+            if (this.lastSelectedCat === -1) return null
+            let currentCat = this.lastSelectedCat
+            if (!robotOne) {
+                const symmetricPoint = this.map.applySymmetry(this.bodies.getById(this.lastSelectedCat)!.pos)
+                currentCat = this.bodies.getBodyAtLocation(symmetricPoint.x, symmetricPoint.y)!.id
+            }
+            if (!this.map.catWaypoints.has(currentCat)) {
+                this.map.catWaypoints.set(currentCat, [])
+            }
+            this.map.catWaypoints.get(currentCat)?.push({ x, y })
 
-//         const remove = (x: number, y: number) => {
-//             const body = this.bodies.getBodyAtLocation(x, y)
+            return () => {}
+        }
 
-//             if (!body) return null
+        const add = (x: number, y: number, team: Team) => {
+            const pos = { x, y }
+            if (!checkValidCatPlacement(pos, this.map, this.bodies)) {
+                return null
+            }
 
-//             const team = body.team
-//             this.bodies.removeBody(body.id)
+            const id = this.bodies.getNextID()
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos)
 
-//             return team
-//         }
+            return id
+        }
 
-//         if (isTower) {
-//             let teamIdx = robotOne ? 0 : 1
-//             if (fields.team.value === 1) teamIdx = 1 - teamIdx
-//             const team = this.bodies.game.teams[teamIdx]
-//             const id = add(x, y, team)
-//             if (id) return () => this.bodies.removeBody(id)
-//             return null
-//         } else {
-//             const team = remove(x, y)
-//             if (!team) return null
-//             return () => add(x, y, team)
-//         }
-//     }
-// }
+        const remove = (x: number, y: number) => {
+            const body = this.bodies.getBodyAtLocation(x, y)
+
+            if (!body) return null
+
+            const team = body.team
+            this.bodies.removeBody(body.id)
+
+            return team
+        }
+
+        if (isCat) {
+            // shouldnt matter which team we add to since cats are neutral
+            const id = add(x, y, this.bodies.game.teams[0])
+            if (id) return () => this.bodies.removeBody(id)
+            return null
+        } else {
+            const team = remove(x, y)
+            if (!team) return null
+            return () => add(x, y, team)
+        }
+    }
+}

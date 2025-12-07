@@ -17,7 +17,7 @@ import {
 } from '../constants'
 import Match from './Match'
 import { ClientConfig } from '../client-config'
-import { RobotBrush } from './Brushes'
+import { CatBrush, RobotBrush } from './Brushes'
 import { getImageIfLoaded } from '../util/ImageLoader'
 
 export default class Bodies {
@@ -193,7 +193,7 @@ export default class Bodies {
     }
 
     getEditorBrushes(round: Round): MapEditorBrush[] {
-        return [new RobotBrush(round)]
+        return [new CatBrush(round), new RobotBrush(round)]
     }
 
     toInitialBodyTable(builder: flatbuffers.Builder): number {

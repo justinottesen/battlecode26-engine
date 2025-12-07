@@ -6,7 +6,7 @@ import Game from '../../../playback/Game'
 import { Button, BrightButton, SmallButton } from '../../button'
 import { NumInput, Select } from '../../forms'
 import Match from '../../../playback/Match'
-import { MapEditorBrush, UndoFunction } from './MapEditorBrush'
+import { MapEditorBrush, UndoFunction, MapEditorBrushClickBehavior } from './MapEditorBrush'
 import { exportMap, loadFileAsMap } from './MapGenerator'
 import { MAP_SIZE_RANGE } from '../../../constants'
 import { InputDialog } from '../../input-dialog'
@@ -188,10 +188,29 @@ export const MapEditorPage: React.FC<Props> = (props) => {
 
     useEffect(() => {
         if (canvasMouseDown && hoveredTile) applyBrush(hoveredTile)
+        if (canvasMouseDown && hoveredTile) {
+            // override the GameRenderer's canvas click
+            const newSelectedBody = GameRunner.match?.currentRound.bodies.getBodyAtLocation(
+                hoveredTile.x,
+                hoveredTile.y
+            )?.id
+
+            switch (openBrush?.clickBehavior) {
+                case MapEditorBrushClickBehavior.DEFAULT:
+                    GameRenderer.setSelectedRobot(newSelectedBody)
+                    break
+                case MapEditorBrushClickBehavior.NO_DESELECT:
+                    if (newSelectedBody !== undefined) {
+                        GameRenderer.setSelectedRobot(newSelectedBody)
+                    }
+                    break
+            }
+        }
     }, [canvasMouseDown, hoveredTile])
 
     useEffect(() => {
         if (props.open) {
+            GameRenderer.disableCanvasClick = true
             if (mapParams.imported) {
                 editGame.current = mapParams.imported
             } else if (!editGame.current || mapParams.imported === null) {
@@ -213,6 +232,7 @@ export const MapEditorPage: React.FC<Props> = (props) => {
             setBrushes(brushes)
             setCleared(round.bodies.isEmpty() && round.map.isEmpty())
         } else {
+            GameRenderer.disableCanvasClick = false
             GameRunner.setGame(undefined)
         }
     }, [mapParams, props.open])
