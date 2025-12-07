@@ -516,3 +516,63 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
         }
     }
 }
+
+export class RatKingBrush extends SymmetricMapEditorBrush<StaticMap> {
+    private readonly bodies: Bodies
+    public readonly name = 'Rat Kings'
+    public readonly fields = {
+        isRatKing: {
+            type: MapEditorBrushFieldType.ADD_REMOVE,
+            value: true
+        },
+        team: {
+            type: MapEditorBrushFieldType.TEAM,
+            value: 0
+        }
+    }
+
+    constructor(round: Round) {
+        super(round.map.staticMap)
+        this.bodies = round.bodies
+    }
+
+    public symmetricApply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean) {
+        const isRatKing: boolean = fields.isRatKing.value
+
+        const add = (x: number, y: number, team: Team) => {
+            const pos = { x, y }
+            if (this.bodies.getBodyAtLocation(x, y)) {
+                return null
+            }
+
+            const id = this.bodies.getNextID()
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos)
+
+            return id
+        }
+
+        const remove = (x: number, y: number) => {
+            const body = this.bodies.getBodyAtLocation(x, y)
+
+            if (!body) return null
+
+            const team = body.team
+            this.bodies.removeBody(body.id)
+
+            return team
+        }
+
+        if (isRatKing) {
+            let teamIdx = robotOne ? 0 : 1
+            if (fields.team.value === 1) teamIdx = 1 - teamIdx
+            const team = this.bodies.game.teams[teamIdx]
+            const id = add(x, y, team)
+            if (id) return () => this.bodies.removeBody(id)
+            return null
+        } else {
+            const team = remove(x, y)
+            if (!team) return null
+            return () => add(x, y, team)
+        }
+    }
+}

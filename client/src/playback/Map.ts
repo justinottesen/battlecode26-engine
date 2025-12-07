@@ -328,6 +328,8 @@ export class CurrentMap {
         schema.GameMap.addWalls(builder, packet.wallsOffset)
         schema.GameMap.addDirt(builder, packet.dirtOffset)
         schema.GameMap.addCheeseMines(builder, packet.cheeseMinesOffset)
+        schema.GameMap.addCatWaypointIds(builder, packet.catWaypointIdsOffset)
+        schema.GameMap.addCatWaypointVecs(builder, packet.catWaypointVecsOffset)
     }
 }
 
