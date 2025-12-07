@@ -114,6 +114,9 @@ public class GameWorld {
         trapCounts.put(TrapType.CAT_TRAP, 0);
         trapCounts.put(TrapType.RAT_TRAP, 0);
         trapTriggers = new ArrayList[numSquares];
+        for (int i = 0; i < trapTriggers.length; i++){
+            trapTriggers[i] = new ArrayList<>();
+        }
 
         this.profilerCollections = new HashMap<>();
 
