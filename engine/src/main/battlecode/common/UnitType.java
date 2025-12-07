@@ -56,6 +56,7 @@ public enum UnitType {
     }
 
     public MapLocation[] getAllLocations(MapLocation center){
+        // return in CW order starting form top left
         MapLocation[] locs = new MapLocation[size * size];
         int c = 0;
         for (int i = - (size-1) / 2; i <= size / 2; i++){
