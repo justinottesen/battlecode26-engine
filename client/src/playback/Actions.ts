@@ -262,6 +262,11 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             round.map.cheeseData[this.actionData.loc()] = amount
         }
     },
+    [schema.Action.CheeseTransfer]: class CheeseTransferAction extends Action<schema.CheeseTransfer> {
+        apply(round: Round): void {
+            // transfer cheese between bots
+        }
+    },
     [schema.Action.CatScratch]: class CatScratchAction extends Action<schema.CatScratch> {
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // cat scratching animation
@@ -332,6 +337,15 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             ctx.stroke()
             ctx.globalAlpha = 1
         }
+    },
+    [schema.Action.ThrowRat]: class ThrowRatAction extends Action<schema.ThrowRat> {
+        // TODO
+    },
+    [schema.Action.UpgradeToRatKing]: class UpgradeToRatKingAction extends Action<schema.UpgradeToRatKing> {
+        // TODO
+    },
+    [schema.Action.RatSqueak]: class RatSqueakAction extends Action<schema.RatSqueak> {
+        // TODO
     },
     [schema.Action.DamageAction]: class DamageAction extends Action<schema.DamageAction> {
         apply(round: Round): void {
