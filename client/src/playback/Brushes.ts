@@ -1,5 +1,6 @@
 import { schema } from 'battlecode-schema'
 import {
+    MapEditorBrushClickBehavior,
     MapEditorBrushField,
     MapEditorBrushFieldType,
     SinglePointMapEditorBrush,
