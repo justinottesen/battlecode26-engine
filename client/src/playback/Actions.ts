@@ -22,7 +22,8 @@ export default class Actions {
             for (let i = 0; i < turn.actionsTypeLength(); i++) {
                 const actionType = turn.actionsType(i)!
                 const action =
-                    unionToAction(actionType, (obj) => turn.actions(i, obj)) ?? assert.fail('Failed to parse action')
+                    unionToAction(actionType, (obj) => turn.actions(i, obj)) ??
+                    assert.fail(`Failed to parse action ${i} with type ${actionType} on round ${round.roundNumber}`)
 
                 // TODO: think about revisiting this
                 const actionClass =
