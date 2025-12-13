@@ -137,6 +137,11 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
+    public Direction getDirection() {
+        return this.robot.getDirection();
+    }
+
+    @Override
     public int getHealth() {
         return this.robot.getHealth();
     }
@@ -596,6 +601,13 @@ public final class RobotControllerImpl implements RobotController {
     private void assertCanMoveForward() throws GameActionException {
         assertIsMovementReady();
         MapLocation[] curLocs = robot.getAllPartLocations();
+        //DEBUGGING
+        System.out.println("START");
+        for (MapLocation part: curLocs) {
+            System.out.print(gameWorld.getRobot(part) + " / ");
+        } 
+        System.out.println("STOP");
+
         MapLocation[] newLocs = new MapLocation[curLocs.length];
         for (int i = 0; i < newLocs.length; i++) {
             newLocs[i] = curLocs[i].add(robot.getDirection());
@@ -604,7 +616,7 @@ public final class RobotControllerImpl implements RobotController {
         for (MapLocation loc : newLocs) {
             if (!onTheMap(loc))
                 throw new GameActionException(OUT_OF_RANGE,
-                        "Can only move to locations on the map; " + loc + " is not on the map.");
+                        "Can only move to locations on the map; " + loc + " is not on the map. Currently at location " + this.getLocation());
             if ((this.gameWorld.getRobot(loc) != null) && (this.gameWorld.getRobot(loc).getID() != robot.getID()))
                 throw new GameActionException(CANT_MOVE_THERE,
                         "Cannot move to an occupied location; " + loc + " is occupied by a different robot.");
@@ -620,6 +632,8 @@ public final class RobotControllerImpl implements RobotController {
             assertCanMoveForward();
             return true;
         } catch (GameActionException e) {
+            if (this.robot.getID() == 2)
+                e.printStackTrace();
             return false;
         }
     }

@@ -314,7 +314,7 @@ public final class GameMapIO {
                 
                 if(robot.type == UnitType.RAT_KING){
                     // client wants top left of rat king
-                    MapLocation top_left = robot.location.translate(-1, -1);
+                    MapLocation top_left = robot.location.translate(-1, +1);
                     bodyLocsXs.add(top_left.x);
                     bodyLocsYs.add(top_left.y);
                 }
@@ -379,7 +379,7 @@ public final class GameMapIO {
                 if(bodyType==UnitType.RAT_KING){
                     //translate from top left corner to center
                     bodyX += 1;
-                    bodyY += 1;
+                    bodyY -= 1;
                 }
 
                 Team bodyTeam = TeamMapping.team(curSpawnAction.team());

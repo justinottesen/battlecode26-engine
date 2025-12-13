@@ -76,6 +76,15 @@ public interface RobotController {
     MapLocation getLocation();
 
     /**
+     * Returns this robot's current direction.
+     *
+     * @return this robot's current direction
+     *
+     * @battlecode.doc.costlymethod
+     */
+    Direction getDirection();
+
+    /**
      * Returns this robot's current health.
      *
      * @return this robot's current health

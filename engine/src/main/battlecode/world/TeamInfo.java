@@ -112,10 +112,6 @@ public class TeamInfo {
      */
     public void addRatKings(int num, Team team){
         this.numRatKings[team.ordinal()] += num;
-
-        if (this.numRatKings[team.ordinal()] == 0){
-            checkWin(team);
-        }
     }
 
     // *********************************
@@ -169,20 +165,6 @@ public class TeamInfo {
         } else {
             this.dirtCounts[team.ordinal()] += 1;
         }
-    }
-
-    private void checkWin(Team team) {
-        // TODO: replace with a condition for winning (e.g. all rat kings dead)
-        if (!this.gameWorld.isCooperation()) { 
-            // backstabbing mode
-            if (getNumRatKings(team.opponent()) == 0){
-                this.gameWorld.gameStats.setWinner(team);
-                this.gameWorld.gameStats.setDominationFactor(DominationFactor.KILL_ALL_RAT_KINGS_BACKSTAB);
-            }
-        }
-        
-        // TODO: if cooperation, even if cat dies, game continues?    
-        // throw new InternalError("Reporting incorrect win");
     }
 
     public int getRoundCheeseChange(Team team) {

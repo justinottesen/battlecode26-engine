@@ -445,9 +445,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
      * @param healthAmount the amount to change health by (can be negative)
      */
     public void addHealth(int healthAmount) {
-        health += healthAmount;
-        health = Math.min(this.health, this.type.health);
-        if (health <= 0) {
+        this.health += healthAmount;
+        this.health = Math.min(this.health, this.type.health);
+        if (this.type == UnitType.CAT){
+            this.gameWorld.updateCatHealth(this.ID, health);
+        }
+        if (this.health <= 0) {
             this.gameWorld.destroyRobot(this.getID(), false, true);
         }
     }
@@ -505,11 +508,15 @@ public class InternalRobot implements Comparable<InternalRobot> {
         if (this.gameWorld.getRobot(loc) != null) {
             InternalRobot targetRobot = this.gameWorld.getRobot(loc);
 
-            // Only bite enemy rats
-            if (this.team != targetRobot.getTeam() && targetRobot.getType() == UnitType.RAT) {
+            // Only bite enemy rats and cats
+            if (this.team != targetRobot.getTeam()) {
                 this.addCheese(-cheeseConsumed);
-                targetRobot.addHealth(-GameConstants.RAT_BITE_DAMAGE -
-                        (int) Math.ceil(Math.log(cheeseConsumed)));
+                int damage = GameConstants.RAT_BITE_DAMAGE +
+                        (int) Math.ceil(Math.log(cheeseConsumed));
+                targetRobot.addHealth(-damage);
+                if (targetRobot.getType() == UnitType.CAT){
+                    this.gameWorld.getTeamInfo().addDamageToCats(team, damage);
+                }
                 this.gameWorld.getMatchMaker().addBiteAction(targetRobot.getID());
             }
         }

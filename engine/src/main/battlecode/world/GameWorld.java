@@ -310,6 +310,10 @@ public class GameWorld {
         this.cheeseAmounts[locationToIndex(loc)] += amount;
     }
 
+    public int getNumCats(){
+        return this.getObjectInfo().getRobotTypeCount(Team.NEUTRAL, UnitType.CAT);
+    }
+
     public boolean isPassable(MapLocation loc) {
         return !(this.walls[locationToIndex(loc)]
                 || this.dirt[locationToIndex(loc)]);
@@ -581,6 +585,46 @@ public class GameWorld {
     }
 
     /**
+     * @return whether a team's rat kings are all dead
+     */
+    public boolean setWinnerIfKilledAllRatKings() {
+        // all rat kings dead
+        
+        if (this.getTeamInfo().getNumRatKings(Team.A) == 0){
+            gameStats.setWinner(Team.B);
+            gameStats.setDominationFactor(DominationFactor.KILL_ALL_RAT_KINGS);
+            return true;
+        }
+        else if (this.getTeamInfo().getNumRatKings(Team.B) == 0){
+            gameStats.setWinner(Team.A);
+            gameStats.setDominationFactor(DominationFactor.KILL_ALL_RAT_KINGS);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return whether all cats dead
+     */
+    public boolean setWinnerifAllCatsDead() {        
+        if(this.getNumCats() == 0){
+            // find out which team won via points
+            if (setWinnerIfMorePoints())
+                return true;
+            if (setWinnerIfMoreCheese())
+                return true;
+            if (setWinnerIfMoreRatsAlive())
+                return true;
+            setWinnerArbitrary();
+
+            return true;
+        }
+        return false;
+
+    }
+
+    /**
      * @return whether a team has more cheese
      */
     public boolean setWinnerIfMoreCheese() {
@@ -625,6 +669,46 @@ public class GameWorld {
     }
 
     /**
+     * @return whether a team has more points depending on the game state
+     */
+    public boolean setWinnerIfMorePoints() {
+        double cat_weight;
+        double king_weight;
+        double cheese_weight;
+
+        if(isCooperation()){
+            cat_weight = 0.5;
+            king_weight = 0.3;
+            cheese_weight = 0.2;
+        }
+        else{
+            cat_weight = 0.3;
+            king_weight = 0.5;
+            cheese_weight = 0.2;
+        }
+
+        ArrayList<Integer> teamPoints = new ArrayList<>();
+
+        for (Team team : List.of(Team.A, Team.B)) {
+            int points = (int) (
+                cat_weight * (100) +
+                king_weight * teamInfo.getNumRatKings(team) +
+                cheese_weight * teamInfo.getCheese(team)); // TODO: Update this to the correct points formula
+            this.teamInfo.addPoints(team, points);
+            teamPoints.add(points);
+        }
+        if (teamPoints.getFirst() > teamPoints.getLast()) {
+            setWinner(Team.A, DominationFactor.MORE_POINTS);
+            return true;
+        } else if (teamPoints.getFirst() < teamPoints.getLast()) {
+            setWinner(Team.B, DominationFactor.MORE_POINTS);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Sets a winner arbitrarily. Hopefully this is actually random.
      */
     public void setWinnerArbitrary() {
@@ -634,18 +718,36 @@ public class GameWorld {
     public boolean timeLimitReached() {
         return currentRound >= this.gameMap.getRounds();
     }
-
+    
     /**
      * Checks end of match and then decides winner based on tiebreak conditions
      */
     public void checkEndOfMatch() {
         if (timeLimitReached() && gameStats.getWinner() == null) {
+            if (setWinnerIfMorePoints())
+                return;
             if (setWinnerIfMoreCheese())
                 return;
             if (setWinnerIfMoreRatsAlive())
                 return;
             setWinnerArbitrary();
         }
+    }
+
+    private void checkWin(Team team) {
+        if(gameStats.getWinner() != null){ // to avoid overriding previously set win
+            return;
+        }
+        // killed all rat kings?
+       if(setWinnerIfKilledAllRatKings())
+            return;
+        // all cats dead
+        if(setWinnerifAllCatsDead()){
+            return;
+        }
+        
+        // TODO: if cooperation, even if cat dies, game continues?    
+        throw new InternalError("Reporting incorrect win");
     }
 
     public void processEndOfRound() {
@@ -742,10 +844,17 @@ public class GameWorld {
         destroyRobot(id, false, false);
     }
 
+    public void updateCatHealth(int id, int newHealth){
+        objectInfo.updateCatHealth(id, newHealth);
+    }
+
     public void destroyRobot(int id, boolean fromException, boolean fromDamage) {
         InternalRobot robot = objectInfo.getRobotByID(id);
         Team robotTeam = robot.getTeam();
         MapLocation loc = robot.getLocation();
+
+        // check win
+        checkWin(robotTeam);
 
         if (loc != null) {
             if (robot.getType().isRatType()){
