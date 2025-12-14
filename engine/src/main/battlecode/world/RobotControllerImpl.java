@@ -137,6 +137,11 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
+    public Direction getDirection() {
+        return this.robot.getDirection();
+    }
+
+    @Override
     public int getHealth() {
         return this.robot.getHealth();
     }
@@ -178,7 +183,7 @@ public final class RobotControllerImpl implements RobotController {
         // This handles the angle checking, so we only check distance.
         assertCanSenseLocation(loc);
         int distance = (this.getType().usesTopRightLocationForDistance())
-                ? (getLocation().topRightDistanceSquaredTo(loc))
+                ? (getLocation().topLeftDistanceSquaredTo(loc))
                 : (getLocation().distanceSquaredTo(loc));
         if (distance > maxRadiusSquared)
             throw new GameActionException(OUT_OF_RANGE,
@@ -187,7 +192,7 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanActOffCenterLocation(MapLocation loc, int maxRadiusSquared) throws GameActionException {
         assertNotNull(loc);
-        if (getLocation().topRightDistanceSquaredTo(loc) > maxRadiusSquared)
+        if (getLocation().topLeftDistanceSquaredTo(loc) > maxRadiusSquared)
             throw new GameActionException(OUT_OF_RANGE,
                     "Target location not within action range");
         if (!this.gameWorld.getGameMap().onTheMap(loc))
@@ -596,6 +601,7 @@ public final class RobotControllerImpl implements RobotController {
     private void assertCanMoveForward() throws GameActionException {
         assertIsMovementReady();
         MapLocation[] curLocs = robot.getAllPartLocations();
+
         MapLocation[] newLocs = new MapLocation[curLocs.length];
         for (int i = 0; i < newLocs.length; i++) {
             newLocs[i] = curLocs[i].add(robot.getDirection());
@@ -604,10 +610,19 @@ public final class RobotControllerImpl implements RobotController {
         for (MapLocation loc : newLocs) {
             if (!onTheMap(loc))
                 throw new GameActionException(OUT_OF_RANGE,
-                        "Can only move to locations on the map; " + loc + " is not on the map.");
-            if ((this.gameWorld.getRobot(loc) != null) && (this.gameWorld.getRobot(loc).getID() != robot.getID()))
+                        "Can only move to locations on the map; " + loc + " is not on the map. Currently at location " + this.getLocation());
+            if ((this.gameWorld.getRobot(loc) != null) && (this.gameWorld.getRobot(loc).getID() != robot.getID())){
+                System.out.println("DEBUGGING: " + " collision with robot of type " + this.gameWorld.getRobot(loc).getType() + " with part locations at ");
+                MapLocation[] partLocs = robot.getAllPartLocations();
+                System.out.print("Part locations: [");
+                for (int i = 0; i < partLocs.length; i++) {
+                    System.out.print("(" + partLocs[i].x + ", " + partLocs[i].y + ")");
+                    if (i < partLocs.length - 1) System.out.print(", ");
+                }
+                System.out.println("]");
                 throw new GameActionException(CANT_MOVE_THERE,
                         "Cannot move to an occupied location; " + loc + " is occupied by a different robot.");
+            }
             if (!this.gameWorld.isPassable(loc))
                 throw new GameActionException(CANT_MOVE_THERE,
                         "Cannot move to an impassable location; " + loc + " is impassable.");
@@ -620,6 +635,8 @@ public final class RobotControllerImpl implements RobotController {
             assertCanMoveForward();
             return true;
         } catch (GameActionException e) {
+            if (this.robot.getID() == 2)
+                e.printStackTrace();
             return false;
         }
     }
