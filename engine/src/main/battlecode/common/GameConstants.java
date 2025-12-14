@@ -247,6 +247,17 @@ public class GameConstants {
     public static final int BUILD_COOLDOWN = 35; // TODO need to specify!
 
     /**
+     * The multiplier to the cooldowns when carrying another robot; TODO increases exponentially when >1 robot is carried?
+     */
+    public static final double CARRY_COOLDOWN_MULTIPLIER = 1.5;
+
+    /** The maximum number of robots a rat can carry */
+    public static final int MAX_CARRY_TOWER_HEIGHT = 2;
+
+    /** The maximum number of robots a rat can carry */
+    public static final int MAX_CARRY_DURATION = 100;
+
+    /**
      * The total time a rat can travel for while thrown (rats are stunned while
      * thrown)
      * */

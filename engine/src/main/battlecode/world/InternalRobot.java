@@ -49,6 +49,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private InternalRobot grabbedByRobot; // robot that is carrying this robot, if any
     private Direction thrownDir;
     private int throwDuration;
+    private int remainingCarriedDuration; // Time before we wriggle free from enemy robot
 
     private Queue<Message> incomingMessages;
 
@@ -115,6 +116,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.grabbedByRobot = null;
         this.thrownDir = null;
         this.throwDuration = 0;
+        this.remainingCarriedDuration = 0;
 
         this.indicatorString = "";
 
@@ -250,6 +252,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     public InternalRobot getCarryingRobot() {
         return carryingRobot;
+    }
+    
+    public int getRemainingCarriedDuration() {
+        return remainingCarriedDuration;
     }
 
     public InternalRobot getGrabbedByRobot() {
@@ -589,33 +595,41 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.movementCooldownTurns += GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
         this.actionCooldownTurns += GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
         this.gameWorld.removeRobot(getLocation());
-        if (this.isCarryingRobot()) { // If we were carrying a robot, drop it
-            this.carryingRobot.getDropped(getLocation());
+        if (this.isCarryingRobot()) { // If we were carrying a robot, drop it TODO actually do this???
+            this.carryingRobot.getDropped(getLocation()); // TODO check about max tower height
             this.carryingRobot = null;
         }
 
         this.setInternalLocationOnly(grabber.getLocation());
+
+        if (grabber.getTeam() != this.getTeam()) {
+            this.remainingCarriedDuration = GameConstants.MAX_CARRY_DURATION;
+        }
+
     }
 
-    public void throwRobot(Direction dir) {
+    public void throwRobot() {
         if (!this.type.isThrowingType()) {
             throw new RuntimeException("Unit must be a rat to throw other rats");
         } else if (!this.isCarryingRobot()) {
             throw new RuntimeException("Not carrying a robot to throw");
         }
-        if (!this.gameWorld.getGameMap().onTheMap(this.getLocation().add(dir))) {
+        if (!this.gameWorld.getGameMap().onTheMap(this.getLocation().add(this.dir))) {
             throw new RuntimeException("Cannot throw outside of map");
+        } else if (this.gameWorld.getRobot(this.getLocation().add(this.dir)) != null) {
+            throw new RuntimeException("Cannot throw into occupied space");
         }
 
         // Throw the robot
-        this.carryingRobot.getThrown(dir);
+        this.carryingRobot.getThrown(this.dir);
         this.gameWorld.getMatchMaker().addThrowAction(this.carryingRobot.getID(),
-                this.getLocation().add(dir));
+                this.getLocation().add(this.dir));
         this.carryingRobot = null;
     }
 
     private void getThrown(Direction dir) {
         this.grabbedByRobot = null;
+        this.remainingCarriedDuration = 0;
         this.thrownDir = dir;
         this.throwDuration = GameConstants.THROW_DURATION/10;
         this.setInternalLocationOnly(this.getLocation().add(dir));
@@ -623,9 +637,17 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void getDropped(MapLocation loc) {
+        if (!this.gameWorld.getGameMap().onTheMap(loc)) {
+            throw new RuntimeException("Cannot drop outside of map");
+        } else if (this.gameWorld.getRobot(loc) != null) {
+            throw new RuntimeException("Cannot drop into occupied space");
+        } else if (!this.gameWorld.isPassable(loc)) {
+            throw new RuntimeException("Cannot drop into impassable terrain");
+        }
         this.grabbedByRobot = null;
-        this.movementCooldownTurns = GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
-        this.actionCooldownTurns = GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
+        this.remainingCarriedDuration = 0;
+        this.movementCooldownTurns -= GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
+        this.actionCooldownTurns -= GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
         this.setInternalLocationOnly(loc);
         this.gameWorld.addRobot(this.getLocation(), this);
     }
@@ -633,8 +655,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void hitGround() {
         this.thrownDir = null;
         this.throwDuration = 0;
-        this.movementCooldownTurns = GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
-        this.actionCooldownTurns = GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
+        this.movementCooldownTurns -= GameConstants.THROW_STUN_DURATION - GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
+        this.actionCooldownTurns -= GameConstants.THROW_STUN_DURATION - GameConstants.THROW_SAFE_LANDING_STUN_DURATION;
     }
 
     public void hitTarget(boolean isSecondMove) {
@@ -847,6 +869,22 @@ public class InternalRobot implements Comparable<InternalRobot> {
         if (!this.isGrabbedByRobot()) {
             this.actionCooldownTurns = Math.max(0, this.actionCooldownTurns - GameConstants.COOLDOWNS_PER_TURN);
             this.movementCooldownTurns = Math.max(0, this.movementCooldownTurns - GameConstants.COOLDOWNS_PER_TURN);
+            this.remainingCarriedDuration = Math.max(0, this.remainingCarriedDuration - GameConstants.COOLDOWNS_PER_TURN);
+            if (this.isGrabbedByRobot() && this.remainingCarriedDuration == 0 && this.getGrabbedByRobot().getTeam() != this.getTeam()) {
+                MapLocation dropLoc = this.getGrabbedByRobot().getLocation().add(this.getDirection());
+                if (this.gameWorld.getGameMap().onTheMap(dropLoc)
+                        && this.gameWorld.isPassable(dropLoc)
+                        && this.gameWorld.getRobot(dropLoc) == null) {
+                    // Wriggle free!
+                    InternalRobot grabber = this.getGrabbedByRobot();
+                    this.getDropped(dropLoc);
+                    grabber.carryingRobot = null;
+                }
+                // Wriggle free!
+                InternalRobot grabber = this.getGrabbedByRobot();
+                this.getDropped(grabber.getLocation());
+                grabber.carryingRobot = null;
+            }
             if (this.isBeingThrown()) {
                 this.travelFlying(false); // This will call hitTarget or hitGround if we hit something or run out of time
                 if (this.isBeingThrown()) {
