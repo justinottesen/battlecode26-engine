@@ -2,9 +2,9 @@ package battlecode.common;
 
 public enum UnitType {
     // health, size, speed, visionRadius, actionCooldown
-    RAT(10, 1, 5, 250, 90, 0),
-    RAT_KING(50, 3, 1, 150, 360, -1),
-    CAT(500,2,10,0,180, 0);
+    RAT(20, 1, 5, 20, 90, 0, 17500),
+    RAT_KING(150, 3, 1, 29, 90, -1, 20000),
+    CAT(1000,2,10,37,180, 0, -1);
 
     // amount of health robot initially starts with
     public final int health;
@@ -16,13 +16,20 @@ public enum UnitType {
     public final int speed;
 
     // robot's vision radius
-    public final int visionConeRadius;
+    public final int visionConeRadiusSquared;
 
     // robot's vision cone angle (in degrees)
     public final int visionConeAngle;
 
-    // number of turns before unit can act again
+    // amount action cooldown gets incremented for taking an action
     public final int actionCooldown;
+
+    // robot's bytecode limit
+    public final int bytecodeLimit;
+
+    public boolean usesTopRightLocationForDistance(){
+        return this.size % 2 == 0;
+    }
 
     public boolean isRobotType(){
         return this == RAT || this == CAT || this == RAT_KING;
@@ -49,33 +56,34 @@ public enum UnitType {
     }
 
     public MapLocation[] getAllLocations(MapLocation center){
+        // return in CCW order starting from top left
         MapLocation[] locs = new MapLocation[size * size];
         int c = 0;
         for (int i = - (size-1) / 2; i <= size / 2; i++){
             for (int j = - (size-1) / 2; j <= size / 2; j++){
-                locs[c] = new MapLocation(center.x + i, center.y + j);
+                locs[c] = new MapLocation(center.x + i, center.y - j);
                 c += 1;
             }
         }
         return locs;
     }
   
-    UnitType(int health, int size, int speed, int visionConeRadius, int visionConeAngle, int actionCooldown) {
+    UnitType(int health, int size, int speed, int visionConeRadius, int visionConeAngle, int actionCooldown, int bytecodeLimit) {
         this.health = health;
         this.size = size;
         this.speed = speed;
-        this.visionConeRadius = visionConeRadius;
+        this.visionConeRadiusSquared = visionConeRadius;
         this.visionConeAngle = visionConeAngle;
         this.actionCooldown = actionCooldown;
+        this.bytecodeLimit = bytecodeLimit;
     }
 
     // Getters 
-    // (we didn't have these before so unclear how useful they are but
-    // I'm adding them for completeness)
     public int getHealth() { return health; }
     public int getSize() { return size; }
     public int getSpeed() { return speed; }
-    public int getVisionRadius() { return visionConeRadius; }
+    public int getVisionRadiusSquared() { return visionConeRadiusSquared; }
     public int getVisionAngle() { return visionConeAngle; }
     public int getActionCooldown() { return actionCooldown; }
+    public int getBytecodeLimit() {return bytecodeLimit; }
 }

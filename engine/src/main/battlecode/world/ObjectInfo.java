@@ -32,6 +32,8 @@ public class ObjectInfo {
 
     private final TIntObjectHashMap<InternalRobot> gameRobotsByID;
 
+    private final TIntObjectHashMap<Integer> catHealthByID;
+
     // private SpatialIndex robotIndex;
 
     private final TIntArrayList dynamicBodyExecOrder;
@@ -46,6 +48,8 @@ public class ObjectInfo {
         // this.mapTopLeft = gm.getOrigin();
 
         this.gameRobotsByID = new TIntObjectHashMap<>();
+
+        this.catHealthByID = new TIntObjectHashMap<Integer>();
 
         // robotIndex = new RTree();
 
@@ -131,12 +135,18 @@ public class ObjectInfo {
         return gameRobotsByID.get(id);
     }
 
+    public void updateCatHealth(int id, int newHealth){
+        catHealthByID.put(id, newHealth);
+    }
+
     // public void moveRobot(InternalRobot robot, MapLocation newLocation) {
     //     // MapLocation loc = robot.getLocation();
 
     //     // robotIndex.delete(fromPoint(loc),robot.getID());
     //     // robotIndex.add(fromPoint(newLocation),robot.getID());
     // }
+
+    // TODO: do we need this robot index stuff anymore? can we just delete it?
 
     public void clearRobotIndex(InternalRobot robot) {
         // robotIndex.delete(fromPoint(robot.getLocation()), robot.getID());
@@ -156,6 +166,10 @@ public class ObjectInfo {
 
         int id = robot.getID();
         gameRobotsByID.put(id, robot);
+
+        if(robot.getType() == UnitType.CAT){
+            catHealthByID.put(id, robot.getHealth());
+        }
 
         dynamicBodyExecOrder.add(id);
 
@@ -177,6 +191,10 @@ public class ObjectInfo {
 
     public void destroyRobot(int id) {
         InternalRobot robot = getRobotByID(id);
+
+        if(robot.getType() == UnitType.CAT){
+            catHealthByID.remove(id);
+        }
 
         decrementRobotCount(robot.getTeam());
         decrementRobotTypeCount(robot.getTeam(), robot.getType());

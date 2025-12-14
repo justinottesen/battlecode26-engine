@@ -10,10 +10,9 @@ export declare class RobotTypeMetadata {
     actionCooldown(): number;
     movementCooldown(): number;
     baseHealth(): number;
-    basePaint(): number;
-    maxPaint(): number;
-    actionRadiusSquared(): number;
-    visionRadiusSquared(): number;
+    maxCheese(): number;
+    visionConeRadiusSquared(): number;
+    visionConeAngle(): number;
     messageRadiusSquared(): number;
     bytecodeLimit(): number;
     static startRobotTypeMetadata(builder: flatbuffers.Builder): void;
@@ -21,12 +20,11 @@ export declare class RobotTypeMetadata {
     static addActionCooldown(builder: flatbuffers.Builder, actionCooldown: number): void;
     static addMovementCooldown(builder: flatbuffers.Builder, movementCooldown: number): void;
     static addBaseHealth(builder: flatbuffers.Builder, baseHealth: number): void;
-    static addBasePaint(builder: flatbuffers.Builder, basePaint: number): void;
-    static addMaxPaint(builder: flatbuffers.Builder, maxPaint: number): void;
-    static addActionRadiusSquared(builder: flatbuffers.Builder, actionRadiusSquared: number): void;
-    static addVisionRadiusSquared(builder: flatbuffers.Builder, visionRadiusSquared: number): void;
+    static addMaxCheese(builder: flatbuffers.Builder, maxCheese: number): void;
+    static addVisionConeRadiusSquared(builder: flatbuffers.Builder, visionConeRadiusSquared: number): void;
+    static addVisionConeAngle(builder: flatbuffers.Builder, visionConeAngle: number): void;
     static addMessageRadiusSquared(builder: flatbuffers.Builder, messageRadiusSquared: number): void;
     static addBytecodeLimit(builder: flatbuffers.Builder, bytecodeLimit: number): void;
     static endRobotTypeMetadata(builder: flatbuffers.Builder): flatbuffers.Offset;
-    static createRobotTypeMetadata(builder: flatbuffers.Builder, type: RobotType, actionCooldown: number, movementCooldown: number, baseHealth: number, basePaint: number, maxPaint: number, actionRadiusSquared: number, visionRadiusSquared: number, messageRadiusSquared: number, bytecodeLimit: number): flatbuffers.Offset;
+    static createRobotTypeMetadata(builder: flatbuffers.Builder, type: RobotType, actionCooldown: number, movementCooldown: number, baseHealth: number, maxCheese: number, visionConeRadiusSquared: number, visionConeAngle: number, messageRadiusSquared: number, bytecodeLimit: number): flatbuffers.Offset;
 }

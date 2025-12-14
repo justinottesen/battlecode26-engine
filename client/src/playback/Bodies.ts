@@ -6,7 +6,6 @@ import * as renderUtils from '../util/RenderUtil'
 import { MapEditorBrush } from '../components/sidebar/map-editor/MapEditorBrush'
 import { StaticMap } from './Map'
 import { Vector, vectorDistSquared, vectorEq } from './Vector'
-import { Colors, currentColors } from '../colors'
 import {
     INDICATOR_DOT_SIZE,
     INDICATOR_LINE_WIDTH,
@@ -17,7 +16,7 @@ import {
 } from '../constants'
 import Match from './Match'
 import { ClientConfig } from '../client-config'
-import { TowerBrush } from './Brushes'
+import { CatBrush, RatKingBrush, RobotBrush } from './Brushes'
 import { getImageIfLoaded } from '../util/ImageLoader'
 
 export default class Bodies {
@@ -75,13 +74,46 @@ export default class Bodies {
 
         const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
 
+        
+
         const body = new bodyClass(this.game, pos, team, id)
+
+        // if (this.checkBodyCollisionAtLocation(type, pos)) {
+        //     assert.fail(`Trying to spawn body of type ${type} at occupied location (${pos.x}, ${pos.y})`)
+        // }
+
         this.bodies.set(id, body)
 
         // Populate default hp, cooldowns, etc
         body.populateDefaultValues()
 
         return body
+    }
+
+    checkBodyCollisionAtLocation(type: schema.RobotType, pos: Vector): boolean {
+        const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
+        const tempBody = new bodyClass(this.game, pos, this.game.getTeamByID(1), 0)
+        const bodySize = tempBody.size;
+        const occupiedSpaces: Vector[] = []
+
+        for (const otherBody of this.bodies.values()) {
+            if (otherBody.id === tempBody.id || otherBody.dead) continue // skip self or dead
+            for(let xoff = 0; xoff < otherBody.size; xoff++){
+                for(let yoff = 0; yoff < otherBody.size; yoff++){
+                    occupiedSpaces.push({ x: otherBody.pos.x + xoff, y: otherBody.pos.y - yoff } )
+                    // console.log(`Added occupied space at (${otherBody.pos.x + xoff}, ${otherBody.pos.y - yoff}) for body ID ${otherBody.id}`) ;
+                }
+            }
+        }
+        // check occupied spaces
+        for (const space of occupiedSpaces){
+            // console.log(`Checking occupied space at (${space.x}, ${space.y}) against new body at (${pos.x}, ${pos.y}) with size ${bodySize}`) ;
+            if(space.x-pos.x < bodySize &&  space.x-pos.x >= 0 && pos.y-space.y < bodySize && pos.y-space.y >= 0){
+                return true;
+            }
+        }
+
+        return false
     }
 
     markBodyAsDead(id: number): void {
@@ -117,7 +149,6 @@ export default class Bodies {
         // Update properties
         body.pos = { x: turn.x(), y: turn.y() }
         body.hp = Math.max(turn.health(), 0)
-        body.paint = turn.paint()
         body.moveCooldown = turn.moveCooldown()
         body.actionCooldown = turn.actionCooldown()
         body.bytecodesUsed = turn.bytecodesUsed()
@@ -148,7 +179,10 @@ export default class Bodies {
         bodyCtx: CanvasRenderingContext2D | null,
         overlayCtx: CanvasRenderingContext2D | null,
         config: ClientConfig,
+        // multiSelectMode: boolean = false,
         selectedBodyID?: number,
+        selectedBodyIDs?: Array<number>,
+        focusedBodyIDs?: Array<number>,
         hoveredTile?: Vector
     ): void {
         for (const body of this.bodies.values()) {
@@ -156,10 +190,11 @@ export default class Bodies {
                 body.draw(match, bodyCtx)
             }
 
-            const selected = selectedBodyID === body.id
+            const selected = selectedBodyID === body.id || !!selectedBodyIDs?.includes(body.id)
             const hovered = !!hoveredTile && vectorEq(body.pos, hoveredTile)
+            const focused = !!focusedBodyIDs?.includes(body.id)
             if (overlayCtx) {
-                body.drawOverlay(match, overlayCtx, config, selected, hovered)
+                body.drawOverlay(match, overlayCtx, config, selected && focused, hovered || (selected && !focused))
             }
         }
     }
@@ -190,7 +225,7 @@ export default class Bodies {
     }
 
     getEditorBrushes(round: Round): MapEditorBrush[] {
-        return [new TowerBrush(round)]
+        return [new RatKingBrush(round), new CatBrush(round), new RobotBrush(round)]
     }
 
     toInitialBodyTable(builder: flatbuffers.Builder): number {
@@ -215,8 +250,8 @@ export default class Bodies {
 export class Body {
     public robotName: string = ''
     public robotType: schema.RobotType = schema.RobotType.NONE
-    protected imgPath: string = ''
-    protected size: number = 1
+    public imgPath: string = ''
+    public size: number = 1
     public lastPos: Vector
     private prevSquares: Vector[]
     public indicatorDots: { location: Vector; color: string }[] = []
@@ -225,8 +260,7 @@ export class Body {
     public dead: boolean = false
     public hp: number = 0
     public maxHp: number = 1
-    public paint: number = 0
-    public maxPaint: number = 0
+    public direction: number = 0 // in degrees
     public level: number = 1 // For towers
     public moveCooldown: number = 0
     public actionCooldown: number = 0
@@ -263,14 +297,22 @@ export class Body {
         if (focused || config.showAllRobotRadii) {
             this.drawRadii(match, ctx, !selected)
         }
-        if (focused || config.showAllIndicators) {
-            this.drawIndicators(match, ctx, !selected && !config.showAllIndicators)
+        // Determine whether to show indicators for this body. Indicators show if
+        // user selects to see indicators for the team of this body, to show all indicators,
+        // or if this body is selected / hovered.
+        const teamIndicatorsEnabled =
+            config.showAllIndicators ||
+            (config.showTeamOneIndicators && this.team.id === 1) ||
+            (config.showTeamTwoIndicators && this.team.id === 2)
+
+        if (focused || teamIndicatorsEnabled) {
+            // If user is hovering without selecting the body / opting in to see indicators,
+            // show indicators lightly
+            const lighter = !selected && !teamIndicatorsEnabled
+            this.drawIndicators(match, ctx, lighter, config.indicatorOpacity)
         }
         if (focused || config.showHealthBars) {
             this.drawHealthBar(match, ctx)
-        }
-        if (focused || config.showPaintBars) {
-            this.drawPaintBar(match, ctx, focused || config.showHealthBars)
         }
 
         // Draw bytecode overage indicator
@@ -287,6 +329,11 @@ export class Body {
     public draw(match: Match, ctx: CanvasRenderingContext2D): void {
         const pos = this.getInterpolatedCoords(match)
         const renderCoords = renderUtils.getRenderCoords(pos.x, pos.y, match.currentRound.map.staticMap.dimension)
+
+
+        renderCoords.x += (this.size-1)*0.5
+        renderCoords.y += (this.size-1)*0.5
+
 
         if (this.dead) ctx.globalAlpha = 0.5
         renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded(this.imgPath), renderCoords, this.size)
@@ -340,6 +387,41 @@ export class Body {
         return coords
     }
 
+    private getAllLocationsWithinFOVAndRadiusSquared(
+        match: Match,
+        location: Vector,
+        radius: number,
+        direction: number,
+        fov: number
+    ) {
+        const ceiledRadius = Math.ceil(Math.sqrt(radius)) + 1
+        const minX = Math.max(location.x - ceiledRadius, 0)
+        const minY = Math.max(location.y - ceiledRadius, 0)
+        const maxX = Math.min(location.x + ceiledRadius, match.map.width - 1)
+        const maxY = Math.min(location.y + ceiledRadius, match.map.height - 1)
+
+        const coords: Vector[] = []
+        const halfFOV = fov / 2
+        const directionRad = (direction * Math.PI) / 180
+
+        for (let x = minX; x <= maxX; x++) {
+            for (let y = minY; y <= maxY; y++) {
+                const dx = x - location.x
+                const dy = y - location.y
+                if (dx * dx + dy * dy <= radius) {
+                    const angleToPoint = Math.atan2(dy, dx)
+                    let angleDiff = angleToPoint - directionRad
+                    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI)) - Math.PI //normalize angle difference
+                    if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180) {
+                        coords.push({ x, y })
+                    }
+                }
+            }
+        }
+
+        return coords
+    }
+
     private drawEdges(match: Match, ctx: CanvasRenderingContext2D, lightly: boolean, squares: Array<Vector>) {
         for (let i = 0; i < squares.length; ++i) {
             const squarePos = squares[i]
@@ -381,21 +463,23 @@ export class Body {
     }
 
     private drawRadii(match: Match, ctx: CanvasRenderingContext2D, lightly: boolean) {
-        // const pos = this.getInterpolatedCoords(match)
-        const pos = this.pos
+        // TODO: support vision cone
 
-        if (lightly) ctx.globalAlpha = 0.5
-        const squares = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.actionRadiusSquared())
-        ctx.beginPath()
-        ctx.strokeStyle = 'red'
-        ctx.lineWidth = 0.1
-        this.drawEdges(match, ctx, lightly, squares)
+        //// const pos = this.getInterpolatedCoords(match)
+        //const pos = this.pos
 
-        ctx.beginPath()
-        ctx.strokeStyle = 'blue'
-        ctx.lineWidth = 0.1
-        const squares2 = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.visionRadiusSquared())
-        this.drawEdges(match, ctx, lightly, squares2)
+        //if (lightly) ctx.globalAlpha = 0.5
+        //const squares = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.actionRadiusSquared())
+        //ctx.beginPath()
+        //ctx.strokeStyle = 'red'
+        //ctx.lineWidth = 0.1
+        //this.drawEdges(match, ctx, lightly, squares)
+
+        //ctx.beginPath()
+        //ctx.strokeStyle = 'blue'
+        //ctx.lineWidth = 0.1
+        //const squares2 = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.visionRadiusSquared())
+        //this.drawEdges(match, ctx, lightly, squares2)
 
         // Currently vision/message radius are always the same
         /*
@@ -409,11 +493,11 @@ export class Body {
         ctx.globalAlpha = 1
     }
 
-    private drawIndicators(match: Match, ctx: CanvasRenderingContext2D, lighter: boolean): void {
+    private drawIndicators(match: Match, ctx: CanvasRenderingContext2D, lighter: boolean, opacity: number): void {
         const dimension = match.currentRound.map.staticMap.dimension
         // Render indicator dots
         for (const data of this.indicatorDots) {
-            ctx.globalAlpha = lighter ? 0.5 : 1
+            ctx.globalAlpha = lighter ? 0.5 : opacity / 100
             const coords = renderUtils.getRenderCoords(data.location.x, data.location.y, dimension)
             ctx.beginPath()
             ctx.arc(coords.x + 0.5, coords.y + 0.5, INDICATOR_DOT_SIZE, 0, 2 * Math.PI, false)
@@ -424,7 +508,7 @@ export class Body {
 
         ctx.lineWidth = INDICATOR_LINE_WIDTH
         for (const data of this.indicatorLines) {
-            ctx.globalAlpha = lighter ? 0.5 : 1
+            ctx.globalAlpha = lighter ? 0.5 : opacity / 100
             const start = renderUtils.getRenderCoords(data.start.x, data.start.y, dimension)
             const end = renderUtils.getRenderCoords(data.end.x, data.end.y, dimension)
             ctx.beginPath()
@@ -451,44 +535,6 @@ export class Body {
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth * (this.hp / this.maxHp), hpBarHeight)
     }
 
-    private drawPaintBar(match: Match, ctx: CanvasRenderingContext2D, healthVisible: boolean): void {
-        const dimension = match.currentRound.map.staticMap.dimension
-        const interpCoords = this.getInterpolatedCoords(match)
-        const renderCoords = renderUtils.getRenderCoords(interpCoords.x, interpCoords.y, dimension)
-        const paintBarWidth = 0.8
-        const paintBarHeight = 0.1
-        const paintBarYOffset = 0.4 + (healthVisible ? 0.11 : 0)
-        const paintBarX = renderCoords.x + 0.5 - paintBarWidth / 2
-        const paintBarY = renderCoords.y + 0.5 + paintBarYOffset
-        ctx.fillStyle = 'rgba(0,0,0,.3)'
-        ctx.fillRect(paintBarX, paintBarY, paintBarWidth, paintBarHeight)
-        ctx.fillStyle = '#c515ed'
-        ctx.fillRect(paintBarX, paintBarY, paintBarWidth * (this.paint / this.maxPaint), paintBarHeight)
-    }
-
-    protected drawLevel(match: Match, ctx: CanvasRenderingContext2D) {
-        if (this.level <= 1) return
-
-        const coords = renderUtils.getRenderCoords(this.pos.x, this.pos.y, match.currentRound.map.staticMap.dimension)
-
-        let numeral
-        if (this.level === 2) {
-            numeral = 'II'
-        } else {
-            numeral = 'III'
-        }
-
-        ctx.font = '0.5px serif'
-        ctx.fillStyle = this.team.color
-        ctx.textAlign = 'right'
-        ctx.shadowColor = 'black'
-        ctx.shadowBlur = 10
-        ctx.fillText(numeral, coords.x + 1 - 0.05, coords.y + 0.4)
-        ctx.shadowColor = ''
-        ctx.shadowBlur = 0
-        ctx.textAlign = 'start'
-    }
-
     public getInterpolatedCoords(match: Match): Vector {
         return renderUtils.getInterpolatedCoords(this.lastPos, this.pos, match.getInterpolationFactor())
     }
@@ -500,7 +546,6 @@ export class Body {
             `${this.robotName}${this.level === 2 ? ' (Lvl II)' : ''}${this.level >= 3 ? ' (Lvl III)' : ''}`,
             `ID: ${this.id}`,
             `HP: ${this.hp}/${this.maxHp}`,
-            `Paint: ${this.paint}/${this.maxPaint}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
@@ -537,8 +582,6 @@ export class Body {
 
         this.maxHp = metadata.baseHealth()
         this.hp = this.maxHp
-        this.maxPaint = metadata.maxPaint()
-        this.paint = metadata.basePaint()
         this.actionCooldown = metadata.actionCooldown()
         this.moveCooldown = metadata.movementCooldown()
     }
@@ -573,65 +616,15 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
     },
 
-    [schema.RobotType.DEFENSE_TOWER]: class DefenseTower extends Body {
-        public robotName = 'DefenseTower'
+    [schema.RobotType.RAT]: class Rat extends Body {
+        public robotName = 'Rat'
 
         constructor(game: Game, pos: Vector, team: Team, id: number) {
             super(game, pos, team, id)
-            this.robotName = `${team.colorName} Defense Tower`
-            this.robotType = schema.RobotType.DEFENSE_TOWER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/defense_tower_64x64.png`
-            this.size = 1.5
-        }
-
-        public draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            super.draw(match, ctx)
-            super.drawLevel(match, ctx)
-        }
-    },
-
-    [schema.RobotType.MONEY_TOWER]: class MoneyTower extends Body {
-        public robotName = 'MoneyTower'
-
-        constructor(game: Game, pos: Vector, team: Team, id: number) {
-            super(game, pos, team, id)
-            this.robotName = `${team.colorName} Money Tower`
-            this.robotType = schema.RobotType.MONEY_TOWER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/money_tower_64x64.png`
-            this.size = 1.5
-        }
-
-        public draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            super.draw(match, ctx)
-            super.drawLevel(match, ctx)
-        }
-    },
-
-    [schema.RobotType.PAINT_TOWER]: class PaintTower extends Body {
-        public robotName = 'PaintTower'
-
-        constructor(game: Game, pos: Vector, team: Team, id: number) {
-            super(game, pos, team, id)
-            this.robotName = `${team.colorName} Paint Tower`
-            this.robotType = schema.RobotType.PAINT_TOWER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/paint_tower_64x64.png`
-            this.size = 1.5
-        }
-
-        public draw(match: Match, ctx: CanvasRenderingContext2D): void {
-            super.draw(match, ctx)
-            super.drawLevel(match, ctx)
-        }
-    },
-
-    [schema.RobotType.MOPPER]: class Mopper extends Body {
-        public robotName = 'Mopper'
-
-        constructor(game: Game, pos: Vector, team: Team, id: number) {
-            super(game, pos, team, id)
-            this.robotName = `${team.colorName} Mopper`
-            this.robotType = schema.RobotType.MOPPER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/mopper_64x64.png`
+            this.robotName = `${team.colorName} Rat`
+            this.robotType = schema.RobotType.RAT
+            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_64x64.png`
+            this.size = 1
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
@@ -639,14 +632,15 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
     },
 
-    [schema.RobotType.SOLDIER]: class Soldier extends Body {
-        public robotName = 'Soldier'
+    [schema.RobotType.RAT_KING]: class RatKing extends Body {
+        public robotName = 'RatKing'
 
         constructor(game: Game, pos: Vector, team: Team, id: number) {
             super(game, pos, team, id)
-            this.robotName = `${team.colorName} Soldier`
-            this.robotType = schema.RobotType.SOLDIER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/soldier_64x64.png`
+            this.robotName = `${team.colorName} Rat King`
+            this.robotType = schema.RobotType.RAT_KING
+            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_64x64.png`
+            this.size = 3
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
@@ -654,14 +648,15 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
     },
 
-    [schema.RobotType.SPLASHER]: class Splasher extends Body {
-        public robotName = 'Splasher'
+    [schema.RobotType.CAT]: class Cat extends Body {
+        public robotName = 'Cat'
 
         constructor(game: Game, pos: Vector, team: Team, id: number) {
             super(game, pos, team, id)
-            this.robotName = `${team.colorName} Splasher`
-            this.robotType = schema.RobotType.SPLASHER
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/splasher_64x64.png`
+            this.robotName = 'Cat'
+            this.robotType = schema.RobotType.CAT
+            this.imgPath = `robots/cat/cat.png`
+            this.size = 2
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
