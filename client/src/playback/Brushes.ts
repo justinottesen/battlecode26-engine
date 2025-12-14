@@ -85,14 +85,16 @@ const makeEditorActionData = (map: StaticMap, atype: schema.Action, tx: number, 
     let targetY = ty
     let validLocFound = false
     // find the first offset that yields a valid square inside the map
+    let nx: number = targetX
+    let ny: number = targetY
     while (!validLocFound) {
-        const nx = tx + Math.random() * 3 - 1
-        const ny = ty + Math.random() * 3 - 1
         if (nx >= 0 && nx < mapWidth && ny >= 0 && ny < mapHeight) {
             targetX = nx
             targetY = ny
             break
         }
+        nx = tx + Math.random() * 3 - 1
+        ny = ty + Math.random() * 3 - 1
     }
 
     const loc = map.locationToIndex(targetX, targetY)
