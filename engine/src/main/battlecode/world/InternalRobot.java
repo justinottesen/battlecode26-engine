@@ -689,10 +689,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
         this.thrownDir = null;
         this.throwDuration = 0;
-        this.addHealth(-GameConstants.THROW_DAMAGE-GameConstants.THROW_DAMAGE_PER_TILE * (2 * this.throwDuration + (isSecondMove ? 0 : 1)));
+        int damage = GameConstants.THROW_DAMAGE-GameConstants.THROW_DAMAGE_PER_TILE * (2 * this.throwDuration + (isSecondMove ? 0 : 1));
+        this.addHealth(-damage);
         this.movementCooldownTurns -= (this.throwDuration-1) * 10;
         this.actionCooldownTurns -= (this.throwDuration-1) * 10;
-        this.gameWorld.getMatchMaker().addImpactAction(this.ID);
+        this.gameWorld.getMatchMaker().addDamageAction(this.ID, damage);
+        this.gameWorld.getMatchMaker().addStunAction(this.ID, GameConstants.THROW_STUN_DURATION);
     }
 
     public void travelFlying(boolean isSecondMove) {

@@ -550,6 +550,13 @@ public class GameMaker {
             });
         }
 
+        public void addStunAction(int robotID, int cooldown) {
+            applyToBuilders((builder) -> {
+                int action = StunAction.createStunAction(builder, robotID, cooldown);
+                builder.addAction(action, Action.StunAction);
+            });
+        }
+
         // TODO: add the rest
 
         public void addPlaceTrapAction(int trapID, MapLocation loc, Team team, TrapType type) {
