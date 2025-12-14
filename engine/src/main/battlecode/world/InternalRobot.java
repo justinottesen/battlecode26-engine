@@ -401,12 +401,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
         MapLocation[] locs = this.getAllPartLocations();
         for (MapLocation loc : locs) {
             MapLocation newloc = loc.translate(dx, dy);
-            if (!this.gameWorld.getGameMap().onTheMap(newloc))
+            if (!this.gameWorld.getGameMap().onTheMap(newloc)) // TODO this fails to check whether or not non-central parts of big robots are on the map!
                 return false;
-            if ((this.gameWorld.getRobot(newloc) != null) && (this.gameWorld.getRobot(newloc).getID() != this.getID())){
+            if ((this.gameWorld.getRobot(newloc) != null) && (this.gameWorld.getRobot(newloc).getID() != this.getID())){ // TODO this fails to check for other robots in non-central parts of big robots!
                 return false;
             }
-            if (!this.gameWorld.isPassable(newloc))
+            if (!this.gameWorld.isPassable(newloc)) // TODO this fails to check for passability in non-central parts of big robots!
                return false;
         }
         return true;
@@ -559,7 +559,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             throw new RuntimeException("Unit must be a rat to grab other rats");
         } else if (!loc.isAdjacentTo(this.getLocation())) {
             throw new RuntimeException("A rat can only grab adjacent rats");
-        } else if (!canSenseLocation(loc)) { // TODO replace with checking if the target robot is in front of this robot
+        } else if (!canSenseLocation(loc)) {
             throw new RuntimeException("A rat can only grab robots in front of it");
         } else if (this.isCarryingRobot()) {
             throw new RuntimeException("Already carrying a rat");
@@ -573,7 +573,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 && !targetRobot.isBeingThrown()) {
             boolean canGrab = false;
             
-            if (!targetRobot.canSenseLocation(this.location)) { // TODO replace with checking if the enemy robot is facing away from this robot
+            if (!targetRobot.canSenseLocation(this.location)) {
                 canGrab = true; // We can always grab robots facing away from us
             } else if (this.team == this.gameWorld.getRobot(loc).getTeam()) {
                 canGrab = true; // We can always grab allied robots
@@ -616,8 +616,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.movementCooldownTurns += GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
         this.actionCooldownTurns += GameConstants.THROW_DURATION + GameConstants.THROW_STUN_DURATION;
         this.gameWorld.removeRobot(getLocation());
-        if (this.isCarryingRobot()) { // If we were carrying a robot, drop it TODO actually do this???
-            this.carryingRobot.getDropped(getLocation()); // TODO check about max tower height
+        if (this.isCarryingRobot()) { // If we were carrying a robot, drop it
+            this.carryingRobot.getDropped(getLocation()); // TODO rat tower???
             this.carryingRobot = null;
         }
 
