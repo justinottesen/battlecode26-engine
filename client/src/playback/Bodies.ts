@@ -526,21 +526,21 @@ export class Body {
     private drawRadii(match: Match, ctx: CanvasRenderingContext2D, lightly: boolean) {
         // TODO: support vision cone
 
-        //// const pos = this.getInterpolatedCoords(match)
-        //const pos = this.pos
+        // const pos = this.getInterpolatedCoords(match)
+        const pos = this.pos
 
-        //if (lightly) ctx.globalAlpha = 0.5
-        //const squares = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.actionRadiusSquared())
-        //ctx.beginPath()
-        //ctx.strokeStyle = 'red'
-        //ctx.lineWidth = 0.1
-        //this.drawEdges(match, ctx, lightly, squares)
+        if (lightly) ctx.globalAlpha = 0.5
+        // const squares = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.actionRadiusSquared())
+        // ctx.beginPath()
+        // ctx.strokeStyle = 'red'
+        // ctx.lineWidth = 0.1
+        // this.drawEdges(match, ctx, lightly, squares)
 
-        //ctx.beginPath()
-        //ctx.strokeStyle = 'blue'
-        //ctx.lineWidth = 0.1
-        //const squares2 = this.getAllLocationsWithinRadiusSquared(match, pos, this.metadata.visionRadiusSquared())
-        //this.drawEdges(match, ctx, lightly, squares2)
+        ctx.beginPath()
+        ctx.strokeStyle = 'blue'
+        ctx.lineWidth = 0.1
+        const squares2 = this.getAllLocationsWithinFOVAndRadiusSquared(match, pos, this.metadata.visionConeRadiusSquared(), this.direction, this.metadata.visionConeAngle())
+        this.drawEdges(match, ctx, lightly, squares2)
 
         // Currently vision/message radius are always the same
         /*
