@@ -668,7 +668,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
         // Target location must be on map and passable (no walls/dirt) and within max pounce distnace
         boolean isWithinPounceDistance = (this.getLocation()
-                    .topLeftDistanceSquaredTo(loc) <= GameConstants.CAT_POUNCE_MAX_DISTANCE_SQUARED);
+                    .bottomLeftDistanceSquaredTo(loc) <= GameConstants.CAT_POUNCE_MAX_DISTANCE_SQUARED);
         if (!this.gameWorld.isPassable(loc) || !isWithinPounceDistance) {
             return null;
         }

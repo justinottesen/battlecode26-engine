@@ -184,7 +184,7 @@ public final class RobotControllerImpl implements RobotController {
         // This handles the angle checking, so we only check distance.
         assertCanSenseLocation(loc);
         int distance = (this.getType().usesTopRightLocationForDistance())
-                ? (getLocation().topLeftDistanceSquaredTo(loc))
+                ? (getLocation().bottomLeftDistanceSquaredTo(loc))
                 : (getLocation().distanceSquaredTo(loc));
         if (distance > maxRadiusSquared)
             throw new GameActionException(OUT_OF_RANGE,
@@ -193,7 +193,7 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanActOffCenterLocation(MapLocation loc, int maxRadiusSquared) throws GameActionException {
         assertNotNull(loc);
-        if (getLocation().topLeftDistanceSquaredTo(loc) > maxRadiusSquared)
+        if (getLocation().bottomLeftDistanceSquaredTo(loc) > maxRadiusSquared)
             throw new GameActionException(OUT_OF_RANGE,
                     "Target location not within action range");
         if (!this.gameWorld.getGameMap().onTheMap(loc))
