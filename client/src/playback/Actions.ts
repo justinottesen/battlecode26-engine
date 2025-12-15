@@ -200,6 +200,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const t = match.getInterpolationFactor()
             const bump = Math.sin(t * Math.PI * 8) * 0.03
             const half = 0.5 + bump
+            const radius = 0.08 // corner radius
 
             ctx.save()
             ctx.shadowBlur = 12
@@ -207,7 +208,13 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             ctx.strokeStyle = src.team.color
             ctx.globalAlpha = 0.7
             ctx.lineWidth = 0.04
-            ctx.strokeRect(srcCoords.x - half, srcCoords.y - half, half * 2, half * 2)
+            ctx.beginPath()
+            ctx.moveTo(srcCoords.x - half + radius, srcCoords.y - half)
+            ctx.arcTo(srcCoords.x + half, srcCoords.y - half, srcCoords.x + half, srcCoords.y + half, radius)
+            ctx.arcTo(srcCoords.x + half, srcCoords.y + half, srcCoords.x - half, srcCoords.y + half, radius)
+            ctx.arcTo(srcCoords.x - half, srcCoords.y + half, srcCoords.x - half, srcCoords.y - half, radius)
+            ctx.arcTo(srcCoords.x - half, srcCoords.y - half, srcCoords.x + half, srcCoords.y - half, radius)
+            ctx.stroke()
             ctx.restore()
             ctx.restore() 
         }
