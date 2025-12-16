@@ -618,7 +618,7 @@ public class GameWorld {
      * @return whether all cats dead
      */
     public boolean setWinnerifAllCatsDead() {        
-        if(this.getNumCats() == 0){
+        if(this.getNumCats() == 0 && this.isCooperation){ // only end game if no more cats in cooperation mode
             // find out which team won via points
             if (setWinnerIfMorePoints())
                 return true;
@@ -756,7 +756,6 @@ public class GameWorld {
             return;
         }
         
-        // TODO: if cooperation, even if cat dies, game continues?    
         throw new InternalError("Reporting incorrect win");
     }
 
