@@ -1,6 +1,7 @@
 package battlecode.util;
 
 import battlecode.common.TrapType;
+import battlecode.common.Direction;
 import battlecode.common.UnitType;
 import battlecode.schema.VecTable;
 import battlecode.schema.WinType;
@@ -70,6 +71,35 @@ public class FlatHelpers {
                 return 3;
             default:
                 throw new RuntimeException("Cannot find byte encoding for " + type);
+        }
+    }
+
+    public static Direction getDirectionFromAngle(int angle){
+        // TODO: need to implement this
+        return Direction.NORTH;
+    }
+
+    public static int getAngleFromDirection(Direction dir){
+        // TODO: need to implement this
+        switch (dir){
+            case NORTH:
+                return 0;
+            case SOUTH:
+                return 180;
+            case EAST:
+                return 90;
+            case WEST:
+                return 270;
+            case NORTHEAST:
+                return 45;
+            case SOUTHEAST:
+                return 135;
+            case SOUTHWEST:
+                return 215;
+            case NORTHWEST:
+                return 315;
+            default:
+                throw new RuntimeException("Invalid diretion " + dir);
         }
     }
 

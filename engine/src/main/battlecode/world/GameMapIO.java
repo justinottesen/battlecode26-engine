@@ -300,6 +300,7 @@ public final class GameMapIO {
             ArrayList<Byte> bodyTypes = new ArrayList<>();
             ArrayList<Integer> bodyLocsXs = new ArrayList<>();
             ArrayList<Integer> bodyLocsYs = new ArrayList<>();
+            ArrayList<Integer> bodyDirs = new ArrayList<>();
 
             ArrayList<Boolean> wallArrayList = new ArrayList<>();
             ArrayList<Boolean> dirtArrayList = new ArrayList<>();
@@ -309,6 +310,7 @@ public final class GameMapIO {
 
             for (RobotInfo robot : gameMap.getInitialBodies()) {
                 bodyIDs.add(robot.ID);
+                bodyDirs.add(FlatHelpers.getAngleFromDirection(robot.direction));
                 bodyTeamIDs.add(TeamMapping.id(robot.team));
                 bodyTypes.add(FlatHelpers.getRobotTypeFromUnitType(robot.type));
                 
@@ -342,7 +344,7 @@ public final class GameMapIO {
             //         ArrayUtils.toPrimitive(patternArrayList.toArray(new Integer[patternArrayList.size()])));
             // int ruinLocations = FlatHelpers.createVecTable(builder, ruinXsList, ruinYsList);
 
-            int spawnActionVectorOffset = createSpawnActionsVector(builder, bodyIDs, bodyLocsXs, bodyLocsYs,
+            int spawnActionVectorOffset = createSpawnActionsVector(builder, bodyIDs, bodyLocsXs, bodyLocsYs, bodyDirs,
                     bodyTeamIDs, bodyTypes);
             int initialBodyOffset = InitialBodyTable.createInitialBodyTable(builder, spawnActionVectorOffset);
 
@@ -375,6 +377,9 @@ public final class GameMapIO {
                 UnitType bodyType = FlatHelpers.getUnitTypeFromRobotType(curSpawnAction.robotType());
                 int bodyX = curSpawnAction.x();
                 int bodyY = curSpawnAction.y();
+                int angle = curSpawnAction.dir();
+                Direction dir = FlatHelpers.getDirectionFromAngle(angle);
+                System.out.println("Direction is " + curSpawnAction.dir());
 
                 if(bodyType==UnitType.RAT_KING){
                     //translate from top left corner to center
@@ -383,6 +388,7 @@ public final class GameMapIO {
                 }
 
                 Team bodyTeam = TeamMapping.team(curSpawnAction.team());
+                
                 if (teamsReversed) {
                     bodyTeam = bodyTeam.opponent();
                 }
@@ -393,15 +399,17 @@ public final class GameMapIO {
                 boolean initialCrouching = false;
                 int initialCheese = GameConstants.INITIAL_TEAM_CHEESE;
                 RobotInfo carryingRobot = null;
-                initialBodies.add(new RobotInfo(curId, bodyTeam, bodyType, bodyType.health, new MapLocation(bodyX, bodyY), initialCheese, carryingRobot, initialCrouching));
+                initialBodies.add(new RobotInfo(curId, bodyTeam, bodyType, bodyType.health, new MapLocation(bodyX, bodyY), dir, initialCheese, carryingRobot, initialCrouching));
+                
+                System.out.println("DEBUGGING: " + "Unit type " + bodyType + " on team " + curSpawnAction.team() + " at location " + bodyX + ", " + bodyY + " with initial angle " + angle);
             }
         }
 
         private static int createSpawnActionsVector(FlatBufferBuilder builder, ArrayList<Integer> ids,
-                ArrayList<Integer> xs, ArrayList<Integer> ys, ArrayList<Byte> teams, ArrayList<Byte> types) {
+                ArrayList<Integer> xs, ArrayList<Integer> ys, ArrayList<Integer> dirs, ArrayList<Byte> teams, ArrayList<Byte> types) {
             InitialBodyTable.startSpawnActionsVector(builder, ids.size());
             for (int i = 0; i < ids.size(); i++) {
-                SpawnAction.createSpawnAction(builder, ids.get(i), xs.get(i), ys.get(i), teams.get(i), types.get(i));
+                SpawnAction.createSpawnAction(builder, ids.get(i), xs.get(i), ys.get(i), dirs.get(i), teams.get(i), types.get(i));
             }
             return builder.endVector();
         }

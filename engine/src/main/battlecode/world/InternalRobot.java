@@ -284,7 +284,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             return cachedRobotInfo;
         }
 
-        this.cachedRobotInfo = new RobotInfo(ID, team, type, health, location, cheeseAmount,
+        this.cachedRobotInfo = new RobotInfo(ID, team, type, health, location, dir, cheeseAmount,
                 carryingRobot != null ? carryingRobot.getRobotInfo() : null, crouching);
         return this.cachedRobotInfo;
     }
@@ -1058,7 +1058,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     }
 
                     Direction toWaypoint = this.location.directionTo(this.catTargetLoc);
-                    System.out.println("DEBUGGING: " + toWaypoint);
                     this.dir = this.location.directionTo(this.catTargetLoc);
 
                     if (this.movementCooldownTurns == 0 && canMove(toWaypoint.getDeltaX(), toWaypoint.getDeltaY())) {

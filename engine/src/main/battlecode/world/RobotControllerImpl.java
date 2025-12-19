@@ -812,7 +812,7 @@ public final class RobotControllerImpl implements RobotController {
         int cost = getCurrentRatCost();
         this.robot.addCheese(-cost);
         InternalRobot robotSpawned = this.gameWorld.getRobot(loc);
-        this.gameWorld.getMatchMaker().addSpawnAction(robotSpawned.getID(), loc, getTeam(), UnitType.RAT);
+        this.gameWorld.getMatchMaker().addSpawnAction(robotSpawned.getID(), loc, this.robot.getDirection(), getTeam(), UnitType.RAT);
     }
 
     public void assertCanBuildTrap(TrapType type, MapLocation loc) throws GameActionException {
