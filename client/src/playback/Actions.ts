@@ -448,7 +448,55 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
     },
     [schema.Action.UpgradeToRatKing]: class UpgradeToRatKingAction extends Action<schema.UpgradeToRatKing> {
-        // TODO
+        apply(round: Round): void {
+            // change body type to RatKing
+            const body = round.bodies.getById(this.robotId)
+            body.robotType = schema.RobotType.RAT_KING
+        }
+        draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            const body = match.currentRound.bodies.getById(this.robotId)
+            const pos = body.getInterpolatedCoords(match)
+            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+
+            const interp = match.getInterpolationFactor()
+            const pop = Math.sin(interp * Math.PI)
+
+            const radius = 0.5
+            const alpha = 0.5 * (1 - interp)
+
+            const seed = ((pos.x * 413 + pos.y * 619 + match.currentRound.roundNumber * 911) / 100) % 1
+
+            ctx.save()
+            ctx.globalAlpha = alpha
+            ctx.fillStyle = '#ffffff'
+            ctx.beginPath()
+            ctx.arc(coords.x, coords.y, radius, 0, Math.PI * 2)
+
+            const spikeCount = 30
+            const baseSpikeLen = 0.1 + 0.1 * pop
+
+            ctx.strokeStyle = '#ffffff'
+            ctx.lineWidth = 0.06
+            ctx.lineCap = 'round'
+
+            for (let i = 0; i < spikeCount; i++) {
+                const angle = (i / spikeCount) * Math.PI * 2 + seed * Math.PI * 0.4
+
+                const len = baseSpikeLen * (0.6 + 0.6 * Math.abs(Math.sin(i * 73.1 + seed * 19)))
+
+                const x1 = coords.x + Math.cos(angle) * radius
+                const y1 = coords.y + Math.sin(angle) * radius
+                const x2 = coords.x + Math.cos(angle) * (radius + len)
+                const y2 = coords.y + Math.sin(angle) * (radius + len)
+
+                ctx.beginPath()
+                ctx.moveTo(x1, y1)
+                ctx.lineTo(x2, y2)
+                ctx.stroke()
+            }
+
+            ctx.restore()
+        }
     },
     [schema.Action.RatSqueak]: class RatSqueakAction extends Action<schema.RatSqueak> {
         // TODO
