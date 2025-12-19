@@ -139,6 +139,10 @@ const makeEditorActionData = (
             return { id: () => targetId }
         case schema.Action.TriggerTrap:
             return { loc: () => loc, team: () => 0 }
+        case schema.Action.ThrowRat:
+            return { id: () => targetId, loc: () => map.locationToIndex(targetX, targetY + 2) }
+        case schema.Action.UpgradeToRatKing:
+            return { phantom: () => targetId }
         default:
             return {}
     }
@@ -203,7 +207,9 @@ export class RobotBrush extends SinglePointMapEditorBrush<StaticMap> {
                 { value: schema.Action.RatAttack, label: 'Rat Attack' },
                 { value: schema.Action.RatCollision, label: 'Rat Collision' },
                 { value: schema.Action.RatNap, label: 'Rat Nap' },
-                { value: schema.Action.TriggerTrap, label: 'Trigger Trap' }
+                { value: schema.Action.TriggerTrap, label: 'Trigger Trap' },
+                { value: schema.Action.ThrowRat, label: 'Throw Rat' },
+                { value: schema.Action.UpgradeToRatKing, label: 'Upgrade To Rat King' }
             ]
         }
     }

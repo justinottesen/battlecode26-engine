@@ -390,8 +390,63 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             ctx.globalAlpha = 1
         }
     },
-    [schema.Action.ThrowRat]: class ThrowRatAction extends Action<schema.ThrowRat> {},
-    // TODO
+    [schema.Action.ThrowRat]: class ThrowRatAction extends Action<schema.ThrowRat> {
+        apply(round: Round): void {
+            // maybe move rat to target loc
+            const body = round.bodies.getById(this.robotId)
+            const endLoc = round.map.indexToLocation(this.actionData.loc())
+        }
+        draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            const body = match.currentRound.bodies.getById(this.robotId)
+            const pos = body.getInterpolatedCoords(match)
+            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+            const interp = match.getInterpolationFactor()
+
+            const from = pos
+            const to = match.currentRound.map.indexToLocation(this.actionData.loc())
+
+            const dx = to.x - from.x
+            const dy = to.y - from.y
+            const mag = Math.hypot(dx, dy)
+            if (mag < 1e-3) return
+
+            const ux = dx / mag
+            const uy = dy / mag
+            const px = -uy
+            const py = ux
+
+            // deterministic jitter
+            const r = ((from.x * 317 + from.y * 911 + match.currentRound.roundNumber * 271) / 100) % 1
+
+            ctx.save()
+
+            ctx.globalAlpha = 0.6 * (1 - interp)
+            ctx.strokeStyle = '#000000'
+            ctx.lineCap = 'round'
+            ctx.lineWidth = 0.1
+
+            const baseLength = 0.6 + 0.3 * interp
+            const spacing = 0.2
+
+            for (let i = -1; i <= 1; i++) {
+                const offset = i * spacing
+                const jitter = (r - 0.5) * 0.15
+
+                const endX = coords.x - ux * 0.3 + px * offset + px * jitter
+                const endY = coords.y - uy * 0.3 + py * offset + py * jitter
+
+                const startX = endX - ux * baseLength
+                const startY = endY - uy * baseLength
+
+                ctx.beginPath()
+                ctx.moveTo(startX, startY)
+                ctx.lineTo(endX, endY)
+                ctx.stroke()
+            }
+
+            ctx.restore()
+        }
+    },
     [schema.Action.UpgradeToRatKing]: class UpgradeToRatKingAction extends Action<schema.UpgradeToRatKing> {
         // TODO
     },
