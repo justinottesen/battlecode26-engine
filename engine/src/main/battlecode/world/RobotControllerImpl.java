@@ -4,6 +4,7 @@ import battlecode.common.*;
 
 import static battlecode.common.GameActionExceptionType.*;
 import battlecode.schema.Action;
+import battlecode.schema.RobotType;
 import battlecode.util.FlatHelpers;
 import battlecode.instrumenter.RobotDeathException;
 
@@ -225,7 +226,8 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
 
-        if (this.robot.getType().isRatType() || this.robot.getType().isRatKingType() && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
+        if (this.robot.getType().isRatType()
+                || this.robot.getType().isRatKingType() && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
             throw new GameActionException(CANT_DO_THAT, "Insufficient cheese to remove dirt!");
         if (!this.gameWorld.getDirt(loc))
             throw new GameActionException(CANT_DO_THAT, "No dirt to remove at that location!");
@@ -666,7 +668,9 @@ public final class RobotControllerImpl implements RobotController {
 
             for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
                 Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
-                boolean wrongTrapType = ((this.getType().isRatType()|| this.getType().isRatKingType()) && trap.getType() == TrapType.CAT_TRAP) || (this.getType().isCatType() && trap.getType() == TrapType.RAT_TRAP);
+                boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
+                        && trap.getType() == TrapType.CAT_TRAP)
+                        || (this.getType().isCatType() && trap.getType() == TrapType.RAT_TRAP);
                 if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
                     continue;
                 }
@@ -835,16 +839,15 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanAttackRat(MapLocation loc) throws GameActionException {
         assertIsActionReady();
-        // TODO: for this and assertCanAttackCat, I don't think we have
-        // 'actionRadiusSquared'/attack radii defined anywhere
-        assertCanActLocation(loc, -1);
+        // Attack is limited to vision radius
+        assertCanActLocation(loc, this.getType().getVisionRadiusSquared());
         if (!this.gameWorld.isPassable(loc))
             throw new GameActionException(CANT_DO_THAT, "Rats cannot attack squares with walls or dirt on them!");
     }
 
     private void assertCanAttackCat(MapLocation loc) throws GameActionException {
         assertIsActionReady();
-        assertCanActLocation(loc, -1);
+        assertCanActLocation(loc, this.getType().getVisionRadiusSquared());
         if (!this.gameWorld.isPassable(loc))
             throw new GameActionException(CANT_DO_THAT, "Cats cannot attack squares with walls or dirt on them!");
     }
@@ -924,7 +927,8 @@ public final class RobotControllerImpl implements RobotController {
 
     @Override
     public void becomeRatKing() throws GameActionException {
-        //TODO: properly destroy all neighboring enemies & absorb cheese + trigger traps as necessary
+        // TODO: properly destroy all neighboring enemies & absorb cheese + trigger
+        // traps as necessary
         assertCanBecomeRatKing();
         int health = 0;
         for (Direction d : Direction.allDirections()) {
