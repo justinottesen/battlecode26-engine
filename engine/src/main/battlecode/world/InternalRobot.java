@@ -729,8 +729,27 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void attack(MapLocation loc) {
         switch (this.getType()) {
             case RAT:
-                // TODO: bite takes in an amount of cheese consumed. How are competitors going to supply this?
                 bite(loc, -1);
+                break;
+            case CAT:
+                scratch(loc);
+                break;
+            default:
+                // TODO
+                break;
+        }
+    }
+
+    /**
+     * Attacks another location.
+     * The type of attack is based on the robot type (specific methods above)
+     * 
+     * @param loc the location of the bot
+     */
+    public void attack(MapLocation loc, int cheese) {
+        switch (this.getType()) {
+            case RAT:
+                bite(loc, cheese);
                 break;
             case CAT:
                 scratch(loc);

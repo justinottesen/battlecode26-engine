@@ -888,6 +888,17 @@ public final class RobotControllerImpl implements RobotController {
         this.robot.attack(loc);
     }
 
+    @Override
+    public void attack(MapLocation loc, int cheese) throws GameActionException {
+        assertCanAttack(loc);
+        if (this.robot.getCheese() + this.gameWorld.getTeamInfo().getCheese(this.robot.getTeam()) < cheese) {
+            throw new GameActionException(CANT_DO_THAT, "Not enough cheese to attack!");
+        }
+        if (this.robot.getType().isRobotType())
+            this.robot.addActionCooldownTurns(this.robot.getType().actionCooldown);
+        this.robot.attack(loc, cheese);
+    }
+
     public void assertCanBecomeRatKing() throws GameActionException {
         assertIsActionReady();
         if (this.gameWorld.getTeamInfo().getCheese(this.robot.getTeam()) < GameConstants.RAT_KING_UPGRADE_CHEESE_COST) {
