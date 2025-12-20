@@ -529,6 +529,14 @@ public class GameMaker {
             });
         }
 
+        public void addCatFeedAction(int sacrificedRatID){
+            applyToBuilders((builder) -> {
+                int action = CatFeed.createCatFeed(builder, sacrificedRatID);
+                builder.addAction(action, Action.CatFeed);
+            });
+        }
+
+
         public void addThrowAction(int thrownRobotID, MapLocation throwDirLocation){
             applyToBuilders((builder) -> {
                 int action = ThrowRat.createThrowRat(builder, thrownRobotID, locationToInt(throwDirLocation));
