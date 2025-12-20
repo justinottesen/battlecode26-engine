@@ -264,4 +264,8 @@ public class GameConstants {
     /** The stun cooldown after hitting the target after being thrown */
     public static final int HIT_TARGET_COOLDOWN = 30;
 
+
+    /** Amount of rounds a cat sleeps for when fed */
+    public static final int CAT_SLEEP_TIME = 2;
+
 }
