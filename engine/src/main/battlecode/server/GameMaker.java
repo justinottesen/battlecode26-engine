@@ -490,7 +490,7 @@ public class GameMaker {
         }
 
         public void endTurn(int robotID, int health, int cheese, int movementCooldown, int actionCooldown, int turningCooldown,
-                int bytecodesUsed, MapLocation loc) {
+                int bytecodesUsed, MapLocation loc, Direction dir) {
             applyToBuilders((builder) -> {
                 builder.startTurn();
 
@@ -503,6 +503,7 @@ public class GameMaker {
                 Turn.addBytecodesUsed(builder, bytecodesUsed);
                 Turn.addX(builder, loc.x);
                 Turn.addY(builder, loc.y);
+                Turn.addDir(builder, FlatHelpers.getOrdinalFromDirection(dir));
 
                 builder.finishTurn();
             });

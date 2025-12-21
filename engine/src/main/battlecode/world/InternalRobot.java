@@ -1037,7 +1037,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.enteredTraps = new ArrayList<>();
 
         this.gameWorld.getMatchMaker().endTurn(this.ID, this.health, this.cheeseAmount, this.movementCooldownTurns,
-                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location);
+                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir);
         this.roundsAlive++;
 
         // cat algo

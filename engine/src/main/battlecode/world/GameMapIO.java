@@ -312,19 +312,10 @@ public final class GameMapIO {
                 bodyIDs.add(robot.ID);
                 bodyDirs.add(FlatHelpers.getOrdinalFromDirection(robot.direction));
                 bodyTeamIDs.add(TeamMapping.id(robot.team));
-                System.out.println("DEBUGGING: " + "serializing " + TeamMapping.id(robot.team));
                 bodyTypes.add(FlatHelpers.getRobotTypeFromUnitType(robot.type));
-                
-                if(robot.type == UnitType.RAT_KING){
-                    // client wants top left of rat king
-                    MapLocation top_left = robot.location.translate(-1, +1);
-                    bodyLocsXs.add(top_left.x);
-                    bodyLocsYs.add(top_left.y);
-                }
-                else{
-                    bodyLocsXs.add(robot.location.x);
-                    bodyLocsYs.add(robot.location.y);
-                }
+ 
+                bodyLocsXs.add(robot.location.x);
+                bodyLocsYs.add(robot.location.y);
             }
 
             for (int i = 0; i < gameMap.getWidth() * gameMap.getHeight(); i++) {
@@ -338,12 +329,6 @@ public final class GameMapIO {
                     ArrayUtils.toPrimitive(wallArrayList.toArray(new Boolean[wallArrayList.size()])));
             int dirtArrayInt = battlecode.schema.GameMap.createDirtVector(builder,
                     ArrayUtils.toPrimitive(dirtArrayList.toArray(new Boolean[dirtArrayList.size()])));
-
-            //TODO: need to fix this stuff
-            // int paintArrayInt = battlecode.schema.GameMap.createPaintVector(builder,
-            //         ArrayUtils.toPrimitive(paintArrayList.toArray(new Byte[paintArrayList.size()])));
-            //         ArrayUtils.toPrimitive(patternArrayList.toArray(new Integer[patternArrayList.size()])));
-            // int ruinLocations = FlatHelpers.createVecTable(builder, ruinXsList, ruinYsList);
 
             int spawnActionVectorOffset = createSpawnActionsVector(builder, bodyIDs, bodyLocsXs, bodyLocsYs, bodyDirs,
                     bodyTeamIDs, bodyTypes);
@@ -379,8 +364,8 @@ public final class GameMapIO {
                 int bodyX = curSpawnAction.x();
                 int bodyY = curSpawnAction.y();
                 int dirOrdinal = curSpawnAction.dir();
-                Direction dir = FlatHelpers.getDirectionFromOrdinal(dirOrdinal);
-                System.out.println("Direction is " + curSpawnAction.dir());
+                
+                Direction dir = FlatHelpers.getDirectionFromOrdinal(dirOrdinal); 
 
                 Team bodyTeam = TeamMapping.team(curSpawnAction.team());
 

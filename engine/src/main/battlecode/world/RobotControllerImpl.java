@@ -808,7 +808,7 @@ public final class RobotControllerImpl implements RobotController {
     public void buildRobot(MapLocation loc) throws GameActionException {
         assertCanBuildRobot(loc);
         this.robot.addActionCooldownTurns(GameConstants.BUILD_ROBOT_COOLDOWN);
-        this.gameWorld.spawnRobot(UnitType.RAT, loc, this.robot.getTeam());
+        this.gameWorld.spawnRobot(UnitType.RAT, loc, this.getDirection(), this.robot.getTeam());
         int cost = getCurrentRatCost();
         this.robot.addCheese(-cost);
         InternalRobot robotSpawned = this.gameWorld.getRobot(loc);
