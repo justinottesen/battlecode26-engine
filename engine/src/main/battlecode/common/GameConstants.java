@@ -59,7 +59,7 @@ public class GameConstants {
     public static final int EXCEPTION_BYTECODE_PENALTY = 500;
 
     /** The amount of cheese each team starts with. */
-    public static final int INITIAL_TEAM_CHEESE = 2500; 
+    public static final int INITIAL_TEAM_CHEESE = 2500;
 
     /** The maximum number of rat kings that a team can have. */
     public static final int MAX_NUMBER_OF_RAT_KINGS = 5; // TODO need to specify!
@@ -83,7 +83,7 @@ public class GameConstants {
     public static final int RATKING_HEALTH_LOSS = 10;
 
     /** Probability parameter for cheese spawn at a mine. **/
-    public static final float CHEESE_MINE_SPAWN_PROBABILITY = 0.15f;
+    public static final float CHEESE_MINE_SPAWN_PROBABILITY = 0.05f;
 
     /** Cheese will spawn within a [-radius, radius] square of the cheese mine **/
     public static final int SQ_CHEESE_SPAWN_RADIUS = 5;
@@ -94,7 +94,10 @@ public class GameConstants {
     /** The number of rat kings a player starts with. */
     public static final int NUMBER_INITIAL_RAT_KINGS = 1;
 
-    /** The maximum distance for transferring cheese to an allied rat king or dropping it on the ground */
+    /**
+     * The maximum distance for transferring cheese to an allied rat king or
+     * dropping it on the ground
+     */
     public static final int CHEESE_DROP_RADIUS_SQUARED = 2;
 
     /** The maximum number of traps a team can have at a given time */
@@ -176,7 +179,7 @@ public class GameConstants {
 
     /** The cheese cost for upgrading a rat into a rat king */
     public static final int RAT_KING_UPGRADE_CHEESE_COST = 50;
-  
+
     /** The cheese cost to dig up a tile of dirt */
     public static final int DIG_DIRT_CHEESE_COST = 10;
 
@@ -242,7 +245,8 @@ public class GameConstants {
     public static final int BUILD_COOLDOWN = 35; // TODO need to specify!
 
     /**
-     * The multiplier to the cooldowns when carrying another robot; TODO increases exponentially when >1 robot is carried?
+     * The multiplier to the cooldowns when carrying another robot; TODO increases
+     * exponentially when >1 robot is carried?
      */
     public static final double CARRY_COOLDOWN_MULTIPLIER = 1.5;
 
