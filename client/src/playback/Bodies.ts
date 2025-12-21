@@ -463,10 +463,10 @@ export class Body {
 
         const coords: Vector[] = []
         const halfFOV = fov / 2
-        if(direction == 0){
+        if (direction == 0) {
             return coords
         }
-        const dirAngle = (direction * 45 + 135)%360
+        const dirAngle = (direction * 45 + 135) % 360
         const directionRad = (dirAngle * Math.PI) / 180
 
         for (let x = minX; x <= maxX; x++) {
@@ -701,6 +701,8 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            const dir = this.direction
+            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_${dir}_64x64.png`
             super.draw(match, ctx)
         }
     },
@@ -717,6 +719,8 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            const dir = this.direction
+            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
             super.draw(match, ctx)
         }
     },
@@ -733,6 +737,8 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
         }
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            const dir = this.direction
+            this.imgPath = `robots/cat/cat_${dir}.png`
             super.draw(match, ctx)
         }
     }
