@@ -196,9 +196,10 @@ public class GameMaker {
 
     /**
      * Write a match out to a file.
+     * 
      * @param saveFile the file to save to
      */
-    
+
     public void writeGame(File saveFile) {
         if (saveFile == null) {
             throw new RuntimeException("Null file provided to writeGame");
@@ -299,7 +300,7 @@ public class GameMaker {
         for (UnitType type : UnitType.values()) {
             // turns all types into level 1 to convert easily into RobotType
             UnitType levelOneType = FlatHelpers.getUnitTypeFromRobotType(FlatHelpers.getRobotTypeFromUnitType(type));
-            
+
             if (type != levelOneType) {
                 continue; // avoid double counting
             }
@@ -520,14 +521,14 @@ public class GameMaker {
             });
         }
 
-        public void addRatNapAction(int grabbedRobotID){
+        public void addRatNapAction(int grabbedRobotID) {
             applyToBuilders((builder) -> {
                 int action = RatNap.createRatNap(builder, grabbedRobotID);
                 builder.addAction(action, Action.RatNap);
             });
         }
 
-        public void addThrowAction(int thrownRobotID, MapLocation throwDirLocation){
+        public void addThrowAction(int thrownRobotID, MapLocation throwDirLocation) {
             applyToBuilders((builder) -> {
                 int action = ThrowRat.createThrowRat(builder, thrownRobotID, locationToInt(throwDirLocation));
                 builder.addAction(action, Action.ThrowRat);
@@ -596,6 +597,13 @@ public class GameMaker {
             applyToBuilders((builder) -> {
                 int action = CheeseTransfer.createCheeseTransfer(builder, toID, amount);
                 builder.addAction(action, Action.CheeseTransfer);
+            });
+        }
+
+        public void addCheeseSpawnAction(MapLocation loc, int amount) {
+            applyToBuilders((builder) -> {
+                int action = CheeseSpawn.createCheeseSpawn(builder, locationToInt(loc), amount);
+                builder.addAction(action, Action.CheeseSpawn);
             });
         }
 

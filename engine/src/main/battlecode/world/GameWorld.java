@@ -348,6 +348,7 @@ public class GameWorld {
 
     public void spawnCheese(CheeseMine mine) {
         boolean spawn = rand.nextFloat() < mine.generationProbability(currentRound);
+
         if (spawn) {
             int dx = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
             int dy = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
@@ -367,10 +368,15 @@ public class GameWorld {
             addCheese(new MapLocation(cheeseX, cheeseY), GameConstants.CHEESE_SPAWN_AMOUNT);
             addCheese(new MapLocation(pairedX, pairedY), GameConstants.CHEESE_SPAWN_AMOUNT);
 
+            System.out.println("New turn" + this.currentRound);
+            System.out.println("DEBUGGING: SPAWNING CHEESE AT " + new MapLocation(cheeseX, cheeseY));
+            System.out.println("DEBUGGING: SPAWNING CHEESE AT " + new MapLocation(pairedX, pairedY));
+
             mine.setLastRound(this.currentRound);
             pairedMine.setLastRound(this.currentRound);
 
-            // matchMaker.addCheeseSpawnAction(mine, loc); TODO: ADD MATCHMAKER
+            matchMaker.addCheeseSpawnAction(new MapLocation(cheeseX, cheeseY));
+            matchMaker.addCheeseSpawnAction(new MapLocation(pairedX, pairedY));
         }
     }
 
