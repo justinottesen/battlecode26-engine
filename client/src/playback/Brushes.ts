@@ -233,7 +233,7 @@ export class RobotBrush extends SinglePointMapEditorBrush<StaticMap> {
             const id = this.bodies.getNextID()
             if (this.bodies.checkBodyCollisionAtLocation(robotType, pos)) return null
 
-            this.bodies.spawnBodyFromValues(id, robotType, team, pos, 0)
+            this.bodies.spawnBodyFromValues(id, robotType, team, pos, 0, 0)
 
             return id
         }
@@ -529,7 +529,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.bodies.checkBodyCollisionAtLocation(schema.RobotType.CAT, pos)) return null
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0)
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, (robotOne ? 0 : 1))
 
             return id
         }
@@ -597,7 +597,7 @@ export class RatKingBrush extends SymmetricMapEditorBrush<StaticMap> {
             }
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0)
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0, 0)
 
             return id
         }
