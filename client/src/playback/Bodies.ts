@@ -68,16 +68,17 @@ export default class Bodies {
         const y = spawnAction.y()
         const dir = spawnAction.dir()
 
-        return this.spawnBodyFromValues(id, robotType, this.game.getTeamByID(team), { x, y }, dir)
+        return this.spawnBodyFromValues(id, robotType, this.game.getTeamByID(team), { x, y }, dir, 0)
     }
 
-    spawnBodyFromValues(id: number, type: schema.RobotType, team: Team, pos: Vector, dir: number): Body {
+    spawnBodyFromValues(id: number, type: schema.RobotType, team: Team, pos: Vector, dir: number, chirality: number): Body {
         assert(!this.bodies.has(id), `Trying to spawn body with id ${id} that already exists`)
 
         const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
 
         const body = new bodyClass(this.game, pos, team, id)
         body.direction = dir
+        body.chirality = chirality
 
         // if (this.checkBodyCollisionAtLocation(type, pos)) {
         //     assert.fail(`Trying to spawn body of type ${type} at occupied location (${pos.x}, ${pos.y})`)
@@ -321,7 +322,8 @@ export class Body {
     public dead: boolean = false
     public hp: number = 0
     public maxHp: number = 1
-    public direction: number = 0 //
+    public direction: number = 0
+    public chirality: number = 0
     public moveCooldown: number = 0
     public actionCooldown: number = 0
     public bytecodesUsed: number = 0
@@ -619,6 +621,7 @@ export class Body {
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
             `Direction: ${DIRECTIONS[this.direction]}`,
+            `Chirality: ${this.chirality}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
