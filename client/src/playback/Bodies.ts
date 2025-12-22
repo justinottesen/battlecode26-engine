@@ -292,6 +292,7 @@ export default class Bodies {
                 body.pos.x,
                 body.pos.y,
                 body.direction,
+                body.chirality,
                 body.team.id,
                 body.robotType
             )
