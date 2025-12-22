@@ -246,12 +246,11 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
-    public void placeDirt(MapLocation loc) {
-        if (canPlaceDirt(loc)) {
-            this.gameWorld.setDirt(loc, true);
-            this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), true);
-            this.robot.addCheese(-1 * GameConstants.PLACE_DIRT_CHEESE_COST);
-        }
+    public void placeDirt(MapLocation loc) throws GameActionException{
+        assertCanPlaceDirt(loc);
+        this.gameWorld.setDirt(loc, true);
+        this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), true);
+        this.robot.addCheese(-1 * GameConstants.PLACE_DIRT_CHEESE_COST);
     }
 
     @Override
@@ -375,13 +374,27 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
-    public void removeDirt(MapLocation loc) {
-        if (canRemoveDirt(loc)) {
-            this.gameWorld.setDirt(loc, false);
-            this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), false);
-            if (this.robot.getType().isRatType() || this.robot.getType().isRatKingType())
-                this.robot.addCheese(-1 * GameConstants.DIG_DIRT_CHEESE_COST);
-        }
+    public void removeDirt(MapLocation loc) throws GameActionException{
+        assertCanRemoveDirt(loc);
+        this.gameWorld.setDirt(loc, false);
+        this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), false);
+        if (this.robot.getType().isRatType() || this.robot.getType().isRatKingType())
+            this.robot.addCheese(-1 * GameConstants.DIG_DIRT_CHEESE_COST);
+    }
+
+    private void assertCanPickUpCheese(MapLocation loc) throws GameActionException {
+        //TODO
+    }
+
+    @Override
+    public boolean canPickUpCheese(MapLocation loc) {
+        return true;
+        //TODO
+    }
+
+    @Override
+    public void pickUpCheese(MapLocation loc) {
+        //TODO
     }
 
     @Override
@@ -682,8 +695,6 @@ public final class RobotControllerImpl implements RobotController {
             assertCanMoveForward();
             return true;
         } catch (GameActionException e) {
-            if (this.robot.getID() == 2)
-                e.printStackTrace();
             return false;
         }
     }

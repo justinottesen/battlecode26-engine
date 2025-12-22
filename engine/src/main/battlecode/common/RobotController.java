@@ -690,6 +690,25 @@ public interface RobotController {
      */
     public void removeCatTrap(MapLocation loc) throws GameActionException;
 
+    /**
+     * Tests whether this robot can pick up cheese at the given location.
+     * 
+     * @param loc
+     * @throws GameActionException
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    public boolean canPickUpCheese(MapLocation loc);
+
+    /**
+     * picks up cheese from the given location.
+     * 
+     * @param loc the location to pick up cheese from
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    void pickUpCheese(MapLocation loc) throws GameActionException;
+
     // ****************************
     // ***** ATTACK / HEAL ********
     // ****************************

@@ -1083,8 +1083,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             MapLocation nextLoc = partLoc.add(toWaypoint);
 
                             if (this.controller.canRemoveDirt(nextLoc)) {
-                                this.controller.removeDirt(nextLoc);
-                                this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                try{
+                                    this.controller.removeDirt(nextLoc);
+                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                }
+                                catch (GameActionException e){
+                                    continue;
+                                }
+                               
                             }
                         }
                     }
@@ -1188,8 +1194,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
                             if (this.controller.canRemoveDirt(nextLoc)) {
-                                this.controller.removeDirt(nextLoc);
-                                this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                try{
+                                    this.controller.removeDirt(nextLoc);
+                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                }
+                                catch (GameActionException e){
+                                    continue;
+                                }
+                               
                             }
                         }
                     }
