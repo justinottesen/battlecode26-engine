@@ -53,17 +53,16 @@ class GameRendererClass {
         topCanvas.oncontextmenu = (e) => e.preventDefault()
 
         // Preload all game images
-        loadImage('icons/gears_64x64.png')
-        loadImage('icons/hammer_64x64.png')
-        loadImage('icons/mop_64x64.png')
-        loadImage('ruins/silver.png')
+        loadImage('icons/cheese_64x64.png')
+        loadImage('cheese_mine.png')
+        loadImage('robots/squeak.png')
+        loadImage('dirty.png')
         for (const color of TEAM_COLOR_NAMES) {
-            loadImage(`robots/${color.toLowerCase()}/defense_tower_64x64.png`)
-            loadImage(`robots/${color.toLowerCase()}/money_tower_64x64.png`)
-            loadImage(`robots/${color.toLowerCase()}/paint_tower_64x64.png`)
-            loadImage(`robots/${color.toLowerCase()}/soldier_64x64.png`)
-            loadImage(`robots/${color.toLowerCase()}/splasher_64x64.png`)
-            loadImage(`robots/${color.toLowerCase()}/mopper_64x64.png`)
+            for (let i = 0; i < 9; i++) {
+                loadImage(`robots/cat/cat_${i}.png`)
+                loadImage(`robots/${color.toLowerCase()}/rat_king_${i}_64x64.png`)
+                loadImage(`robots/${color.toLowerCase()}/rat_${i}_64x64.png`)
+            }
         }
     }
 
