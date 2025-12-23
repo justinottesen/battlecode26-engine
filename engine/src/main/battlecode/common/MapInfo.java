@@ -83,6 +83,17 @@ public class MapInfo {
     }
 
     /**
+     * Returns the amount of cheese on this square (guaranteed to be 0 if no rats died here and not near a cheese mine).
+     * 
+     * @return the amount of cheese on this square
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    public int getCheeseAmount() {
+        return cheeseAmount;
+    }
+
+    /**
      * Returns the location of this square
      * 
      * @return the location of this square
