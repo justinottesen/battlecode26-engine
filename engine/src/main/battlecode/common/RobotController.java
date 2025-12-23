@@ -546,14 +546,15 @@ public interface RobotController {
     /**
      * Checks whether this robot can turn.
      * 
+     * @param d
      * @return
      */
     boolean canTurn();
 
     /**
-     * Turns to the specified direction.
+     * Turns to the specified direction 
      * 
-     * @param steps
+     * @param d direction to turn to (cannot be Direction.CENTER)
      * @throws GameActionException
      */
     void turn(Direction d) throws GameActionException;
@@ -618,9 +619,7 @@ public interface RobotController {
     /**
      * Tests whether this robot can place dirt at the given location.
      * 
-     * @param loc
-     * @throws GameActionException
-     * 
+     * @param loc the location to place dirt
      * @battlecode.doc.costlymethod
      */
     public boolean canPlaceDirt(MapLocation loc);
@@ -635,10 +634,9 @@ public interface RobotController {
     void placeDirt(MapLocation loc) throws GameActionException;
 
     /**
-     * Tests whether this robot can place dirt at the given location.
+     * Tests whether this robot can remove dirt from the given location.
      * 
-     * @param loc
-     * @throws GameActionException
+     * @param loc the location to remove dirt from
      * 
      * @battlecode.doc.costlymethod
      */
@@ -648,7 +646,7 @@ public interface RobotController {
      * Removes dirt from the given location.
      * 
      * @param loc the location to remove dirt from
-     * 
+     * @throws GameActionException
      * @battlecode.doc.costlymethod
      */
     void removeDirt(MapLocation loc) throws GameActionException;
@@ -657,6 +655,7 @@ public interface RobotController {
      * Tests whether this robot can place a rat trap at the given location.
      * 
      * @param loc
+     * @return whether the robot can place a rat trap at the specified location
      * 
      * @battlecode.doc.costlymethod
      */
@@ -665,8 +664,8 @@ public interface RobotController {
     /**
      * Places a rat trap at the given location.
      * 
-     * @param loc
-     * 
+     * @param loc the location to place rat trap
+     * @throws GameActionException
      * @battlecode.doc.costlymethod
      */
     public void placeRatTrap(MapLocation loc) throws GameActionException;
@@ -674,8 +673,8 @@ public interface RobotController {
     /**
      * Tests whether this robot can remove a rat trap at the given location.
      * 
-     * @param loc
-     * @throws GameActionException
+     * @param loc the location to remove rat trap
+     * @return whether the robot can remove a rat trap at the given location
      * 
      * @battlecode.doc.costlymethod
      */
@@ -684,7 +683,7 @@ public interface RobotController {
     /**
      * Removes the rat trap at the given location.
      * 
-     * @param loc
+     * @param loc the location to remove rat trap
      * @throws GameActionException
      * 
      * @battlecode.doc.costlymethod
@@ -694,38 +693,45 @@ public interface RobotController {
     /**
      * Tests whether this robot can place a cat trap at the given location.
      * 
-     * @param loc
+     * @param loc the location to place cat trap
+     * @return whether the robot can remove a cat trap at the given location
+     * 
+     * @battlecode.doc.costlymethod
      */
     public boolean canPlaceCatTrap(MapLocation loc);
 
     /**
      * Places a cat trap at the given location.
      * 
-     * @param loc
+     * @param loc the location to place cat trap
+     * @throws GameActionException
+     * @battlecode.doc.costlymethod
      */
     public void placeCatTrap(MapLocation loc) throws GameActionException;
 
     /**
      * Tests whether this robot can remove a cat trap at the given location.
      * 
-     * @param loc
-     * @throws GameActionException
+     * @param loc the location to remove cat trap
+     * @return whether the robot can remove a cat trap at the given location
+     * @battlecode.doc.costlymethod
      */
     public boolean canRemoveCatTrap(MapLocation loc);
 
     /**
      * Removes the cat trap at the given location.
      * 
-     * @param loc
+     * @param loc the location to remove cat trap
      * @throws GameActionException
+     * @battlecode.doc.costlymethod
      */
     public void removeCatTrap(MapLocation loc) throws GameActionException;
 
     /**
      * Tests whether this robot can pick up cheese at the given location.
      * 
-     * @param loc
-     * @throws GameActionException
+     * @param loc the location to pick up cheese from
+     * @return whether the robot can pick up cheese at the given location
      * 
      * @battlecode.doc.costlymethod
      */
@@ -735,6 +741,7 @@ public interface RobotController {
      * picks up cheese from the given location.
      * 
      * @param loc the location to pick up cheese from
+     * @throws GameActionException
      * 
      * @battlecode.doc.costlymethod
      */
@@ -883,19 +890,21 @@ public interface RobotController {
     void transferCheese(MapLocation loc, int amount) throws GameActionException;
 
     /**
-     * Throws robot in the robot direction
+     * Throws robot in the robot's facing direction
+     * 
+     * @throws GameActionException if the robot is not able to throw the rat
      * 
      * @battlecode.doc.costlymethod
      */
     void throwRat() throws GameActionException;
 
     /**
-     * Tests whether the robot can throw a carried robot in the robot direction.
+     * Tests whether the robot can throw a carried robot
      * 
-     * @throws GameActionException if the robot is not able to throw to the
-     *                             location
+     * @return whether robot can throw a carried robot
+     *
      */
-    boolean canThrowRat() throws GameActionException;
+    boolean canThrowRat();
 
     /**
      * Safely drops robot in the specified direction
@@ -905,13 +914,15 @@ public interface RobotController {
     void dropRat(Direction dir) throws GameActionException;
 
     /**
-     * Tests whether the robot can safely drop a carried robot in the specified
+     * Tests whether this robot can safely drop a carried robot in the specified
      * direction.
      * 
-     * @throws GameActionException if the robot is not able to drop to the
-     *                             location
+     * @param dir direction to drop off carried robot
+     * @return whether this robot can drop a carried robot in the specified direction
+     * 
+     * @battlecode.doc.costlymethod
      */
-    boolean canDropRat(Direction dir) throws GameActionException;
+    boolean canDropRat(Direction dir);
 
     /**
      * Tests whether the robot can grab (carry) a robot at the specified location.

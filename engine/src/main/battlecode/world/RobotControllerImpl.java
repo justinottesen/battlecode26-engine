@@ -795,8 +795,11 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public void turn(Direction d) throws GameActionException {
         assertCanTurn();
-        this.robot.setDirection(d);
-        this.robot.addTurningCooldownTurns();
+        if(d != Direction.CENTER){
+            this.robot.setDirection(d);
+            this.robot.addTurningCooldownTurns();
+        }
+            
     }
 
     // ***********************************
