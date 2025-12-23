@@ -872,6 +872,17 @@ public interface RobotController {
     boolean canTransferCheese(MapLocation loc, int amount);
 
     /**
+     * Transfers cheese to a given rat king.
+     * 
+     * You can give cheese to an allied rat king if you are a rat, can act
+     * at the given location, and have enough raw cheese in your local stash.
+     * 
+     * @param loc    the location of the rat king to transfer cheese to
+     * @param amount the amount of cheese to transfer. Positive to give cheese.
+     */
+    void transferCheese(MapLocation loc, int amount);
+
+    /**
      * Throws robot in the robot direction
      * 
      * @battlecode.doc.costlymethod

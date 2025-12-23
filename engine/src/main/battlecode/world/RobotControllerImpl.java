@@ -1136,6 +1136,7 @@ public final class RobotControllerImpl implements RobotController {
         }
     }
 
+    @Override
     public void transferCheese(MapLocation loc, int amount) throws GameActionException {
         assertCanTransferCheese(loc, amount);
         this.robot.addCheese(-amount);
