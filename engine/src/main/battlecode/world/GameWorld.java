@@ -39,7 +39,7 @@ public class GameWorld {
     private InternalRobot[][] robots;
     private Trap[] trapLocations;
     private ArrayList<Trap>[] trapTriggers;
-    private HashMap<TrapType, Integer> trapCounts;
+    private HashMap<TrapType, int[]> trapCounts; // maps trap type to counts for each team
     private int trapId;
     private final LiveMap gameMap;
     private final TeamInfo teamInfo;
@@ -115,8 +115,8 @@ public class GameWorld {
         this.gameMap = gm;
         this.objectInfo = new ObjectInfo(gm);
         this.trapCounts = new HashMap<>();
-        trapCounts.put(TrapType.CAT_TRAP, 0);
-        trapCounts.put(TrapType.RAT_TRAP, 0);
+        trapCounts.put(TrapType.CAT_TRAP, new int[2]);
+        trapCounts.put(TrapType.RAT_TRAP, new int[2]);
         trapTriggers = new ArrayList[numSquares];
         for (int i = 0; i < trapTriggers.length; i++) {
             trapTriggers[i] = new ArrayList<>();
@@ -436,7 +436,9 @@ public class GameWorld {
         }
 
         matchMaker.addTrap(trap);
-        this.trapCounts.put(type, this.trapCounts.get(type) + 1);
+        int[] trapTypeCounts = this.trapCounts.get(type);
+        trapTypeCounts[team.ordinal()] += 1;
+        this.trapCounts.put(type,  trapTypeCounts);
         trapId++;
     }
 
@@ -446,7 +448,10 @@ public class GameWorld {
             return;
         }
         TrapType type = trap.getType();
-        this.trapCounts.put(type, this.trapCounts.get(type) - 1);
+        Team team = trap.getTeam();
+        int[] trapTypeCounts = this.trapCounts.get(type);
+        trapTypeCounts[team.ordinal()] -= 1;
+        this.trapCounts.put(type, trapTypeCounts);
         this.trapLocations[locationToIndex(loc)] = null;
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
@@ -454,17 +459,19 @@ public class GameWorld {
         }
     }
 
-    public int getTrapCount(TrapType type) {
-        return this.trapCounts.get(type);
+    public int getTrapCount(TrapType type, Team team) {
+        return this.trapCounts.get(type)[team.ordinal()];
     }
 
     public void triggerTrap(Trap trap, InternalRobot robot) {
+        // will only be called for matching trap and robot types
+        
         MapLocation loc = trap.getLocation();
         TrapType type = trap.getType();
 
         robot.setMovementCooldownTurns(type.stunTime);
         robot.addHealth(-type.damage);
-        if (robot.getType().isCatType()) {
+        if (type == TrapType.CAT_TRAP && robot.getType().isCatType()) {
             this.teamInfo.addDamageToCats(trap.getTeam(), type.damage);
         }
         // TODO once the cat exists, alert cat of trap trigger

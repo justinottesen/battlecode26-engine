@@ -106,9 +106,6 @@ public class GameConstants {
      */
     public static final int CHEESE_DROP_RADIUS_SQUARED = 9;
 
-    /** The maximum number of traps a team can have at a given time */
-    public static final int MAX_TRAP_COUNT = 25;
-
     /** The maximum distance from a rat king for building robots */
     public static final int BUILD_ROBOT_RADIUS_SQUARED = 4;
 

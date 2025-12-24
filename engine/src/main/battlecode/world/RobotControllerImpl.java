@@ -285,7 +285,7 @@ public final class RobotControllerImpl implements RobotController {
             throw new GameActionException(CANT_DO_THAT, "Can't place rat trap on an occupied tile!");
         if (this.gameWorld.hasRatTrap(loc))
             throw new GameActionException(CANT_DO_THAT, "Tile already has a rat trap!");
-        if (this.gameWorld.getTrapCount(TrapType.RAT_TRAP) >= TrapType.RAT_TRAP.maxCount)
+        if (this.gameWorld.getTrapCount(TrapType.RAT_TRAP, this.robot.getTeam()) >= TrapType.RAT_TRAP.maxCount)
             throw new GameActionException(CANT_DO_THAT, "Team has reached maximum number of rat traps on the map!");
     }
 
@@ -303,13 +303,15 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
 
+        if (!this.gameWorld.isCooperation)
+            throw new GameActionException(CANT_DO_THAT, "Can't place new cat traps in backstabbing mode!");
         if (this.gameWorld.getWall(loc))
             throw new GameActionException(CANT_DO_THAT, "Can't place cat trap on a wall!");
         if (this.gameWorld.getRobot(loc) != null)
             throw new GameActionException(CANT_DO_THAT, "Can't place cat trap on an occupied tile!");
         if (this.gameWorld.hasCatTrap(loc))
             throw new GameActionException(CANT_DO_THAT, "Tile already has a cat trap!");
-        if (this.gameWorld.getTrapCount(TrapType.CAT_TRAP) >= TrapType.CAT_TRAP.maxCount)
+        if (this.gameWorld.getTrapCount(TrapType.CAT_TRAP, this.robot.getTeam()) >= TrapType.CAT_TRAP.maxCount)
             throw new GameActionException(CANT_DO_THAT, "Team has reached maximum number of cat traps on the map!");
     }
 
@@ -770,7 +772,7 @@ public final class RobotControllerImpl implements RobotController {
                 if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
                     continue;
                 }
-                this.robot.addTrapTrigger(trap, true);
+                this.robot.addTrapTrigger(trap);
             }
         }
 
