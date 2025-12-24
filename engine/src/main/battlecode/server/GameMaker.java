@@ -373,6 +373,14 @@ public class GameMaker {
             this.timelineMarkerRounds = new ArrayList<>();
             this.timelineMarkerLabels = new ArrayList<>();
             this.timelineMarkerColors = new ArrayList<>();
+            
+            this.trapAddedIds = new TIntArrayList();
+            this.trapAddedX = new TIntArrayList();
+            this.trapAddedY = new TIntArrayList();
+            this.trapAddedTypes = new TByteArrayList();
+            this.trapAddedTeams = new TByteArrayList();
+            this.trapTriggeredIds = new TIntArrayList();
+
         }
 
         public void makeMatchHeader(LiveMap gameMap) {
