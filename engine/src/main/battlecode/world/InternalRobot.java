@@ -579,13 +579,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void scratch(MapLocation loc) {
         if (this.type != UnitType.CAT)
             throw new RuntimeException("Unit must be a cat!");
-
         // If there's a robot on the tile, deal large damage to it
         if (this.gameWorld.getRobot(loc) != null) {
             InternalRobot robot = this.gameWorld.getRobot(loc);
             if (this.team != robot.getTeam()) {
                 robot.addHealth(-GameConstants.CAT_SCRATCH_DAMAGE);
-                this.gameWorld.getMatchMaker().addScratchAction(robot.getID());
+                this.gameWorld.getMatchMaker().addScratchAction(this.getGameWorld().locationToIndex(loc));
             }
         }
 

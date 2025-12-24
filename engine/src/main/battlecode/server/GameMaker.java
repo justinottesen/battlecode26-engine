@@ -556,10 +556,10 @@ public class GameMaker {
         }
 
         /// Visually indicate an cat scratch
-        public void addScratchAction(int otherID) {
+        public void addScratchAction(int loc) {
             applyToBuilders((builder) -> {
-                int action = CatScratch.createCatScratch(builder, otherID);
-                builder.addAction(action, Action.RatAttack);
+                int action = CatScratch.createCatScratch(builder, loc);
+                builder.addAction(action, Action.CatScratch);
             });
         }
 

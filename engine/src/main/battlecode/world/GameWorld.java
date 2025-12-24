@@ -288,7 +288,7 @@ public class GameWorld {
         return this.dirt[locationToIndex(loc)];
     }
 
-    public int getCheese(MapLocation loc) {
+    public int getCheese(MapLocation loc){
         return this.cheeseAmounts[locationToIndex(loc)];
     }
 
@@ -859,7 +859,7 @@ public class GameWorld {
         for (MapLocation loc : locations) {
             InternalRobot otherRobot = getRobot(loc);
 
-            if (otherRobot != null && (otherRobot.getType().isCatType() || otherRobot.getTeam() == robot.getTeam())) {
+            if (otherRobot.getType().isCatType() || (otherRobot != null && otherRobot.getTeam() == robot.getTeam())) {
                 otherRobot.addMessage(message.copy());
             }
         }
@@ -925,7 +925,9 @@ public class GameWorld {
             matchMaker.addDieAction(id, fromException);
         else
             matchMaker.addDied(id);
-        this.currentNumberUnits[robot.getTeam().ordinal()] -= 1;
+
+        if(robot.getType() != UnitType.CAT)
+            this.currentNumberUnits[robot.getTeam().ordinal()] -= 1;
 
         // check win
         if (robot.getType() == UnitType.RAT_KING && this.getTeamInfo().getNumRatKings(robot.getTeam()) == 0) {
