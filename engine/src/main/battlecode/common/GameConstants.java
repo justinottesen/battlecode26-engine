@@ -76,7 +76,10 @@ public class GameConstants {
     // ****** GAME MECHANICS ***********
     // *********************************
 
-    /** The default cooldown applied when moving in one of the 7 non-forward directions (forward is 10 ticks) */
+    /**
+     * The default cooldown applied when moving in one of the 7 non-forward
+     * directions (forward is 10 ticks)
+     */
     public static final int MOVE_STRAFE_COOLDOWN = 18;
 
     /** The amount of cheese the ratking consumes each round. */
@@ -101,7 +104,7 @@ public class GameConstants {
      * The maximum distance for transferring cheese to an allied rat king or
      * dropping it on the ground
      */
-    public static final int CHEESE_DROP_RADIUS_SQUARED = 2;
+    public static final int CHEESE_DROP_RADIUS_SQUARED = 9;
 
     /** The maximum number of traps a team can have at a given time */
     public static final int MAX_TRAP_COUNT = 25;

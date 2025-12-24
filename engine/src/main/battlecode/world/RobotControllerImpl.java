@@ -80,7 +80,8 @@ public final class RobotControllerImpl implements RobotController {
         GameWorld gw = this.gameWorld;
         Trap trap = gw.getTrap(loc);
         TrapType trapType = (trap != null && trap.getTeam() == this.getTeam()) ? trap.getType() : TrapType.NONE;
-        MapInfo currentLocInfo = new MapInfo(loc, gw.isPassable(loc), gw.getWall(loc), gw.getDirt(loc), gw.getCheeseAmount(loc), trapType,
+        MapInfo currentLocInfo = new MapInfo(loc, gw.isPassable(loc), gw.getWall(loc), gw.getDirt(loc),
+                gw.getCheeseAmount(loc), trapType,
                 gw.hasCheeseMine(loc));
         return currentLocInfo;
     }
@@ -194,10 +195,9 @@ public final class RobotControllerImpl implements RobotController {
                 : (getLocation().distanceSquaredTo(loc));
 
         int addDistance = (this.getType().size > 1)
-                ? (int) Math.ceil((this.getType().size/2.0 + Math.sqrt((double) maxRadiusSquared))
-                        * (this.getType().size/2.0 + Math.sqrt((double) maxRadiusSquared)))
+                ? (int) Math.ceil((this.getType().size / Math.sqrt(2.0) + Math.sqrt((double) maxRadiusSquared))
+                        * (this.getType().size / Math.sqrt(2.0) + Math.sqrt((double) maxRadiusSquared)))
                 : maxRadiusSquared;
-
 
         if (distance > (addDistance))
             throw new GameActionException(OUT_OF_RANGE,
@@ -240,7 +240,6 @@ public final class RobotControllerImpl implements RobotController {
                 || this.robot.getType().isRatKingType()) && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
             throw new GameActionException(CANT_DO_THAT, "Insufficient cheese to remove dirt!");
 
-        System.out.println(loc);
         if (!this.gameWorld.getDirt(loc))
             throw new GameActionException(CANT_DO_THAT, "No dirt to remove at that location!");
 
@@ -257,7 +256,7 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
-    public void placeDirt(MapLocation loc) throws GameActionException{
+    public void placeDirt(MapLocation loc) throws GameActionException {
         assertCanPlaceDirt(loc);
         this.gameWorld.setDirt(loc, true);
         this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), true);
@@ -387,7 +386,7 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     @Override
-    public void removeDirt(MapLocation loc) throws GameActionException{
+    public void removeDirt(MapLocation loc) throws GameActionException {
         assertCanRemoveDirt(loc);
         this.gameWorld.setDirt(loc, false);
         this.gameWorld.getTeamInfo().updateDirt(this.robot.getTeam(), false);
@@ -409,16 +408,16 @@ public final class RobotControllerImpl implements RobotController {
 
     @Override
     public boolean canPickUpCheese(MapLocation loc) {
-       try{
+        try {
             assertCanPickUpCheese(loc);
             return true;
-       }catch (GameActionException e){
+        } catch (GameActionException e) {
             return false;
-       }
+        }
     }
 
     @Override
-    public void pickUpCheese(MapLocation loc) throws GameActionException{
+    public void pickUpCheese(MapLocation loc) throws GameActionException {
         assertCanPickUpCheese(loc);
         int amountCheeseAvail = this.gameWorld.getCheeseAmount(loc);
         this.gameWorld.addCheese(loc, -amountCheeseAvail);
@@ -746,7 +745,7 @@ public final class RobotControllerImpl implements RobotController {
         move(robot.getDirection());
     }
 
-        @Override
+    @Override
     public void move(Direction d) throws GameActionException {
         assertCanMove(d);
 
@@ -795,11 +794,11 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public void turn(Direction d) throws GameActionException {
         assertCanTurn();
-        if(d != Direction.CENTER){
+        if (d != Direction.CENTER) {
             this.robot.setDirection(d);
             this.robot.addTurningCooldownTurns();
         }
-            
+
     }
 
     // ***********************************

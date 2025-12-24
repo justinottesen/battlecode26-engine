@@ -77,7 +77,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private MapLocation[] catWaypoints;
     private MapLocation catTargetLoc;
     private int catTurns;
-    private InternalRobot catTarget;
+    private RobotInfo catTarget;
 
     /**
      * Create a new internal representation of a robot
@@ -208,7 +208,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void addCheese(int amount) {
         // TODO: idk if I used this method correctly in my paint -> cheese changes,
         // maybe look through uses of this and check
-        if (this.getType() == UnitType.RAT_KING){
+        if (this.getType() == UnitType.RAT_KING) {
             this.gameWorld.getTeamInfo().addCheese(getTeam(), amount);
             return;
         }
@@ -445,7 +445,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
         if (getType() == UnitType.RAT && this.dir != d) {
             movementCooldown = GameConstants.MOVE_STRAFE_COOLDOWN;
         }
-        movementCooldown *= (int) (this.carryingRobot != null ? GameConstants.CARRY_COOLDOWN_MULTIPLIER : 1); // TODO add support for rat towers???
+        movementCooldown *= (int) (this.carryingRobot != null ? GameConstants.CARRY_COOLDOWN_MULTIPLIER : 1); // TODO
+                                                                                                              // add
+                                                                                                              // support
+                                                                                                              // for rat
+                                                                                                              // towers???
         this.setMovementCooldownTurns(this.movementCooldownTurns + movementCooldown);
     }
 
@@ -1073,13 +1077,15 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                     // try seeing nearby rats
                     Message squeak = getFrontMessage();
-                    InternalRobot[] nearbyRobots = this.gameWorld.getAllRobotsWithinConeRadiusSquared(this.location,
-                            this.dir, getVisionConeAngle(), getVisionRadiusSquared(), team);
+                    RobotInfo[] nearbyRobots = this.controller.senseNearbyRobots();
+
+                    // this.gameWorld.getAllRobotsWithinConeRadiusSquared(this.location,
+                    // this.dir, getVisionConeAngle(), getVisionRadiusSquared(), team);
 
                     boolean ratVisible = false;
-                    InternalRobot rat = null;
+                    RobotInfo rat = null;
 
-                    for (InternalRobot r : nearbyRobots) {
+                    for (RobotInfo r : nearbyRobots) {
                         if (r.getType().isRatType() || r.getType().isRatKingType()) {
                             ratVisible = true;
                             rat = r;
@@ -1104,7 +1110,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     if (this.movementCooldownTurns == 0 && canMove(toWaypoint.getDeltaX(), toWaypoint.getDeltaY())) {
                         setLocation(toWaypoint.getDeltaX(), toWaypoint.getDeltaY());
                     } else {
-                        System.out.println("stuck here cuz of dirt");
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(toWaypoint);
 
@@ -1113,14 +1118,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             if (this.controller.canRemoveDirt(nextLoc)) {
                                 System.out.println("stuck more here cuz of dirt");
 
-                                try{
+                                try {
                                     this.controller.removeDirt(nextLoc);
                                     this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
-                                }
-                                catch (GameActionException e){
+                                } catch (GameActionException e) {
                                     continue;
                                 }
-                               
+
                             }
                         }
                     }
@@ -1162,13 +1166,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                     this.dir = this.dir.rotateLeft().rotateLeft();
 
-                    nearbyRobots = this.gameWorld.getAllRobotsWithinConeRadiusSquared(this.location, this.dir,
-                            getVisionConeAngle(), getVisionRadiusSquared(), team);
+                    nearbyRobots = this.controller.senseNearbyRobots();
 
                     ratVisible = false;
                     rat = null;
 
-                    for (InternalRobot r : nearbyRobots) {
+                    for (RobotInfo r : nearbyRobots) {
                         if (r.getType().isRatType() || r.getType().isRatKingType()) {
                             ratVisible = true;
                             rat = r;
@@ -1187,12 +1190,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 case ATTACK:
                     // step 1: try to find the rat it was attacking, if cannot find it go back to
                     // explore
-                    nearbyRobots = this.gameWorld.getAllRobotsWithinConeRadiusSquared(this.location, this.dir,
-                            getVisionConeAngle(), getVisionRadiusSquared(), team);
+                    nearbyRobots = this.controller.senseNearbyRobots();
 
                     ratVisible = false;
 
-                    for (InternalRobot r : nearbyRobots) {
+                    for (RobotInfo r : nearbyRobots) {
                         if (r.equals(this.catTarget)) {
                             ratVisible = true;
                             this.catTargetLoc = this.catTarget.getLocation();
@@ -1206,8 +1208,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                     // step 2: try to attack it and move towards it
 
-                    if (canActCooldown()) {
-                        attack(this.catTarget.getLocation());
+                    if (this.controller.canAttack(this.catTarget.getLocation())) {
+                        this.attack(this.catTarget.getLocation());
                     }
 
                     this.dir = this.location.directionTo(this.catTargetLoc);
@@ -1224,14 +1226,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
                             if (this.controller.canRemoveDirt(nextLoc)) {
-                                try{
+                                try {
                                     this.controller.removeDirt(nextLoc);
                                     this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
-                                }
-                                catch (GameActionException e){
+                                } catch (GameActionException e) {
                                     continue;
                                 }
-                               
+
                             }
                         }
                     }
