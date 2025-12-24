@@ -385,6 +385,8 @@ public final class RobotControllerImpl implements RobotController {
             this.robot.addCheese(-1 * GameConstants.DIG_DIRT_CHEESE_COST);
 
         this.robot.addActionCooldownTurns(GameConstants.DIG_COOLDOWN);
+        System.out.println("DEBUGGING: " + "remove dirt at location" + loc);
+        this.gameWorld.getMatchMaker().addRemoveDirtAction(loc);
     }
 
     private void assertCanPickUpCheese(MapLocation loc) throws GameActionException {

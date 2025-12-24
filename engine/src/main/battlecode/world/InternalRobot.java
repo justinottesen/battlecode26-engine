@@ -1136,8 +1136,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(toWaypoint);
 
-                            System.out.println(partLoc + " " + nextLoc);
-
                             if (this.controller.canRemoveDirt(nextLoc)) {
                                 System.out.println("stuck more here cuz of dirt");
 
