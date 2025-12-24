@@ -288,7 +288,7 @@ public class GameWorld {
         return this.dirt[locationToIndex(loc)];
     }
 
-    public int getCheese(MapLocation loc){
+    public int getCheese(MapLocation loc) {
         return this.cheeseAmounts[locationToIndex(loc)];
     }
 
@@ -863,7 +863,7 @@ public class GameWorld {
         for (MapLocation loc : locations) {
             InternalRobot otherRobot = getRobot(loc);
 
-            if (otherRobot.getType().isCatType() || (otherRobot != null && otherRobot.getTeam() == robot.getTeam())) {
+            if (otherRobot != null && (otherRobot.getType().isCatType() || otherRobot.getTeam() == robot.getTeam())) {
                 otherRobot.addMessage(message.copy());
             }
         }
