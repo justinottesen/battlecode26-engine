@@ -851,12 +851,15 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 case VERTICAL:
                     cornerToTest = loc.add(Direction.EAST);
                     rotateDir = Direction.WEST;
+                    break;
                 case HORIZONTAL:
                     cornerToTest = loc.add(Direction.SOUTH);
                     rotateDir = Direction.NORTH;
+                    break;
                 case ROTATIONAL:
                     cornerToTest = loc.add(Direction.SOUTHEAST);
                     rotateDir = Direction.WEST;
+                    break;
                 default:
                     throw new RuntimeException("Invalid symmetry");
             }

@@ -384,10 +384,6 @@ public class GameWorld {
                 addCheese(new MapLocation(cheeseX, cheeseY), GameConstants.CHEESE_SPAWN_AMOUNT);
                 addCheese(new MapLocation(pairedX, pairedY), GameConstants.CHEESE_SPAWN_AMOUNT);
 
-                System.out.println("New turn" + this.currentRound);
-                System.out.println("DEBUGGING: SPAWNING CHEESE AT " + new MapLocation(cheeseX, cheeseY));
-                System.out.println("DEBUGGING: SPAWNING CHEESE AT " + new MapLocation(pairedX, pairedY));
-
                 mine.setLastRound(this.currentRound);
                 pairedMine.setLastRound(this.currentRound);
 
