@@ -622,6 +622,17 @@ export class Body {
     }
 
     public onHoverInfo(): string[] {
+        const directionMap = [
+            'None',
+            'West',
+            'Southwest',
+            'South',
+            'Southeast',
+            'East',
+            'Northeast',
+            'North',
+            'Northwest']
+        
         if (!this.game.playable) return [this.robotName]
         
         const defaultInfo = [
@@ -629,7 +640,7 @@ export class Body {
             `ID: ${this.id}`,
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
-            `Direction: ${DIRECTIONS[this.direction]}`,
+            `Direction: ${directionMap[this.direction]}`,
             `${this.robotType === schema.RobotType.CAT ? 'Chirality: ' + this.chirality : ''}`,
             `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
