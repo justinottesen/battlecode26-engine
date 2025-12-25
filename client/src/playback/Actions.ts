@@ -512,14 +512,9 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     },
     [schema.Action.UpgradeToRatKing]: class UpgradeToRatKingAction extends Action<schema.UpgradeToRatKing> {
         apply(round: Round): void {
-            // change body type to RatKing
+            // promote body in-place to RatKing while preserving ID/state
             const body = round.bodies.getById(this.robotId)
-            const dir = body.direction
-            body.robotType = schema.RobotType.RAT_KING
-            body.robotName = `${body.team.colorName} Rat King`
-            body.imgPath = `robots/${body.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
-            body.size = 3
-            body.populateDefaultValues() // updates hp/cooldowns from metadata
+            body.promoteTo(schema.RobotType.RAT_KING)
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const body = match.currentRound.bodies.getById(this.robotId)

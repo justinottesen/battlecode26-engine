@@ -72,7 +72,14 @@ export default class Bodies {
         return this.spawnBodyFromValues(id, robotType, this.game.getTeamByID(team), { x, y }, dir, chirality)
     }
 
-    spawnBodyFromValues(id: number, type: schema.RobotType, team: Team, pos: Vector, dir: number, chirality: number): Body {
+    spawnBodyFromValues(
+        id: number,
+        type: schema.RobotType,
+        team: Team,
+        pos: Vector,
+        dir: number,
+        chirality: number
+    ): Body {
         assert(!this.bodies.has(id), `Trying to spawn body with id ${id} that already exists`)
 
         const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
@@ -661,6 +668,27 @@ export class Body {
         this.hp = this.maxHp
         this.actionCooldown = metadata.actionCooldown()
         this.moveCooldown = metadata.movementCooldown()
+    }
+
+    public promoteTo(newType: schema.RobotType): void {
+        // Only support rat -> rat-king promotions for now
+        if (newType !== schema.RobotType.RAT_KING) return
+        if (this.robotType === schema.RobotType.RAT_KING) return
+
+        const bodyClass =
+            BODY_DEFINITIONS[schema.RobotType.RAT_KING] ??
+            assert.fail(`Body type ${schema.RobotType.RAT_KING} not found in BODY_DEFINITIONS`)
+        const oldHp = this.hp
+
+        // Change prototype so instance methods come from the RatKing class
+        Object.setPrototypeOf(this, bodyClass.prototype)
+
+        this.robotType = schema.RobotType.RAT_KING
+        this.robotName = `${this.team.colorName} Rat King`
+        this.size = 3
+        const dir = this.direction
+        this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
+        this.populateDefaultValues()
     }
 }
 
