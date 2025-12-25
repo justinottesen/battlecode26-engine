@@ -39,8 +39,7 @@ public class GameWorld {
     private InternalRobot[][] robots;
     private Trap[] trapLocations;
     private ArrayList<Trap>[] trapTriggers;
-    private HashMap<TrapType, Integer> trapCounts;
-    private int trapId;
+    private HashMap<TrapType, int[]> trapCounts; // maps trap type to counts for each team
     private final LiveMap gameMap;
     private final TeamInfo teamInfo;
     private final ObjectInfo objectInfo;
@@ -115,8 +114,8 @@ public class GameWorld {
         this.gameMap = gm;
         this.objectInfo = new ObjectInfo(gm);
         this.trapCounts = new HashMap<>();
-        trapCounts.put(TrapType.CAT_TRAP, 0);
-        trapCounts.put(TrapType.RAT_TRAP, 0);
+        trapCounts.put(TrapType.CAT_TRAP, new int[2]);
+        trapCounts.put(TrapType.RAT_TRAP, new int[2]);
         trapTriggers = new ArrayList[numSquares];
         for (int i = 0; i < trapTriggers.length; i++) {
             trapTriggers[i] = new ArrayList<>();
@@ -288,7 +287,7 @@ public class GameWorld {
         return this.dirt[locationToIndex(loc)];
     }
 
-    public int getCheese(MapLocation loc) {
+    public int getCheese(MapLocation loc){
         return this.cheeseAmounts[locationToIndex(loc)];
     }
 
@@ -424,19 +423,23 @@ public class GameWorld {
         return this.trapTriggers[locationToIndex(loc)];
     }
 
-    public void placeTrap(MapLocation loc, TrapType type, Team team) {
-        Trap trap = new Trap(loc, type, team, trapId);
+    public void placeTrap(MapLocation loc, Trap trap) {
+
+        TrapType type = trap.getType();
+        Team team = trap.getTeam();
+        int trapId = trap.getId();
 
         int idx = locationToIndex(loc);
         this.trapLocations[idx] = trap;
-        this.cheeseAmounts[idx] = Math.max(this.cheeseAmounts[idx], type.spawnCheeseAmount);
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
             this.trapTriggers[locationToIndex(adjLoc)].add(trap);
         }
 
         matchMaker.addTrap(trap);
-        this.trapCounts.put(type, this.trapCounts.get(type) + 1);
+        int[] trapTypeCounts = this.trapCounts.get(type);
+        trapTypeCounts[team.ordinal()] += 1;
+        this.trapCounts.put(type,  trapTypeCounts);
         trapId++;
     }
 
@@ -446,7 +449,10 @@ public class GameWorld {
             return;
         }
         TrapType type = trap.getType();
-        this.trapCounts.put(type, this.trapCounts.get(type) - 1);
+        Team team = trap.getTeam();
+        int[] trapTypeCounts = this.trapCounts.get(type);
+        trapTypeCounts[team.ordinal()] -= 1;
+        this.trapCounts.put(type, trapTypeCounts);
         this.trapLocations[locationToIndex(loc)] = null;
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
@@ -454,17 +460,19 @@ public class GameWorld {
         }
     }
 
-    public int getTrapCount(TrapType type) {
-        return this.trapCounts.get(type);
+    public int getTrapCount(TrapType type, Team team) {
+        return this.trapCounts.get(type)[team.ordinal()];
     }
 
     public void triggerTrap(Trap trap, InternalRobot robot) {
+        // will only be called for matching trap and robot types
+        
         MapLocation loc = trap.getLocation();
         TrapType type = trap.getType();
 
         robot.setMovementCooldownTurns(type.stunTime);
         robot.addHealth(-type.damage);
-        if (robot.getType().isCatType()) {
+        if (type == TrapType.CAT_TRAP && robot.getType().isCatType()) {
             this.teamInfo.addDamageToCats(trap.getTeam(), type.damage);
         }
         // TODO once the cat exists, alert cat of trap trigger
@@ -859,7 +867,7 @@ public class GameWorld {
         for (MapLocation loc : locations) {
             InternalRobot otherRobot = getRobot(loc);
 
-            if (otherRobot != null && (otherRobot.getType().isCatType() || otherRobot.getTeam() == robot.getTeam())) {
+            if (otherRobot.getType().isCatType() || (otherRobot != null && otherRobot.getTeam() == robot.getTeam())) {
                 otherRobot.addMessage(message.copy());
             }
         }
@@ -925,7 +933,9 @@ public class GameWorld {
             matchMaker.addDieAction(id, fromException);
         else
             matchMaker.addDied(id);
-        this.currentNumberUnits[robot.getTeam().ordinal()] -= 1;
+
+        if(robot.getType() != UnitType.CAT)
+            this.currentNumberUnits[robot.getTeam().ordinal()] -= 1;
 
         // check win
         if (robot.getType() == UnitType.RAT_KING && this.getTeamInfo().getNumRatKings(robot.getTeam()) == 0) {

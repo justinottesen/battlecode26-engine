@@ -373,6 +373,14 @@ public class GameMaker {
             this.timelineMarkerRounds = new ArrayList<>();
             this.timelineMarkerLabels = new ArrayList<>();
             this.timelineMarkerColors = new ArrayList<>();
+            
+            this.trapAddedIds = new TIntArrayList();
+            this.trapAddedX = new TIntArrayList();
+            this.trapAddedY = new TIntArrayList();
+            this.trapAddedTypes = new TByteArrayList();
+            this.trapAddedTeams = new TByteArrayList();
+            this.trapTriggeredIds = new TIntArrayList();
+
         }
 
         public void makeMatchHeader(LiveMap gameMap) {
@@ -556,10 +564,10 @@ public class GameMaker {
         }
 
         /// Visually indicate an cat scratch
-        public void addScratchAction(int otherID) {
+        public void addScratchAction(int loc) {
             applyToBuilders((builder) -> {
-                int action = CatScratch.createCatScratch(builder, otherID);
-                builder.addAction(action, Action.RatAttack);
+                int action = CatScratch.createCatScratch(builder, loc);
+                builder.addAction(action, Action.CatScratch);
             });
         }
 

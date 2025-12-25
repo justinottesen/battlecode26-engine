@@ -70,7 +70,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private String indicatorString;
 
     private ArrayList<Trap> trapsToTrigger;
-    private ArrayList<Boolean> enteredTraps;
 
     private int currentWaypoint;
     private CatStateType catState;
@@ -103,7 +102,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.incomingMessages = new LinkedList<>();
 
         this.trapsToTrigger = new ArrayList<>();
-        this.enteredTraps = new ArrayList<>();
 
         this.cheeseAmount = 0;
 
@@ -506,9 +504,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
     }
 
-    public void addTrapTrigger(Trap t, boolean entered) {
+    public void addTrapTrigger(Trap t) {
         this.trapsToTrigger.add(t);
-        this.enteredTraps.add(entered);
     }
 
     // *********************************
@@ -579,13 +576,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
     public void scratch(MapLocation loc) {
         if (this.type != UnitType.CAT)
             throw new RuntimeException("Unit must be a cat!");
-
         // If there's a robot on the tile, deal large damage to it
         if (this.gameWorld.getRobot(loc) != null) {
             InternalRobot robot = this.gameWorld.getRobot(loc);
             if (this.team != robot.getTeam()) {
                 robot.addHealth(-GameConstants.CAT_SCRATCH_DAMAGE);
-                this.gameWorld.getMatchMaker().addScratchAction(robot.getID());
+                this.gameWorld.getMatchMaker().addScratchAction(this.getGameWorld().locationToIndex(loc));
             }
         }
 
@@ -1071,13 +1067,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
 
         for (int i = 0; i < trapsToTrigger.size(); i++) {
-            // TODO do we really need enteredTraps? I don't see it used anywhere except
-            // here, and it's not needed by triggerTrap
-            this.gameWorld.triggerTrap(trapsToTrigger.get(i), this/* , enteredTraps.get(i) */);
+            this.gameWorld.triggerTrap(trapsToTrigger.get(i), this);
         }
 
         this.trapsToTrigger = new ArrayList<>();
-        this.enteredTraps = new ArrayList<>();
 
         this.gameWorld.getMatchMaker().endTurn(this.ID, this.health, this.cheeseAmount, this.movementCooldownTurns,
                 this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir);
@@ -1143,14 +1136,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(toWaypoint);
 
-                            System.out.println(partLoc + " " + nextLoc);
-
                             if (this.controller.canRemoveDirt(nextLoc)) {
                                 System.out.println("stuck more here cuz of dirt");
 
                                 try {
                                     this.controller.removeDirt(nextLoc);
-                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_ADDITIONAL_COOLDOWN);
                                 } catch (GameActionException e) {
                                     continue;
                                 }
@@ -1179,9 +1170,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
-                            if (this.actionCooldownTurns == 0 && (this.gameWorld.getDirt(nextLoc))) {
-                                this.gameWorld.setDirt(nextLoc, false);
-                                this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                            if (this.controller.canRemoveDirt(nextLoc)) {
+                                try {
+                                    this.controller.removeDirt(nextLoc);
+                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_ADDITIONAL_COOLDOWN);
+                                } catch (GameActionException e) {
+                                    continue;
+                                }
                             }
                         }
                     }
@@ -1239,7 +1234,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     // step 2: try to attack it and move towards it
 
                     if (this.controller.canAttack(this.catTarget.getLocation())) {
-                        this.attack(this.catTarget.getLocation());
+                        try{
+                            this.controller.attack(this.catTarget.getLocation());
+                        } catch(GameActionException e){
+                        }
+                        
+
                     }
 
                     this.dir = this.location.directionTo(this.catTargetLoc);
@@ -1258,7 +1258,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             if (this.controller.canRemoveDirt(nextLoc)) {
                                 try {
                                     this.controller.removeDirt(nextLoc);
-                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_COOLDOWN);
+                                    this.addActionCooldownTurns(GameConstants.CAT_DIG_ADDITIONAL_COOLDOWN);
                                 } catch (GameActionException e) {
                                     continue;
                                 }

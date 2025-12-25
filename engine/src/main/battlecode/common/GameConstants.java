@@ -106,9 +106,6 @@ public class GameConstants {
      */
     public static final int CHEESE_DROP_RADIUS_SQUARED = 9;
 
-    /** The maximum number of traps a team can have at a given time */
-    public static final int MAX_TRAP_COUNT = 25;
-
     /** The maximum distance from a rat king for building robots */
     public static final int BUILD_ROBOT_RADIUS_SQUARED = 4;
 
@@ -172,7 +169,7 @@ public class GameConstants {
      */
     public static final int CAT_POUNCE_ADJACENT_DAMAGE_PERCENT = 50;
 
-    public static final int CAT_DIG_COOLDOWN = 30;
+    public static final int CAT_DIG_ADDITIONAL_COOLDOWN = 5;
 
     /**
      * The minimum gap between an enemy robot's health and our own before we can
