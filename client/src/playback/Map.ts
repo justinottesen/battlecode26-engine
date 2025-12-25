@@ -258,6 +258,7 @@ export class CurrentMap {
         const dirt = this.dirt[schemaIdx]
         const wall = this.staticMap.walls[schemaIdx]
         const cheeseMine = this.staticMap.cheeseMines.find((r) => r.x === square.x && r.y === square.y)
+        const cheese = this.cheeseData[schemaIdx]
         const srp = this.resourcePatterns.find((r) => r.center.x === square.x && r.center.y === square.y)
         const markerA = this.markers[0][schemaIdx]
         const markerB = this.markers[1][schemaIdx]
@@ -284,6 +285,9 @@ export class CurrentMap {
         }
         if (dirt) {
             info.push('Dirt')
+        }
+        if (cheese) {
+            info.push(`Cheese: ${cheese}`)
         }
         if (srp) {
             const roundsRemaining = Math.max(srp.createRound + 50 - match.currentRound.roundNumber, 0)
@@ -533,13 +537,6 @@ export class StaticMap {
                 if (this.walls[schemaIdx]) {
                     renderUtils.renderRounded(ctx, i, j, this, this.walls, () => {
                         ctx.fillStyle = Colors.WALLS_COLOR.get()
-                        ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
-                    })
-                }
-
-                if (this.initialDirt[schemaIdx]) {
-                    renderUtils.renderRounded(ctx, i, j, this, this.initialDirt, () => {
-                        ctx.fillStyle = Colors.DIRT_COLOR.get()
                         ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
                     })
                 }

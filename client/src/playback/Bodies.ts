@@ -487,7 +487,7 @@ export class Body {
                 if (dx * dx + dy * dy <= radius) {
                     const angleToPoint = Math.atan2(dy, dx)
                     let angleDiff = angleToPoint - directionRad
-                    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI)) - Math.PI //normalize angle difference
+                    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
                     if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180) {
                         coords.push({ x, y })
                     }
@@ -623,14 +623,15 @@ export class Body {
 
     public onHoverInfo(): string[] {
         if (!this.game.playable) return [this.robotName]
-
+        
         const defaultInfo = [
             `${this.robotName}`,
             `ID: ${this.id}`,
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
             `Direction: ${DIRECTIONS[this.direction]}`,
-            `Chirality: ${this.chirality}`,
+            `${this.robotType === schema.RobotType.CAT ? 'Chirality: ' + this.chirality : ''}`,
+            `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
