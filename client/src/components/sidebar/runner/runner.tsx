@@ -690,8 +690,6 @@ export const Console: React.FC<Props> = ({ lines }) => {
                     >
                         <ChevronUpIcon className="w-4 h-4" />
                     </button>
-
-                    {/* Next */}
                     <button
                     className="px-2 py-1 text-xs border border-white rounded disabled:opacity-40"
                     onClick={goToNextMatch}
@@ -712,7 +710,7 @@ export const Console: React.FC<Props> = ({ lines }) => {
                         ref={consoleRef}
                         tabIndex={0}
                         className="flex-grow border border-white py-1 px-1 rounded-md overflow-auto flex flex-col min-h-[250px] w-full"
-                        style={{ height: '80vh', maxHeight: '80vh' }}
+                        style={{ height: '75vh', maxHeight: '75vh' }}
                         onKeyDown={handleKeyDown}
                     >
                         {popout && lineList}
