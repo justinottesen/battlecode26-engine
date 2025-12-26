@@ -190,6 +190,7 @@ export default class Bodies {
         body.hp = Math.max(turn.health(), 0)
         body.moveCooldown = turn.moveCooldown()
         body.actionCooldown = turn.actionCooldown()
+        body.turningCooldown = turn.turningCooldown()
         body.bytecodesUsed = turn.bytecodesUsed()
 
         body.addToPrevSquares()
@@ -335,6 +336,7 @@ export class Body {
     public chirality: number = 0
     public moveCooldown: number = 0
     public actionCooldown: number = 0
+    public turningCooldown: number = 0
     public bytecodesUsed: number = 0
     public cheese: number = 0
 
@@ -487,7 +489,7 @@ export class Body {
                 if (dx * dx + dy * dy <= radius) {
                     const angleToPoint = Math.atan2(dy, dx)
                     let angleDiff = angleToPoint - directionRad
-                    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
+                    angleDiff = ((((angleDiff + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI
                     if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180) {
                         coords.push({ x, y })
                     }
@@ -631,10 +633,11 @@ export class Body {
             'East',
             'Northeast',
             'North',
-            'Northwest']
-        
+            'Northwest'
+        ]
+
         if (!this.game.playable) return [this.robotName]
-        
+
         const defaultInfo = [
             `${this.robotName}`,
             `ID: ${this.id}`,
@@ -645,6 +648,7 @@ export class Body {
             `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
+            `Turning Cooldown: ${this.turningCooldown}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
                 this.bytecodesUsed >= this.metadata.bytecodeLimit() ? ' <EXCEEDED!>' : ''
             }`
@@ -679,6 +683,7 @@ export class Body {
         this.maxHp = metadata.baseHealth()
         this.hp = this.maxHp
         this.actionCooldown = metadata.actionCooldown()
+        this.turningCooldown = metadata.turningCooldown()
         this.moveCooldown = metadata.movementCooldown()
     }
 
