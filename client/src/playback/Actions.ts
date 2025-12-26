@@ -332,7 +332,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
 
             const interpolationFactor = match.getInterpolationFactor()
             ctx.strokeStyle = body.team.color
-            ctx.globalAlpha = 0.3
+            ctx.globalAlpha = 0.6
             ctx.fillStyle = body.team.color
             ctx.beginPath()
             if (reflected) {
