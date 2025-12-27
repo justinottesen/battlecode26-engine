@@ -769,8 +769,6 @@ public final class RobotControllerImpl implements RobotController {
                 crushedRobot.addHealth(-crushedRobot.getHealth());
             }
 
-            this.gameWorld.addRobot(newLoc, this.robot);
-
             for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
                 Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
                 boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
