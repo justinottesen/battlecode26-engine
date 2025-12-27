@@ -62,6 +62,7 @@ export class CurrentMap {
             this.cheeseData = new Int8Array(from.cheese)
             this.markers = [new Int8Array(this.width * this.height), new Int8Array(this.width * this.height)]
             this.resourcePatterns = []
+            this.trapData = new Int8Array(this.width * this.height)
         } else {
             // Create current map from current map (copy)
 
@@ -72,9 +73,8 @@ export class CurrentMap {
 
             // Assumes ResourcePatternData is immutable
             this.resourcePatterns = [...from.resourcePatterns]
+            this.trapData = new Int8Array(from.trapData)
         }
-
-        this.trapData = new Int8Array(this.width * this.height)
     }
 
     indexToLocation(index: number): { x: number; y: number } {
@@ -166,6 +166,11 @@ export class CurrentMap {
                 const cheese = this.cheeseData[schemaIdx]
                 if (cheese) {
                     renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('cheese.png'), coords, 1.0)
+                }
+
+                const trap = this.trapData[schemaIdx]
+                if (trap) {
+                    renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('trap.png'), coords, 1.0)
                 }
 
                 if (config.showPaintMarkers) {
