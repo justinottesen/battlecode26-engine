@@ -167,7 +167,7 @@ export class CurrentMap {
                 if (cheese) {
                     renderUtils.renderCenteredImageOrLoadingIndicator(
                         ctx,
-                        getImageIfLoaded('icons/cheese.png'),
+                        getImageIfLoaded('icons/cheese_64x64.png'),
                         coords,
                         1.0
                     )
