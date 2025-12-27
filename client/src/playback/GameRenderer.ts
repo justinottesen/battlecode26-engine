@@ -54,7 +54,7 @@ class GameRendererClass {
 
         // Preload all game images
         loadImage('icons/cheese_64x64.png')
-        loadImage('cheese_mine.png')
+        loadImage('icons/cheese_mine.png')
         loadImage('robots/squeak.png')
         loadImage('dirty.png')
         for (const color of TEAM_COLOR_NAMES) {

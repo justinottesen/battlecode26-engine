@@ -401,48 +401,21 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // place trap animation
+            const map = match.currentRound.map
             const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+            const coords = renderUtils.getRenderCoords(body.pos.x, body.pos.y, map.dimension, false)
+            const factor = match.getInterpolationFactor()
+            const isEndpoint = factor == 0 || factor == 1
+            const size = isEndpoint ? 1 : Math.max(factor * 1.5, 0.3)
+            const alpha = isEndpoint ? 1 : (factor < 0.5 ? factor : 1 - factor) * 2
 
-            const size = body.size - 1
-
-            const t = match.getInterpolationFactor()
-            const oscillations = 3
-            const amplitude = Math.PI / 12
-            const envelope = Math.pow(1 - t, 0.6)
-            const rotation = Math.sin(t * oscillations * Math.PI * 2) * amplitude * envelope - Math.PI / 12
-
-            ctx.save()
-            ctx.translate(coords.x + size * 0.5, coords.y + 0.5)
-            ctx.strokeStyle = body.team.color
-            ctx.lineWidth = 0.08
-            ctx.lineCap = 'round'
-
-            ctx.beginPath()
-            ctx.moveTo(-0.1, 0)
-            ctx.lineTo(0.1, 0)
-            ctx.stroke()
-
-            ctx.save()
-            ctx.rotate(-rotation)
-            ctx.beginPath()
-            ctx.moveTo(0, 0)
-            ctx.lineTo(-0.6 - size * 0.5, 0)
-            ctx.lineTo(-0.6 - size * 0.5, -0.1)
-            ctx.stroke()
-            ctx.restore()
-
-            ctx.save()
-            ctx.rotate(rotation)
-            ctx.beginPath()
-            ctx.moveTo(0, 0)
-            ctx.lineTo(0.6 + size * 0.5, 0)
-            ctx.lineTo(0.6 + size * 0.5, -0.1)
-            ctx.stroke()
-            ctx.restore()
-
-            ctx.restore()
+            ctx.globalAlpha = alpha
+            ctx.shadowBlur = 4
+            ctx.shadowColor = 'black'
+            renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('icons/trap.png'), coords, size)
+            ctx.shadowBlur = 0
+            ctx.shadowColor = ''
+            ctx.globalAlpha = 1
         }
     },
     [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {

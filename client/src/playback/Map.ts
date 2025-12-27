@@ -165,12 +165,22 @@ export class CurrentMap {
 
                 const cheese = this.cheeseData[schemaIdx]
                 if (cheese) {
-                    renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('cheese.png'), coords, 1.0)
+                    renderUtils.renderCenteredImageOrLoadingIndicator(
+                        ctx,
+                        getImageIfLoaded('icons/cheese.png'),
+                        coords,
+                        1.0
+                    )
                 }
 
                 const trap = this.trapData[schemaIdx]
                 if (trap) {
-                    renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('trap.png'), coords, 1.0)
+                    renderUtils.renderCenteredImageOrLoadingIndicator(
+                        ctx,
+                        getImageIfLoaded('icons/trap.png'),
+                        coords,
+                        1.0
+                    )
                 }
 
                 if (config.showPaintMarkers) {
@@ -570,7 +580,7 @@ export class StaticMap {
         this.cheeseMines.forEach(({ x, y }) => {
             const coords = renderUtils.getRenderCoords(x, y, this.dimension)
 
-            const imgPath = `cheese_mine.png`
+            const imgPath = `icons/cheese_mine.png`
             const cheeseMineImage = getImageIfLoaded(imgPath)
             renderUtils.renderCenteredImageOrLoadingIndicator(ctx, cheeseMineImage, coords, 1.0)
         })
