@@ -498,6 +498,7 @@ public final class RobotControllerImpl implements RobotController {
         assertRadiusNonNegative(radiusSquared);
         int actualRadiusSquared = radiusSquared == -1 ? this.robot.getVisionRadiusSquared()
                 : Math.min(radiusSquared, this.robot.getVisionRadiusSquared());
+        actualRadiusSquared += 2; // expand slightly to account for cat center being bottom left corner
         InternalRobot[] allSensedRobots = gameWorld.getAllRobotsWithinRadiusSquared(center, actualRadiusSquared, team);
         List<RobotInfo> validSensedRobots = new ArrayList<>();
         for (InternalRobot sensedRobot : allSensedRobots) {
@@ -770,10 +771,11 @@ public final class RobotControllerImpl implements RobotController {
         this.robot.setLocation(d.dx, d.dy);
         for (int i = 0; i < newLocs.length; i++) {
             MapLocation newLoc = newLocs[i];
-            if (this.gameWorld.getRobot(newLoc) != null && this.getType().isCatType()
-                    && this.gameWorld.getRobot(newLoc).getType().isRatType()) {
+            InternalRobot crushedRobot = this.gameWorld.getRobot(newLoc);
+            if (crushedRobot != null && this.getType().isCatType()
+                    && crushedRobot.getType().isRatType()) {
                 // kill this rat
-                this.gameWorld.removeRobot(newLoc);
+                crushedRobot.addHealth(-crushedRobot.getHealth());
             }
 
             this.gameWorld.addRobot(newLoc, this.robot);
@@ -791,6 +793,7 @@ public final class RobotControllerImpl implements RobotController {
         }
 
         this.robot.addMovementCooldownTurns(d);
+        
     }
 
     private void assertCanTurn() throws GameActionException {
