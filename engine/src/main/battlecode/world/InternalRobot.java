@@ -724,6 +724,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.grabbedByRobot = null;
         this.remainingCarriedDuration = 0;
         this.thrownDir = dir;
+        this.remainingThrowDuration = 4;
 
         MapLocation nextLoc = this.getLocation().add(this.dir);
 
