@@ -47,6 +47,7 @@ table RobotTypeMetadata {
     type: RobotType;
     actionCooldown: int;
     movementCooldown: int;
+    turningCooldown: int;
     baseHealth: int;
     maxCheese: int;
     visionConeRadiusSquared: int;
