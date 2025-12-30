@@ -72,7 +72,14 @@ export default class Bodies {
         return this.spawnBodyFromValues(id, robotType, this.game.getTeamByID(team), { x, y }, dir, chirality)
     }
 
-    spawnBodyFromValues(id: number, type: schema.RobotType, team: Team, pos: Vector, dir: number, chirality: number): Body {
+    spawnBodyFromValues(
+        id: number,
+        type: schema.RobotType,
+        team: Team,
+        pos: Vector,
+        dir: number,
+        chirality: number
+    ): Body {
         assert(!this.bodies.has(id), `Trying to spawn body with id ${id} that already exists`)
 
         const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
@@ -183,6 +190,7 @@ export default class Bodies {
         body.hp = Math.max(turn.health(), 0)
         body.moveCooldown = turn.moveCooldown()
         body.actionCooldown = turn.actionCooldown()
+        body.turningCooldown = turn.turningCooldown()
         body.bytecodesUsed = turn.bytecodesUsed()
 
         body.addToPrevSquares()
@@ -328,6 +336,7 @@ export class Body {
     public chirality: number = 0
     public moveCooldown: number = 0
     public actionCooldown: number = 0
+    public turningCooldown: number = 0
     public bytecodesUsed: number = 0
     public cheese: number = 0
 
@@ -480,7 +489,7 @@ export class Body {
                 if (dx * dx + dy * dy <= radius) {
                     const angleToPoint = Math.atan2(dy, dx)
                     let angleDiff = angleToPoint - directionRad
-                    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI)) - Math.PI //normalize angle difference
+                    angleDiff = ((((angleDiff + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI
                     if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180) {
                         coords.push({ x, y })
                     }
@@ -615,6 +624,18 @@ export class Body {
     }
 
     public onHoverInfo(): string[] {
+        const directionMap = [
+            'None',
+            'West',
+            'Southwest',
+            'South',
+            'Southeast',
+            'East',
+            'Northeast',
+            'North',
+            'Northwest'
+        ]
+
         if (!this.game.playable) return [this.robotName]
 
         const defaultInfo = [
@@ -622,10 +643,12 @@ export class Body {
             `ID: ${this.id}`,
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
-            `Direction: ${DIRECTIONS[this.direction]}`,
-            `Chirality: ${this.chirality}`,
+            `Direction: ${directionMap[this.direction]}`,
+            `${this.robotType === schema.RobotType.CAT ? 'Chirality: ' + this.chirality : ''}`,
+            `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
+            `Turning Cooldown: ${this.turningCooldown}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
                 this.bytecodesUsed >= this.metadata.bytecodeLimit() ? ' <EXCEEDED!>' : ''
             }`
@@ -660,7 +683,29 @@ export class Body {
         this.maxHp = metadata.baseHealth()
         this.hp = this.maxHp
         this.actionCooldown = metadata.actionCooldown()
+        this.turningCooldown = metadata.turningCooldown()
         this.moveCooldown = metadata.movementCooldown()
+    }
+
+    public promoteTo(newType: schema.RobotType): void {
+        // Only support rat -> rat-king promotions for now
+        if (newType !== schema.RobotType.RAT_KING) return
+        if (this.robotType === schema.RobotType.RAT_KING) return
+
+        const bodyClass =
+            BODY_DEFINITIONS[schema.RobotType.RAT_KING] ??
+            assert.fail(`Body type ${schema.RobotType.RAT_KING} not found in BODY_DEFINITIONS`)
+        const oldHp = this.hp
+
+        // Change prototype so instance methods come from the RatKing class
+        Object.setPrototypeOf(this, bodyClass.prototype)
+
+        this.robotType = schema.RobotType.RAT_KING
+        this.robotName = `${this.team.colorName} Rat King`
+        this.size = 3
+        const dir = this.direction
+        this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
+        this.populateDefaultValues()
     }
 }
 

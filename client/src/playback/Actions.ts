@@ -332,7 +332,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
 
             const interpolationFactor = match.getInterpolationFactor()
             ctx.strokeStyle = body.team.color
-            ctx.globalAlpha = 0.3
+            ctx.globalAlpha = 0.6
             ctx.fillStyle = body.team.color
             ctx.beginPath()
             if (reflected) {
@@ -399,6 +399,24 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
 
             round.map.trapData[this.actionData.loc()] = 1 + body.team.id // 1 for team 0, 2 for team 1
         }
+        draw(match: Match, ctx: CanvasRenderingContext2D): void {
+            // place trap animation
+            const map = match.currentRound.map
+            const body = match.currentRound.bodies.getById(this.robotId)
+            const coords = renderUtils.getRenderCoords(body.pos.x, body.pos.y, map.dimension, false)
+            const factor = match.getInterpolationFactor()
+            const isEndpoint = factor == 0 || factor == 1
+            const size = isEndpoint ? 1 : Math.max(factor * 1.5, 0.3)
+            const alpha = isEndpoint ? 1 : (factor < 0.5 ? factor : 1 - factor) * 2
+
+            ctx.globalAlpha = alpha
+            ctx.shadowBlur = 4
+            ctx.shadowColor = 'black'
+            renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('icons/trap.png'), coords, size)
+            ctx.shadowBlur = 0
+            ctx.shadowColor = ''
+            ctx.globalAlpha = 1
+        }
     },
     [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {
         apply(round: Round): void {
@@ -411,42 +429,46 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // trap triggering animation
-            const body = match.currentRound.bodies.getById(this.robotId);
-            const pos = match.map.indexToLocation(this.actionData.loc());
-            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true);
+            const body = match.currentRound.bodies.getById(this.robotId)
+            const pos = match.map.indexToLocation(this.actionData.loc())
+            const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
 
-            const size = body.size-1;
+            const size = body.size - 1
 
-            const t = match.getInterpolationFactor(); 
-            const snap = Math.pow(t, .25);
-            const rotation = (-snap) * (Math.PI / 2);
+            const t = match.getInterpolationFactor()
+            const snap = Math.pow(t, 0.25)
+            const rotation = -snap * (Math.PI / 2)
 
-            ctx.save();
-            ctx.translate(coords.x+size*.5, coords.y+.5);
-            ctx.strokeStyle = body.team.color;
-            ctx.lineWidth = 0.08;
-            ctx.lineCap = "round";
+            ctx.save()
+            ctx.translate(coords.x + size * 0.5, coords.y + 0.5)
+            ctx.strokeStyle = body.team.color
+            ctx.lineWidth = 0.08
+            ctx.lineCap = 'round'
 
-            ctx.beginPath();
-            ctx.moveTo(-0.1, 0);
-            ctx.lineTo(0.1, 0);
-            ctx.stroke();
+            ctx.beginPath()
+            ctx.moveTo(-0.1, 0)
+            ctx.lineTo(0.1, 0)
+            ctx.stroke()
 
-            ctx.save();
-            ctx.rotate(-rotation);
-            ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(-0.6-size*.5, 0); ctx.lineTo(-0.6-size*.5, -0.1); 
-            ctx.stroke();
-            ctx.restore();
+            ctx.save()
+            ctx.rotate(-rotation)
+            ctx.beginPath()
+            ctx.moveTo(0, 0)
+            ctx.lineTo(-0.6 - size * 0.5, 0)
+            ctx.lineTo(-0.6 - size * 0.5, -0.1)
+            ctx.stroke()
+            ctx.restore()
 
-            ctx.save();
-            ctx.rotate(rotation);
-            ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(0.6+size*.5, 0); ctx.lineTo(0.6+size*.5, -0.1);
-            ctx.stroke();
-            ctx.restore();
+            ctx.save()
+            ctx.rotate(rotation)
+            ctx.beginPath()
+            ctx.moveTo(0, 0)
+            ctx.lineTo(0.6 + size * 0.5, 0)
+            ctx.lineTo(0.6 + size * 0.5, -0.1)
+            ctx.stroke()
+            ctx.restore()
 
-            ctx.restore();
+            ctx.restore()
         }
     },
     [schema.Action.ThrowRat]: class ThrowRatAction extends Action<schema.ThrowRat> {
@@ -508,9 +530,9 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     },
     [schema.Action.UpgradeToRatKing]: class UpgradeToRatKingAction extends Action<schema.UpgradeToRatKing> {
         apply(round: Round): void {
-            // change body type to RatKing
+            // promote body in-place to RatKing while preserving ID/state
             const body = round.bodies.getById(this.robotId)
-            body.robotType = schema.RobotType.RAT_KING
+            body.promoteTo(schema.RobotType.RAT_KING)
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const body = match.currentRound.bodies.getById(this.robotId)

@@ -195,8 +195,8 @@ public final class RobotControllerImpl implements RobotController {
                 : (getLocation().distanceSquaredTo(loc));
 
         int addDistance = (this.getType().size > 1)
-                ? (int) Math.ceil((this.getType().size / Math.sqrt(2.0) + Math.sqrt((double) maxRadiusSquared))
-                        * (this.getType().size / Math.sqrt(2.0) + Math.sqrt((double) maxRadiusSquared)))
+                ? (int) Math.ceil((this.getType().size / (2.0) + Math.sqrt((double) maxRadiusSquared))
+                        * (this.getType().size / 2.0 + Math.sqrt((double) maxRadiusSquared)))
                 : maxRadiusSquared;
 
         if (distance > (addDistance))
@@ -498,6 +498,7 @@ public final class RobotControllerImpl implements RobotController {
         assertRadiusNonNegative(radiusSquared);
         int actualRadiusSquared = radiusSquared == -1 ? this.robot.getVisionRadiusSquared()
                 : Math.min(radiusSquared, this.robot.getVisionRadiusSquared());
+        actualRadiusSquared = (int)((Math.sqrt(actualRadiusSquared)+2)*(Math.sqrt(actualRadiusSquared)+2)); // expand slightly to account for cat center being bottom left corner
         InternalRobot[] allSensedRobots = gameWorld.getAllRobotsWithinRadiusSquared(center, actualRadiusSquared, team);
         List<RobotInfo> validSensedRobots = new ArrayList<>();
         for (InternalRobot sensedRobot : allSensedRobots) {
@@ -553,9 +554,9 @@ public final class RobotControllerImpl implements RobotController {
     public MapInfo[] senseNearbyMapInfos(MapLocation center, int radiusSquared) throws GameActionException {
         assertNotNull(center);
         assertRadiusNonNegative(radiusSquared);
-        int actualRadiusSquared = radiusSquared == -1 ? UnitType.RAT.visionConeRadiusSquared
-                : Math.min(radiusSquared, UnitType.RAT.visionConeRadiusSquared);
-        MapLocation[] allSensedLocs = gameWorld.getAllLocationsWithinRadiusSquared(center, actualRadiusSquared);
+        int actualRadiusSquared = radiusSquared == -1 ? this.getType().visionConeRadiusSquared
+                : Math.min(radiusSquared, this.getType().visionConeRadiusSquared);
+        MapLocation[] allSensedLocs = gameWorld.getAllLocationsWithinRadiusSquared(center, (int)((Math.sqrt(actualRadiusSquared)+2)*(Math.sqrt(actualRadiusSquared)+2))); //expand slightly to allow off-center sensing
         List<MapInfo> validSensedMapInfo = new ArrayList<>();
         for (MapLocation mapLoc : allSensedLocs) {
             // Can't actually sense location
@@ -686,25 +687,29 @@ public final class RobotControllerImpl implements RobotController {
 
         MapLocation[] newLocs = new MapLocation[curLocs.length];
         for (int i = 0; i < newLocs.length; i++) {
+
             newLocs[i] = curLocs[i].add(d);
+
+            // System.out.println("Moving " + d + " from " + curLocs[i] + " " + newLocs[i]);
         }
 
         for (MapLocation loc : newLocs) {
             if (!onTheMap(loc)) {
-                System.out.println("DEBUGGING: " + loc + " not on map");
+                // System.out.println("DEBUGGING: " + loc + " not on map");
                 throw new GameActionException(OUT_OF_RANGE,
                         "Can only move to locations on the map; " + loc + " is not on the map. Currently at location "
                                 + this.getLocation());
             }
 
-            if ((this.gameWorld.getRobot(loc) != null) && (this.gameWorld.getRobot(loc).getID() != robot.getID())) {
+            InternalRobot occupyingRobot = this.gameWorld.getRobot(loc); 
+            if ((occupyingRobot != null) && (occupyingRobot.getID() != this.robot.getID())) {
 
-                if (this.gameWorld.getRobot(loc).getType().isRatType() && this.getType().isCatType()) {
+                if (occupyingRobot.getType().isRatType() && this.getType().isCatType()) {
                     System.out.println("Cat killed a rat by stepping on it");
                 } else {
                     System.out.println("DEBUGGING: " + this.robot.getID() + " collision with robot of type "
-                            + this.gameWorld.getRobot(loc).getType() + " with part locations at ");
-                    MapLocation[] partLocs = robot.getAllPartLocations();
+                            + occupyingRobot.getType() + " with part locations at ");
+                    MapLocation[] partLocs = this.robot.getAllPartLocations();
                     System.out.print("Part locations: [");
                     for (int i = 0; i < partLocs.length; i++) {
                         System.out.print("(" + partLocs[i].x + ", " + partLocs[i].y + ")");
@@ -717,7 +722,6 @@ public final class RobotControllerImpl implements RobotController {
                 }
             }
             if (!this.gameWorld.isPassable(loc)) {
-                System.out.println("DEBUGGING: " + " impassable at location (" + loc.x + ", " + loc.y + ")");
                 throw new GameActionException(CANT_MOVE_THERE,
                         "Cannot move to an impassable location; " + loc + " is impassable.");
             }
@@ -750,42 +754,47 @@ public final class RobotControllerImpl implements RobotController {
         move(robot.getDirection());
     }
 
+    public void processTrapsAtLocation(MapLocation loc){
+        // process any traps at newly entered location
+
+        // add trap triggers in game world
+        for (int j = this.gameWorld.getTrapTriggers(loc).size() - 1; j >= 0; j--) {
+            Trap trap = this.gameWorld.getTrapTriggers(loc).get(j);
+            TrapType type = trap.getType();
+            boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
+                    && type == TrapType.CAT_TRAP)
+                    || (this.getType().isCatType() && type == TrapType.RAT_TRAP);
+            
+            if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
+                continue;
+            }
+            this.gameWorld.triggerTrap(trap, robot);
+
+        }
+        
+
+    }
+
     @Override
     public void move(Direction d) throws GameActionException {
         assertCanMove(d);
 
         // calculate set of next map locations
         MapLocation[] curLocs = robot.getAllPartLocations();
-        MapLocation[] newLocs = new MapLocation[curLocs.length];
-        for (int i = 0; i < newLocs.length; i++) {
-            MapLocation curLoc = curLocs[i];
-            newLocs[i] = curLoc.add(d);
-            this.gameWorld.removeRobot(curLoc);
-        }
-        this.robot.setLocation(d.dx, d.dy);
-        for (int i = 0; i < newLocs.length; i++) {
-            MapLocation newLoc = newLocs[i];
-            if (this.gameWorld.getRobot(newLoc) != null && this.getType().isCatType()
-                    && this.gameWorld.getRobot(newLoc).getType().isRatType()) {
+        for (int i = 0; i < curLocs.length; i++) {
+            MapLocation newLoc = curLocs[i].add(d);
+            InternalRobot crushedRobot = this.gameWorld.getRobot(newLoc);
+            if (crushedRobot != null && this.getID() != crushedRobot.getID() && this.getType().isCatType()
+                    && crushedRobot.getType().isRatType()) {
                 // kill this rat
-                this.gameWorld.removeRobot(newLoc);
+                crushedRobot.addHealth(-crushedRobot.getHealth());
             }
-
-            this.gameWorld.addRobot(newLoc, this.robot);
-
-            for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
-                Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
-                boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
-                        && trap.getType() == TrapType.CAT_TRAP)
-                        || (this.getType().isCatType() && trap.getType() == TrapType.RAT_TRAP);
-                if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
-                    continue;
-                }
-                this.robot.addTrapTrigger(trap);
-            }
+            processTrapsAtLocation(newLoc);
         }
 
+        this.robot.setLocation(d.dx, d.dy);
         this.robot.addMovementCooldownTurns(d);
+
     }
 
     private void assertCanTurn() throws GameActionException {
@@ -910,7 +919,7 @@ public final class RobotControllerImpl implements RobotController {
         }
 
         switch (this.robot.getType()) {
-            case RAT:
+            case RAT, RAT_KING:
                 assertCanAttackRat(loc);
                 break;
             case CAT:
@@ -994,10 +1003,10 @@ public final class RobotControllerImpl implements RobotController {
         int health = 0;
         for (Direction d : Direction.allDirections()) {
             InternalRobot currentRobot = this.gameWorld.getRobot(this.adjacentLocation(d));
-            if (robot.getTeam() == currentRobot.getTeam()) {
+            if (currentRobot != null && robot.getTeam() == currentRobot.getTeam()) {
                 health += currentRobot.getHealth();
             }
-            if (d != Direction.CENTER) {
+            if (currentRobot != null && d != Direction.CENTER) {
                 // all their raw cheese is taken
                 this.gameWorld.getTeamInfo().addCheese(this.getTeam(), currentRobot.getCheese());
                 currentRobot.addCheese(-currentRobot.getCheese());
@@ -1005,23 +1014,20 @@ public final class RobotControllerImpl implements RobotController {
                 // all robots in the 3x3 including enemies die
                 currentRobot.addHealth(-currentRobot.getHealth());
             }
+            this.gameWorld.addRobot(this.adjacentLocation(d), this.robot);
         }
+
         this.gameWorld.getTeamInfo().addCheese(this.getTeam(), -GameConstants.RAT_KING_UPGRADE_CHEESE_COST);
         health = Math.min(health, UnitType.RAT_KING.health);
 
         robot.becomeRatKing(health);
 
+        // System.out.println("IM ALIVE (RATKING)");
+
         for (Direction d : Direction.allDirections()) {
             if (d != Direction.CENTER) {
                 MapLocation newLoc = this.adjacentLocation(d);
-                for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
-                    Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
-                    boolean wrongTrapType = (trap.getType() == TrapType.CAT_TRAP);
-                    if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
-                        continue;
-                    }
-                    this.robot.addTrapTrigger(trap);
-                }
+                processTrapsAtLocation(newLoc);
             }
         }
 

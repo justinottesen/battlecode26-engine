@@ -163,11 +163,14 @@ public class RobotPlayer {
             // if current target doesn't exist, set random target at least 6 away and go to
             // it
             if (goalLoc == null || rc.getLocation().distanceSquaredTo(goalLoc) < 36) {
-                if (cheeseMine == null) {
-                    goalLoc = new MapLocation(rng.nextInt(rc.getMapWidth()), rng.nextInt(rc.getMapHeight()));
-                } else {
-                    goalLoc = cheeseMine;
-                }
+                // if (cheeseMine == null) {
+                // goalLoc = new MapLocation(rng.nextInt(rc.getMapWidth()),
+                // rng.nextInt(rc.getMapHeight()));
+                // } else {
+                // goalLoc = cheeseMine;
+                // }
+
+                goalLoc = new MapLocation(rng.nextInt(rc.getMapWidth()), rng.nextInt(rc.getMapHeight()));
 
             }
 
@@ -194,6 +197,11 @@ public class RobotPlayer {
                 if (cheeseMine != null) {
                     rc.squeak(10000 + r.getLocation().x * 100 + r.getLocation().y);
                 }
+            } else if (r.getType().isCatType()) {
+                if (rc.getAllCheese() > 1000 && rc.canPlaceCatTrap(rc.getLocation().add(rc.getDirection()))) {
+                    System.out.println("Time to trap the cat");
+                    rc.placeCatTrap(rc.getLocation().add(rc.getDirection()));
+                }
             }
 
             // if enemy rat, try to grab / bite
@@ -207,6 +215,10 @@ public class RobotPlayer {
                 }
             }
 
+        }
+        if (rc.getAllCheese() > 1000 && rc.canPlaceRatTrap(rc.getLocation().add(rc.getDirection()))) {
+            System.out.println("Time to trap rats");
+            rc.placeRatTrap(rc.getLocation().add(rc.getDirection()));
         }
 
         // if sense cheese, pickup
@@ -222,6 +234,7 @@ public class RobotPlayer {
                 goalLoc = cheeseMine;
             }
         }
+
     }
 
     public static void bug2(RobotController rc, MapLocation target) throws GameActionException {

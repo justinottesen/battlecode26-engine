@@ -62,6 +62,7 @@ export class CurrentMap {
             this.cheeseData = new Int8Array(from.cheese)
             this.markers = [new Int8Array(this.width * this.height), new Int8Array(this.width * this.height)]
             this.resourcePatterns = []
+            this.trapData = new Int8Array(this.width * this.height)
         } else {
             // Create current map from current map (copy)
 
@@ -72,9 +73,8 @@ export class CurrentMap {
 
             // Assumes ResourcePatternData is immutable
             this.resourcePatterns = [...from.resourcePatterns]
+            this.trapData = new Int8Array(from.trapData)
         }
-
-        this.trapData = new Int8Array(this.width * this.height)
     }
 
     indexToLocation(index: number): { x: number; y: number } {
@@ -165,7 +165,22 @@ export class CurrentMap {
 
                 const cheese = this.cheeseData[schemaIdx]
                 if (cheese) {
-                    renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('cheese.png'), coords, 1.0)
+                    renderUtils.renderCenteredImageOrLoadingIndicator(
+                        ctx,
+                        getImageIfLoaded('icons/cheese_64x64.png'),
+                        coords,
+                        1.0
+                    )
+                }
+
+                const trap = this.trapData[schemaIdx]
+                if (trap) {
+                    renderUtils.renderCenteredImageOrLoadingIndicator(
+                        ctx,
+                        getImageIfLoaded('icons/trap.png'),
+                        coords,
+                        1.0
+                    )
                 }
 
                 if (config.showPaintMarkers) {
@@ -258,6 +273,7 @@ export class CurrentMap {
         const dirt = this.dirt[schemaIdx]
         const wall = this.staticMap.walls[schemaIdx]
         const cheeseMine = this.staticMap.cheeseMines.find((r) => r.x === square.x && r.y === square.y)
+        const cheese = this.cheeseData[schemaIdx]
         const srp = this.resourcePatterns.find((r) => r.center.x === square.x && r.center.y === square.y)
         const markerA = this.markers[0][schemaIdx]
         const markerB = this.markers[1][schemaIdx]
@@ -284,6 +300,9 @@ export class CurrentMap {
         }
         if (dirt) {
             info.push('Dirt')
+        }
+        if (cheese) {
+            info.push(`Cheese: ${cheese}`)
         }
         if (srp) {
             const roundsRemaining = Math.max(srp.createRound + 50 - match.currentRound.roundNumber, 0)
@@ -537,13 +556,6 @@ export class StaticMap {
                     })
                 }
 
-                if (this.initialDirt[schemaIdx]) {
-                    renderUtils.renderRounded(ctx, i, j, this, this.initialDirt, () => {
-                        ctx.fillStyle = Colors.DIRT_COLOR.get()
-                        ctx.fillRect(coords.x, coords.y, 1.0, 1.0)
-                    })
-                }
-
                 // Draw grid
                 const showGrid = true
                 if (showGrid) {
@@ -568,7 +580,7 @@ export class StaticMap {
         this.cheeseMines.forEach(({ x, y }) => {
             const coords = renderUtils.getRenderCoords(x, y, this.dimension)
 
-            const imgPath = `cheese_mine.png`
+            const imgPath = `icons/cheese_mine.png`
             const cheeseMineImage = getImageIfLoaded(imgPath)
             renderUtils.renderCenteredImageOrLoadingIndicator(ctx, cheeseMineImage, coords, 1.0)
         })

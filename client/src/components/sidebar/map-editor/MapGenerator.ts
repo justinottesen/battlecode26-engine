@@ -1,5 +1,5 @@
 import { schema, flatbuffers } from 'battlecode-schema'
-import Game from '../../../playback/Game'
+import Game, { Team } from '../../../playback/Game'
 import Match from '../../../playback/Match'
 import { CurrentMap, StaticMap } from '../../../playback/Map'
 import Round from '../../../playback/Round'
@@ -63,8 +63,25 @@ function verifyMap(map: CurrentMap, bodies: Bodies): string {
         return 'Map is empty'
     }
 
+    // verify there are at least 2 cats
+    const numCats = Array.from(bodies.bodies.values()).filter((body) => body.robotType === RobotType.CAT).length
+    if (numCats < 2) {
+        return 'Map must have at least 2 cats placed'
+    }
+
+    // verify there is exactly one rat-king per team initially
+    const ratKings = Array.from(bodies.bodies.values()).filter((body) => body.robotType === RobotType.RAT_KING)
+    const ratKingTeams = new Set<Team>()
+    for (const ratK of ratKings) {
+        ratKingTeams.add(ratK.team)
+    }
+    if (ratKings.length !== 2 || ratKingTeams.size !== 2) {
+        return `Each team must have exactly 1 Rat King placed`
+    }
+
     // Validate map elements
     let numWalls = 0
+    let numDirt = 0
     const mapSize = map.width * map.height
     for (let i = 0; i < mapSize; i++) {
         const pos = map.indexToLocation(i)
@@ -110,13 +127,21 @@ function verifyMap(map: CurrentMap, bodies: Bodies): string {
         }
 
         numWalls += wall
+        numDirt += map.dirt[i] > 0 ? 1 : 0
     }
 
     // Validate wall percentage
-    const maxPercent = 20
-    if (numWalls * 100 >= mapSize * maxPercent) {
+    const maxWallPercent = 20
+    if (numWalls * 100 >= mapSize * maxWallPercent) {
         const displayPercent = (numWalls / mapSize) * 100
-        return `Walls must take up at most ${maxPercent}% of the map, currently is ${displayPercent.toFixed(1)}%`
+        return `Walls must take up at most ${maxWallPercent}% of the map, currently is ${displayPercent.toFixed(1)}%`
+    }
+
+    // Validate dirt percentage
+    const maxDirtPercent = 50
+    if (numDirt * 100 >= mapSize * maxDirtPercent) {
+        const displayPercent = (numDirt / mapSize) * 100
+        return `Dirt must take up at most ${maxDirtPercent}% of the map, currently is ${displayPercent.toFixed(1)}%`
     }
 
     // Validate initial bodies
