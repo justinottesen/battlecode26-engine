@@ -22,6 +22,7 @@ class Action(object):
   CatScratch = cast(int, ...)
   CatPounce = cast(int, ...)
   PlaceTrap = cast(int, ...)
+  RemoveTrap = cast(int, ...)
   TriggerTrap = cast(int, ...)
   ThrowRat = cast(int, ...)
   UpgradeToRatKing = cast(int, ...)
