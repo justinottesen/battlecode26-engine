@@ -471,7 +471,6 @@ public class GameWorld {
         TrapType type = trap.getType();
 
         robot.setMovementCooldownTurns(type.stunTime);
-        robot.addHealth(-type.damage);
         if (type == TrapType.CAT_TRAP && robot.getType().isCatType()) {
             this.teamInfo.addDamageToCats(trap.getTeam(), type.damage);
         }
@@ -482,13 +481,12 @@ public class GameWorld {
             this.isCooperation = false;
         }
 
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
-            this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
-        }
-
         this.trapLocations[locationToIndex(loc)] = null;
-        matchMaker.addTriggeredTrap(trap.getId());
+        matchMaker.addTriggeredTrap(trap.getId()); 
         matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
+
+        removeTrap(loc);
+        robot.addHealth(-type.damage);
         // matchMaker.addAction(robot.getID(),
         // FlatHelpers.getTrapActionFromTrapType(type),
         // locationToIndex(trap.getLocation()));
