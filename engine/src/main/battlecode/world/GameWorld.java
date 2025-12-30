@@ -466,7 +466,7 @@ public class GameWorld {
 
     public void triggerTrap(Trap trap, InternalRobot robot) {
         // will only be called for matching trap and robot types
-
+        Team triggeringTeam = robot.getTeam();
         MapLocation loc = trap.getLocation();
         TrapType type = trap.getType();
 
@@ -480,7 +480,6 @@ public class GameWorld {
         if (trap.getType() != TrapType.CAT_TRAP) {
             // initiate backstab
             this.isCooperation = false;
-            // TODO: make any changes that need to happen with switch to cooperation
         }
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
@@ -489,6 +488,7 @@ public class GameWorld {
 
         this.trapLocations[locationToIndex(loc)] = null;
         matchMaker.addTriggeredTrap(trap.getId());
+        matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
         // matchMaker.addAction(robot.getID(),
         // FlatHelpers.getTrapActionFromTrapType(type),
         // locationToIndex(trap.getLocation()));
