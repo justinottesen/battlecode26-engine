@@ -105,6 +105,11 @@ public final class RobotControllerImpl implements RobotController {
         return this.gameWorld.getGameMap().getHeight();
     }
 
+    @Override
+    public boolean isCooperation() {
+        return this.gameWorld.isCooperation;
+    }
+
     // *********************************
     // ****** UNIT QUERY METHODS *******
     // *********************************

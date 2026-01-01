@@ -44,6 +44,15 @@ public interface RobotController {
      */
     int getMapHeight();
 
+    /**
+     * Returns the game state- true if in cooperation mode, false if in backstabbing mode. 
+     *
+     * @return boolean representing the game state
+     *
+     * @battlecode.doc.costlymethod
+     */
+    boolean isCooperation();
+
     // *********************************
     // ****** UNIT QUERY METHODS *******
     // *********************************
