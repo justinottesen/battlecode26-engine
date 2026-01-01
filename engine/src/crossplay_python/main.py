@@ -7,7 +7,8 @@ from collections import OrderedDict
 
 from crossplay_python.runner import RobotRunner
 from crossplay_python.crossplay import BYTECODE_LIMIT, CrossPlayLiteral as lit, \
-    CrossPlayMessage as mess, CrossPlayMethod as m, CrossPlayObjectType as ot, wait
+    CrossPlayMessage as mess, CrossPlayMethod as m, CrossPlayObjectType as ot, \
+    wait, reset_files, clear_temp_files
 from crossplay_python.wrappers import _GAME_METHODS, Team
 
 CROSSPLAY_PYTHON_DIR = "example-bots/src/crossplay_python"
@@ -49,29 +50,34 @@ def play(team_a=None, team_b=None, debug=False):
         Team.B: get_code(team_b),
         Team.NEUTRAL: None
     }
+
+    reset_files()
     
-    while True:
-        rc, round, team, id, end = wait(mess(m.START_TURN, []))
+    try:
+        while True:
+            rc, round, team, id, end = wait(mess(m.START_TURN, []))
 
-        if end:
-            print("Game ended")
-            break
+            if end:
+                print("Game ended")
+                break
 
-        if debug:
-            print(f"Starting turn. Round {round}, team {TEAM_NAMES[team]}, ID {id}, end {end}")
+            if debug:
+                print(f"Starting turn. Round {round}, team {TEAM_NAMES[team]}, ID {id}, end {end}")
 
-        runner = RobotRunner(
-            code=code[team],
-            game_methods=_GAME_METHODS,
-            error_method=get_error_printer(team=team, id=id, round=round),
-            bytecode_limit=BYTECODE_LIMIT,
-            debug=debug)
-        
-        runner.init_robot()
-        runner.run()
-        bytecode = runner.bytecode_limit - runner.bytecode
-        runner.kill()
-        wait(mess(m.END_TURN, [lit(ot.INTEGER, bytecode)]))
+            runner = RobotRunner(
+                code=code[team],
+                game_methods=_GAME_METHODS,
+                error_method=get_error_printer(team=team, id=id, round=round),
+                bytecode_limit=BYTECODE_LIMIT,
+                debug=debug)
+            
+            runner.init_robot()
+            runner.run()
+            bytecode = runner.bytecode_limit - runner.bytecode
+            runner.kill()
+            wait(mess(m.END_TURN, [lit(ot.INTEGER, bytecode)]))
+    finally:
+        clear_temp_files()
 
 if __name__ == "__main__":
     parser = ArgumentParser()

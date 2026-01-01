@@ -13,6 +13,8 @@ MESSAGE_FILE_JAVA = "messages_java.json"
 MESSAGE_FILE_OTHER = "messages_other.json"
 LOCK_FILE_JAVA = "lock_java.txt"
 LOCK_FILE_OTHER = "lock_other.txt"
+STARTED_FILE_JAVA = "started_java.txt"
+STARTED_FILE_OTHER = "started_other.txt"
 
 class CrossPlayException(Exception):
     def __init__(self, message):
@@ -200,60 +202,130 @@ class CrossPlayMessage(CrossPlayObject):
 
 # 0.1 ms timestep, 10 min timeout
 def wait(message: CrossPlayMessage, timeout=600, timestep=0.0001, message_dir=MESSAGE_DIR):
+    try:
+        read_file = os.path.join(message_dir, MESSAGE_FILE_JAVA)
+        write_file = os.path.join(message_dir, MESSAGE_FILE_OTHER)
+        java_lock_file = os.path.join(message_dir, LOCK_FILE_JAVA)
+        other_lock_file = os.path.join(message_dir, LOCK_FILE_OTHER)
+
+        # if directory does not exist, create it
+        if not os.path.exists(message_dir):
+            os.makedirs(message_dir)
+
+        json_message = message.to_json()
+        time_limit = time.time() + timeout
+
+        # print(f"Waiting to send message Python -> Java: {json_message}")
+
+        while os.path.exists(read_file) or os.path.exists(write_file) or os.path.exists(java_lock_file):
+            time.sleep(timestep)
+
+            if time.time() > time_limit:
+                raise CrossPlayException("Cross-play message passing timed out (Python waiting, Java busy).")
+
+        if not os.path.exists(other_lock_file):
+            with open(other_lock_file, 'x') as f:
+                f.write('')
+
+            # print("Created other lock file")
+
+        with open(write_file, 'w') as f:
+            json.dump(json_message, f)
+
+        if os.path.exists(other_lock_file):
+            os.remove(other_lock_file)
+
+        # print(f"Sent message Python -> Java: {json_message}")
+        # print("Waiting for response Java -> Python...")
+        time_limit = time.time() + timeout
+        
+        while not os.path.exists(read_file) or os.path.exists(write_file) or os.path.exists(java_lock_file):
+            time.sleep(timestep)
+
+            if time.time() > time_limit:
+                raise CrossPlayException("Cross-play message passing timed out (Python waiting, Java not responding).")
+
+        if not os.path.exists(other_lock_file):
+            with open(other_lock_file, 'x') as f:
+                f.write('')
+
+        with open(read_file, 'r') as f:
+            json_data = json.load(f)
+            result = CrossPlayObject.from_json(json_data)
+        
+        os.remove(read_file)
+        
+        if os.path.exists(other_lock_file):
+            os.remove(other_lock_file)
+
+        # print(f"Received message Java -> Python: {result}")
+
+        if isinstance(result, CrossPlayLiteral):
+            return result.reduce_literal()
+        else:
+            return result
+    except IOError as e:
+        raise CrossPlayException("Cross-play message passing failed due to file I/O error: " + str(e))
+
+def reset_files(message_dir=MESSAGE_DIR):
     read_file = os.path.join(message_dir, MESSAGE_FILE_JAVA)
     write_file = os.path.join(message_dir, MESSAGE_FILE_OTHER)
     java_lock_file = os.path.join(message_dir, LOCK_FILE_JAVA)
     other_lock_file = os.path.join(message_dir, LOCK_FILE_OTHER)
+    java_started_file = os.path.join(message_dir, STARTED_FILE_JAVA)
+    other_started_file = os.path.join(message_dir, STARTED_FILE_OTHER)
 
-    json_message = message.to_json()
-    time_limit = time.time() + timeout
+    if not os.path.exists(message_dir) or not os.path.isdir(message_dir):
+        os.makedirs(message_dir)
+    elif os.path.exists(other_started_file):
+        print("DEBUGGING: Detected existing crossplay_temp/started_other.txt file. " \
+              "This indicates that a previous cross-play match did not terminate cleanly. " \
+                "Deleting the old crossplay_temp files.")
+    elif os.path.exists(java_started_file):
+        print("DEBUGGING: Java cross-play runner already started. Using existing cross-play temp directory.")
+        return
 
-    # print(f"Waiting to send message Python -> Java: {json_message}")
-
-    while os.path.exists(read_file) or os.path.exists(write_file) or os.path.exists(java_lock_file):
-        time.sleep(timestep)
-
-        if time.time() > time_limit:
-            raise CrossPlayException("Cross-play message passing timed out (Python waiting, Java busy).")
-
-    if not os.path.exists(other_lock_file):
-        with open(other_lock_file, 'x') as f:
-            f.write('')
-
-        # print("Created other lock file")
-
-    with open(write_file, 'w') as f:
-        json.dump(json_message, f)
-
-    if os.path.exists(other_lock_file):
-        os.remove(other_lock_file)
-
-    # print(f"Sent message Python -> Java: {json_message}")
-    # print("Waiting for response Java -> Python...")
-    time_limit = time.time() + timeout
+    if os.path.exists(read_file):
+        os.remove(read_file)
     
-    while not os.path.exists(read_file) or os.path.exists(write_file) or os.path.exists(java_lock_file):
-        time.sleep(timestep)
-
-        if time.time() > time_limit:
-            raise CrossPlayException("Cross-play message passing timed out (Python waiting, Java not responding).")
-
-    if not os.path.exists(other_lock_file):
-        with open(other_lock_file, 'x') as f:
-            f.write('')
-
-    with open(read_file, 'r') as f:
-        json_data = json.load(f)
-        result = CrossPlayObject.from_json(json_data)
+    if os.path.exists(write_file):
+        os.remove(write_file)
     
-    os.remove(read_file)
+    if os.path.exists(java_lock_file):
+        os.remove(java_lock_file)
     
     if os.path.exists(other_lock_file):
         os.remove(other_lock_file)
+    
+    if not os.path.exists(os.path.join(message_dir, STARTED_FILE_OTHER)):
+        with open(other_started_file, 'x') as f:
+            f.write('')
 
-    # print(f"Received message Java -> Python: {result}")
+def clear_temp_files(message_dir=MESSAGE_DIR):
+    if not os.path.exists(message_dir) or not os.path.isdir(message_dir):
+        return
 
-    if isinstance(result, CrossPlayLiteral):
-        return result.reduce_literal()
-    else:
-        return result
+    read_file = os.path.join(message_dir, MESSAGE_FILE_JAVA)
+    write_file = os.path.join(message_dir, MESSAGE_FILE_OTHER)
+    java_lock_file = os.path.join(message_dir, LOCK_FILE_JAVA)
+    other_lock_file = os.path.join(message_dir, LOCK_FILE_OTHER)
+    java_started_file = os.path.join(message_dir, STARTED_FILE_JAVA)
+    other_started_file = os.path.join(message_dir, STARTED_FILE_OTHER)
+
+    if os.path.exists(read_file):
+        os.remove(read_file)
+    
+    if os.path.exists(write_file):
+        os.remove(write_file)
+    
+    if os.path.exists(java_lock_file):
+        os.remove(java_lock_file)
+    
+    if os.path.exists(other_lock_file):
+        os.remove(other_lock_file)
+    
+    if os.path.exists(java_started_file):
+        os.remove(java_started_file)
+    
+    if os.path.exists(other_started_file):
+        os.remove(other_started_file)
