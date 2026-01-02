@@ -1327,7 +1327,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
 
         this.gameWorld.getMatchMaker().endTurn(this.ID, this.health, this.cheeseAmount, this.movementCooldownTurns,
-                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir);
+                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir, this.gameWorld.isCooperation);
         this.roundsAlive++;
     }
 

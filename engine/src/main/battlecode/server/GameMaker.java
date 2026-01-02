@@ -500,13 +500,14 @@ public class GameMaker {
         }
 
         public void endTurn(int robotID, int health, int cheese, int movementCooldown, int actionCooldown, int turningCooldown,
-                int bytecodesUsed, MapLocation loc, Direction dir) {
+                int bytecodesUsed, MapLocation loc, Direction dir, boolean isCooperation) {
             applyToBuilders((builder) -> {
                 builder.startTurn();
 
                 Turn.addRobotId(builder, robotID);
                 Turn.addHealth(builder, health);
                 Turn.addCheese(builder, cheese);
+                Turn.addIsCooperation(builder, isCooperation);
                 Turn.addMoveCooldown(builder, movementCooldown);
                 Turn.addActionCooldown(builder, actionCooldown);
                 Turn.addTurningCooldown(builder, turningCooldown);

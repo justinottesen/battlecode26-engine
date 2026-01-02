@@ -147,8 +147,15 @@ class Turn(object):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(26))
         return o == 0
 
+    # Turn
+    def IsCooperation(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(28))
+        if o != 0:
+            return bool(self._tab.Get(flatbuffers.number_types.BoolFlags, o + self._tab.Pos))
+        return False
+
 def TurnStart(builder: flatbuffers.Builder):
-    builder.StartObject(12)
+    builder.StartObject(13)
 
 def Start(builder: flatbuffers.Builder):
     TurnStart(builder)
@@ -236,6 +243,12 @@ def TurnStartActionsVector(builder, numElems: int) -> int:
 
 def StartActionsVector(builder, numElems: int) -> int:
     return TurnStartActionsVector(builder, numElems)
+
+def TurnAddIsCooperation(builder: flatbuffers.Builder, isCooperation: bool):
+    builder.PrependBoolSlot(12, isCooperation, 0)
+
+def AddIsCooperation(builder: flatbuffers.Builder, isCooperation: bool):
+    TurnAddIsCooperation(builder, isCooperation)
 
 def TurnEnd(builder: flatbuffers.Builder) -> int:
     return builder.EndObject()
