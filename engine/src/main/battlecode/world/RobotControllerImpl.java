@@ -105,6 +105,11 @@ public final class RobotControllerImpl implements RobotController {
         return this.gameWorld.getGameMap().getHeight();
     }
 
+    @Override
+    public boolean isCooperation() {
+        return this.gameWorld.isCooperation;
+    }
+
     // *********************************
     // ****** UNIT QUERY METHODS *******
     // *********************************
@@ -162,6 +167,24 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public UnitType getType() {
         return this.robot.getType();
+    }
+
+    @Override
+    public RobotInfo getCarrying() {
+        if (this.robot.isCarryingRobot())
+            return null;
+        else
+            return this.robot.getCarryingRobot().getRobotInfo();
+    }
+
+    @Override
+    public boolean isBeingThrown() {
+        return this.robot.isBeingThrown();
+    }
+
+    @Override
+    public boolean isBeingCarried() {
+        return this.robot.isGrabbedByRobot();
     }
 
     // ***********************************
@@ -230,6 +253,8 @@ public final class RobotControllerImpl implements RobotController {
             throw new GameActionException(CANT_DO_THAT, "Can't place dirt on an occupied tile!");
         if (this.gameWorld.getDirt(loc))
             throw new GameActionException(CANT_DO_THAT, "Tile already has dirt!");
+        if (this.gameWorld.hasCheeseMine(loc))
+            throw new GameActionException(CANT_DO_THAT, "Tile has a cheese mine!");
     }
 
     private void assertCanRemoveDirt(MapLocation loc) throws GameActionException {
@@ -303,6 +328,8 @@ public final class RobotControllerImpl implements RobotController {
         if (getAllCheese() < trapType.buildCost) {
             throw new GameActionException(CANT_DO_THAT, "Not enough cheese to build trap!");
         }
+        if (this.gameWorld.hasCheeseMine(loc))
+            throw new GameActionException(CANT_DO_THAT, "Tile has a cheese mine!");
     }
 
     private void assertCanRemoveCatTrap(MapLocation loc) throws GameActionException {
@@ -342,7 +369,9 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public void removeRatTrap(MapLocation loc) throws GameActionException {
         assertCanRemoveRatTrap(loc);
+        Trap trap = this.gameWorld.getTrap(loc);
         this.gameWorld.removeTrap(loc);
+        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getId(), trap.getTeam());
     }
 
     @Override
@@ -374,7 +403,9 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public void removeCatTrap(MapLocation loc) throws GameActionException {
         assertCanRemoveCatTrap(loc);
+        Trap trap = this.gameWorld.getTrap(loc);
         this.gameWorld.removeTrap(loc);
+        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getId(), trap.getTeam());
     }
 
     @Override
@@ -498,7 +529,17 @@ public final class RobotControllerImpl implements RobotController {
         assertRadiusNonNegative(radiusSquared);
         int actualRadiusSquared = radiusSquared == -1 ? this.robot.getVisionRadiusSquared()
                 : Math.min(radiusSquared, this.robot.getVisionRadiusSquared());
-        actualRadiusSquared = (int)((Math.sqrt(actualRadiusSquared)+2)*(Math.sqrt(actualRadiusSquared)+2)); // expand slightly to account for cat center being bottom left corner
+        actualRadiusSquared = (int) ((Math.sqrt(actualRadiusSquared) + 2) * (Math.sqrt(actualRadiusSquared) + 2)); // expand
+                                                                                                                   // slightly
+                                                                                                                   // to
+                                                                                                                   // account
+                                                                                                                   // for
+                                                                                                                   // cat
+                                                                                                                   // center
+                                                                                                                   // being
+                                                                                                                   // bottom
+                                                                                                                   // left
+                                                                                                                   // corner
         InternalRobot[] allSensedRobots = gameWorld.getAllRobotsWithinRadiusSquared(center, actualRadiusSquared, team);
         List<RobotInfo> validSensedRobots = new ArrayList<>();
         for (InternalRobot sensedRobot : allSensedRobots) {
@@ -556,7 +597,11 @@ public final class RobotControllerImpl implements RobotController {
         assertRadiusNonNegative(radiusSquared);
         int actualRadiusSquared = radiusSquared == -1 ? this.getType().visionConeRadiusSquared
                 : Math.min(radiusSquared, this.getType().visionConeRadiusSquared);
-        MapLocation[] allSensedLocs = gameWorld.getAllLocationsWithinRadiusSquared(center, (int)((Math.sqrt(actualRadiusSquared)+2)*(Math.sqrt(actualRadiusSquared)+2))); //expand slightly to allow off-center sensing
+        MapLocation[] allSensedLocs = gameWorld.getAllLocationsWithinRadiusSquared(center,
+                (int) ((Math.sqrt(actualRadiusSquared) + 2) * (Math.sqrt(actualRadiusSquared) + 2))); // expand slightly
+                                                                                                      // to allow
+                                                                                                      // off-center
+                                                                                                      // sensing
         List<MapInfo> validSensedMapInfo = new ArrayList<>();
         for (MapLocation mapLoc : allSensedLocs) {
             // Can't actually sense location
@@ -701,7 +746,7 @@ public final class RobotControllerImpl implements RobotController {
                                 + this.getLocation());
             }
 
-            InternalRobot occupyingRobot = this.gameWorld.getRobot(loc); 
+            InternalRobot occupyingRobot = this.gameWorld.getRobot(loc);
             if ((occupyingRobot != null) && (occupyingRobot.getID() != this.robot.getID())) {
 
                 if (occupyingRobot.getType().isRatType() && this.getType().isCatType()) {
@@ -754,6 +799,26 @@ public final class RobotControllerImpl implements RobotController {
         move(robot.getDirection());
     }
 
+    public void processTrapsAtLocation(MapLocation loc) {
+        // process any traps at newly entered location
+
+        // add trap triggers in game world
+        for (int j = this.gameWorld.getTrapTriggers(loc).size() - 1; j >= 0; j--) {
+            Trap trap = this.gameWorld.getTrapTriggers(loc).get(j);
+            TrapType type = trap.getType();
+            boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
+                    && type == TrapType.CAT_TRAP)
+                    || (this.getType().isCatType() && type == TrapType.RAT_TRAP);
+
+            if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
+                continue;
+            }
+            this.gameWorld.triggerTrap(trap, robot);
+
+        }
+
+    }
+
     @Override
     public void move(Direction d) throws GameActionException {
         assertCanMove(d);
@@ -768,17 +833,7 @@ public final class RobotControllerImpl implements RobotController {
                 // kill this rat
                 crushedRobot.addHealth(-crushedRobot.getHealth());
             }
-
-            for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
-                Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
-                boolean wrongTrapType = ((this.getType().isRatType() || this.getType().isRatKingType())
-                        && trap.getType() == TrapType.CAT_TRAP)
-                        || (this.getType().isCatType() && trap.getType() == TrapType.RAT_TRAP);
-                if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
-                    continue;
-                }
-                this.robot.addTrapTrigger(trap);
-            }
+            processTrapsAtLocation(newLoc);
         }
 
         this.robot.setLocation(d.dx, d.dy);
@@ -1016,14 +1071,7 @@ public final class RobotControllerImpl implements RobotController {
         for (Direction d : Direction.allDirections()) {
             if (d != Direction.CENTER) {
                 MapLocation newLoc = this.adjacentLocation(d);
-                for (int j = this.gameWorld.getTrapTriggers(newLoc).size() - 1; j >= 0; j--) {
-                    Trap trap = this.gameWorld.getTrapTriggers(newLoc).get(j);
-                    boolean wrongTrapType = (trap.getType() == TrapType.CAT_TRAP);
-                    if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
-                        continue;
-                    }
-                    this.robot.addTrapTrigger(trap);
-                }
+                processTrapsAtLocation(newLoc);
             }
         }
 

@@ -22,6 +22,7 @@ class Action(object):
   CatScratch: int
   CatPounce: int
   PlaceTrap: int
+  RemoveTrap: int
   TriggerTrap: int
   ThrowRat: int
   UpgradeToRatKing: int

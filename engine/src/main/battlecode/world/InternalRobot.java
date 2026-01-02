@@ -57,8 +57,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     // the number of messages this robot/tower has sent this turn
     private int sentMessagesCount;
 
-    // cat related stuff
-    private boolean crouching;
     private int chirality;
     private int sleepTimeRemaining;
 
@@ -68,8 +66,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private RobotInfo cachedRobotInfo;
 
     private String indicatorString;
-
-    private ArrayList<Trap> trapsToTrigger;
 
     private int currentWaypoint;
     private CatStateType catState;
@@ -100,9 +96,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.diedLocation = null;
         this.health = type.health;
         this.incomingMessages = new LinkedList<>();
-
-        this.trapsToTrigger = new ArrayList<>();
-
         this.cheeseAmount = 0;
 
         this.controlBits = 0;
@@ -271,7 +264,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 && cachedRobotInfo.type == type
                 && cachedRobotInfo.health == health
                 && cachedRobotInfo.cheeseAmount == cheeseAmount
-                && cachedRobotInfo.crouching == crouching
                 && cachedRobotInfo.chirality == chirality
                 && cachedRobotInfo.direction == dir
                 && ((cachedRobotInfo.carryingRobot == null && carryingRobot == null)
@@ -281,7 +273,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
 
         this.cachedRobotInfo = new RobotInfo(ID, team, type, health, location, dir, chirality, cheeseAmount,
-                carryingRobot != null ? carryingRobot.getRobotInfo() : null, crouching);
+                carryingRobot != null ? carryingRobot.getRobotInfo() : null);
         return this.cachedRobotInfo;
     }
 
@@ -441,6 +433,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
         int cooldownUp = numActionCooldownToAdd
                 * (int) (this.carryingRobot != null ? GameConstants.CARRY_COOLDOWN_MULTIPLIER : 1); // TODO add support
                                                                                                     // for rat towers???
+        if (getType() == UnitType.RAT) {
+            cooldownUp = (int) (((double)cooldownUp)*(1.0 + this.cheeseAmount*GameConstants.CHEESE_COOLDOWN_PENALTY));
+        }
         setActionCooldownTurns(this.actionCooldownTurns + cooldownUp);
     }
 
@@ -457,6 +452,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                                                                                               // support
                                                                                                               // for rat
                                                                                                               // towers???
+        if (getType() == UnitType.RAT) {
+            movementCooldown = (int) (((double)movementCooldown)*(1.0 + this.cheeseAmount*GameConstants.CHEESE_COOLDOWN_PENALTY));
+        }
         this.setMovementCooldownTurns(this.movementCooldownTurns + movementCooldown);
     }
 
@@ -511,10 +509,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
         if (this.health <= 0) {
             this.gameWorld.destroyRobot(this.getID(), false, true);
         }
-    }
-
-    public void addTrapTrigger(Trap t) {
-        this.trapsToTrigger.add(t);
     }
 
     // *********************************
@@ -1094,7 +1088,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     public void processEndOfTurn() {
         // eat cheese if ratking
-        if (this.type.isRatKingType()) {
+        if (this.type.isRatKingType() && this.gameWorld.getTeamInfo().getNumRatKings(this.getTeam()) > 0) {
             // ratking starves
             if (this.gameWorld.getTeamInfo().getCheese(team) < GameConstants.RATKING_CHEESE_CONSUMPTION) {
                 this.addHealth(-GameConstants.RATKING_HEALTH_LOSS);
@@ -1331,14 +1325,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
             this.gameWorld.getMatchMaker().addIndicatorString(this.ID, this.indicatorString);
         }
 
-        for (int i = 0; i < trapsToTrigger.size(); i++) {
-            this.gameWorld.triggerTrap(trapsToTrigger.get(i), this);
-        }
-
-        this.trapsToTrigger = new ArrayList<>();
 
         this.gameWorld.getMatchMaker().endTurn(this.ID, this.health, this.cheeseAmount, this.movementCooldownTurns,
-                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir);
+                this.actionCooldownTurns, this.turningCooldownTurns, this.bytecodesUsed, this.location, this.dir, this.gameWorld.isCooperation);
         this.roundsAlive++;
     }
 
