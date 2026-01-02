@@ -11,15 +11,16 @@ const EMPTY_ROBOT_COUNTS: Record<schema.RobotType, number> = {
 }
 
 export class TeamRoundStat {
+    gameModeCooperation: boolean = false
     cheeseAmount: number = 0
     cheesePercent: number = 0
-    dirtAmount: number = 0
-    ratCount: number = 0
-    trapAmount: number = 0
     catDamageAmount: number = 0
     catDamagePercent: number = 0
     ratKingCount: number = 0
     ratKingPercent: number = 0
+    dirtAmount: number = 0
+    ratCount: number = 0
+    trapAmount: number = 0
 
     copy(): TeamRoundStat {
         const newStat: TeamRoundStat = Object.assign(Object.create(Object.getPrototypeOf(this)), this)
@@ -82,6 +83,18 @@ export default class RoundStat {
 
                 teamStat.cheeseAmount = delta.teamCheeseAmounts(i) ?? assert.fail('missing cheese amount')
                 teamStat.cheesePercent = teamStat.cheeseAmount / totalCheese
+
+                // Use the engine-emitted cooperation flag (per-turn) when available.
+                // If any turn in this delta indicates cooperation, consider gameMode active.
+                let isCoop = false
+                for (let ti = 0; ti < delta.turnsLength(); ti++) {
+                    const t = delta.turns(ti)
+                    if (t && t.isCooperation && t.isCooperation()) {
+                        isCoop = true
+                        break
+                    }
+                }
+                teamStat.gameModeCooperation = isCoop
             }
         }
 

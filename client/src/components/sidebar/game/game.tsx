@@ -93,6 +93,15 @@ export const GamePage: React.FC<Props> = React.memo((props) => {
         )
     }
 
+    const isGameModeCooperation =
+        !!round &&
+        !!game &&
+        (() => {
+            const t0 = round.stat.getTeamStat(game.teams[0])?.gameModeCooperation ?? true
+            const t1 = round.stat.getTeamStat(game.teams[1])?.gameModeCooperation ?? true
+            return t0 && t1
+        })()
+
     return (
         <div className="flex flex-col overflow-x-hidden">
             <div className="w-full pb-3 px-4 text-center">
@@ -100,6 +109,21 @@ export const GamePage: React.FC<Props> = React.memo((props) => {
                     <div className="border-white border rounded-md font-bold">{game.currentMatch.map.name}</div>
                 )}
             </div>
+            {game ? (
+                isGameModeCooperation ? (
+                    <div className="w-full flex justify-center my-2">
+                        <div className="px-3 py-1 rounded-md bg-lime-500 text-black font-bold">
+                            Cooperation Mode Active
+                        </div>
+                    </div>
+                ) : (
+                    <div className="w-full flex justify-center my-2">
+                        <div className="px-3 py-1 rounded-md bg-rose-600 text-black font-bold">
+                            Backstab Mode Active
+                        </div>
+                    </div>
+                )
+            ) : null}
             {teamBox(0)}
             <TeamTable teamIdx={0} />
 
