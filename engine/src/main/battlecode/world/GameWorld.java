@@ -739,17 +739,17 @@ public class GameWorld {
         ArrayList<Integer> teamPoints = new ArrayList<>();
 
         int total_num_rat_kings = teamInfo.getNumRatKings(Team.A) + teamInfo.getNumRatKings(Team.B);
-        int total_amount_cheese = teamInfo.getCheese(Team.A) + teamInfo.getCheese(Team.B);
+        int total_amount_cheese_collected = teamInfo.getCheeseCollected(Team.A) + teamInfo.getCheeseCollected(Team.B);
         int total_amount_cat_damage = teamInfo.getDamageToCats(Team.A) + teamInfo.getDamageToCats(Team.B);
 
         for (Team team : List.of(Team.A, Team.B)) {
 
             float proportion_rat_kings = teamInfo.getNumRatKings(team) / total_num_rat_kings;
-            float proportion_cheese = teamInfo.getCheese(team) / total_amount_cheese;
+            float proportion_cheese_collected = teamInfo.getCheeseCollected(team) / total_amount_cheese_collected;
             float proportion_cat_damage = teamInfo.getDamageToCats(team) / total_amount_cat_damage;
 
             int points = (int) (cat_weight * 100 * (proportion_cat_damage) + king_weight * 100 * proportion_rat_kings
-                    + cheese_weight * 100 * proportion_cheese);
+                    + cheese_weight * 100 * proportion_cheese_collected);
             this.teamInfo.addPoints(team, points);
             teamPoints.add(points);
         }
