@@ -593,4 +593,11 @@ export class StaticMap {
     getEditorBrushes(): MapEditorBrush[] {
         return []
     }
+
+    public inBounds(x: number, y: number) {
+        return x >= 0 && x < this.width && y >= 0 && y < this.height
+    }
+    public wallAt(x: number, y: number) {
+        return this.inBounds(x, y) && this.walls[this.locationToIndex(x, y)]
+    }
 }

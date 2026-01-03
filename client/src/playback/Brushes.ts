@@ -507,7 +507,14 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             }
 
             // if adding a waypoint
-            if (this.bodies.getBodyAtLocation(x, y)) {
+            if (!this.map.inBounds(x + 1, y + 1)) return null
+
+            if (
+                this.bodies.getBodyAtLocation(x, y) ||
+                this.map.wallAt(x, y) ||
+                this.map.wallAt(x + 1, y + 1) ||
+                this.map.wallAt(x, y + 1)
+            ) {
                 return null
             }
             if (!this.map.catWaypoints.has(currentCat)) {
@@ -529,7 +536,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.bodies.checkBodyCollisionAtLocation(schema.RobotType.CAT, pos)) return null
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, (robotOne ? 0 : 1))
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, robotOne ? 0 : 1)
 
             return id
         }
