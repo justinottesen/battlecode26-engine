@@ -517,9 +517,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.bodies.getBodyAtLocation(x, y) || this.map.wallAt(x, y)) {
                 return null
             }
-            if (!this.map.catWaypoints.has(currentCat)) {
-                this.map.catWaypoints.set(currentCat, [])
-            }
+
             this.map.catWaypoints.get(currentCat)?.push({ x, y })
 
             return () => {
@@ -537,6 +535,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
 
             const id = this.bodies.getNextID()
             this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, robotOne ? 0 : 1)
+            this.map.catWaypoints.set(id, [{ x: x, y: y }]) // add initial waypoint at spawn location
 
             return id
         }
