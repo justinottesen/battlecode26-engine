@@ -998,7 +998,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         for (int i = 0; i < 4; i += 1){
             allPartLocations[i] = startingCorner;
 
-            startingCorner.add(rotateDir);
+            startingCorner = startingCorner.add(rotateDir);
             if (chirality == 0) {
                 rotateDir = rotateDir.rotateRight();
                 rotateDir = rotateDir.rotateRight();
