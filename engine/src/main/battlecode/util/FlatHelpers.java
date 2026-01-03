@@ -52,7 +52,7 @@ public class FlatHelpers {
     public static UnitType getUnitTypeFromRobotType(byte b) {
         switch (b) {
             case 1:
-                return UnitType.RAT;
+                return UnitType.BABY_RAT;
             case 2:
                 return UnitType.RAT_KING;
             case 3:
@@ -64,7 +64,7 @@ public class FlatHelpers {
 
     public static byte getRobotTypeFromUnitType(UnitType type) {
         switch (type) {
-            case RAT:
+            case BABY_RAT:
                 return 1;
             case RAT_KING:
                 return 2;

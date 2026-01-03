@@ -829,7 +829,7 @@ public class GameWorld {
         int[] totalRobotsAlive = new int[2];
 
         for (UnitType type : UnitType.values()) {
-            if (type.isRatType()) {
+            if (type.isBabyRatType() || type.isRatKingType()) {
                 totalRobotsAlive[Team.A.ordinal()] += this.getObjectInfo().getRobotTypeCount(Team.A, type);
                 totalRobotsAlive[Team.B.ordinal()] += this.getObjectInfo().getRobotTypeCount(Team.B, type);
             }
@@ -939,7 +939,7 @@ public class GameWorld {
 
         Team[] teams = {Team.A, Team.B};
         for (Team t : teams){
-            this.matchMaker.addTeamInfo(t, this.teamInfo.getCheese(t), this.teamInfo.getCheeseCollected(t), this.teamInfo.getDamageToCats(t), this.teamInfo.getNumRatKings(t), this.teamInfo.getNumRats(t), this.teamInfo.getDirt(t), this.getTrapCount(TrapType.RAT_TRAP, t), this.getTrapCount(TrapType.CAT_TRAP, t));
+            this.matchMaker.addTeamInfo(t, this.teamInfo.getCheese(t), this.teamInfo.getCheeseCollected(t), this.teamInfo.getDamageToCats(t), this.teamInfo.getNumRatKings(t), this.teamInfo.getNumBabyRats(t), this.teamInfo.getDirt(t), this.getTrapCount(TrapType.RAT_TRAP, t), this.getTrapCount(TrapType.CAT_TRAP, t));
         }
         this.teamInfo.processEndOfRound();
 
@@ -977,8 +977,8 @@ public class GameWorld {
         objectInfo.createRobot(robot);
         controlProvider.robotSpawned(robot);
 
-        if (type.isRatType()) {
-            this.teamInfo.addRats(1, team);
+        if (type.isBabyRatType()) {
+            this.teamInfo.addBabyRats(1, team);
         } else if (type.isRatKingType()) {
             this.teamInfo.addRatKings(1, team);
         } else if (type.isCatType()) {
@@ -1057,8 +1057,8 @@ public class GameWorld {
         MapLocation loc = robot.getLocation();
 
         if (loc != null) {
-            if (robot.getType().isRatType()) {
-                this.teamInfo.addRats(-1, robotTeam);
+            if (robot.getType().isBabyRatType()) {
+                this.teamInfo.addBabyRats(-1, robotTeam);
             } else if (robot.getType().isRatKingType()) {
                 this.teamInfo.addRatKings(-1, robotTeam);
             } else if (robot.getType().isCatType()) {

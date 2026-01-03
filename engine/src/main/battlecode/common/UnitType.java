@@ -2,7 +2,7 @@ package battlecode.common;
 
 public enum UnitType {
     // health, size, speed, visionRadius, actionCooldown
-    RAT(100, 1, 5, 20, 90, 10, 10, 10000),
+    BABY_RAT(100, 1, 5, 20, 90, 10, 10, 10000),
     RAT_KING(500, 3, 1, 29, 360, 10, 40, 20000),
     CAT(2000, 2, 10, 37, 180, 15, 10, 10);
 
@@ -35,19 +35,19 @@ public enum UnitType {
     }
 
     public boolean isRobotType() {
-        return this == RAT || this == CAT || this == RAT_KING;
+        return this == BABY_RAT || this == CAT || this == RAT_KING;
     }
 
     public boolean isThrowableType() {
-        return this == RAT;
+        return this == BABY_RAT;
     }
 
     public boolean isThrowingType() {
-        return this == RAT;
+        return this == BABY_RAT;
     }
 
-    public boolean isRatType() {
-        return this == RAT;
+    public boolean isBabyRatType() {
+        return this == BABY_RAT;
     }
 
     public boolean isRatKingType() {

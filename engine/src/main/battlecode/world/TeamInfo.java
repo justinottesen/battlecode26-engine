@@ -17,7 +17,7 @@ public class TeamInfo {
     private int[] dirtCounts;
     private int[] oldCheeseCounts;
     private int[] cheeseCollected;
-    private int[] totalNumRats;
+    private int[] numBabyRats;
     private int[] numRatKings;
     private int[] damageToCats;
     private int[] points;
@@ -33,7 +33,7 @@ public class TeamInfo {
         this.dirtCounts = new int[2];
         this.oldCheeseCounts = new int[2];
         this.cheeseCollected = new int[2];
-        this.totalNumRats = new int[2];
+        this.numBabyRats = new int[2];
         this.damageToCats = new int[2];
         this.numRatKings = new int[2];
         this.points = new int[2];
@@ -81,8 +81,8 @@ public class TeamInfo {
      * @param team the team to query
      * @return the number of rats the team has
      */
-    public int getNumRats(Team team) {
-        return this.totalNumRats[team.ordinal()];
+    public int getNumBabyRats(Team team) {
+        return this.numBabyRats[team.ordinal()];
     }
 
     /**
@@ -121,12 +121,12 @@ public class TeamInfo {
 
 
     /**
-     * Change the total number of rats belonging to a team
+     * Change the total number of baby rats belonging to a team
      * 
      * @param team the team to change
      */
-    public void addRats(int num, Team team) {
-        this.totalNumRats[team.ordinal()] += num;
+    public void addBabyRats(int num, Team team) {
+        this.numBabyRats[team.ordinal()] += num;
     }
 
     /**

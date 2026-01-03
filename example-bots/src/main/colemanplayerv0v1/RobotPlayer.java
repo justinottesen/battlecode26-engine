@@ -101,7 +101,7 @@ public class RobotPlayer {
 
             if (turnCount == 0) {
                 // This is our first turn; we can perform any initial setup here.
-                if (rc.getType() == battlecode.common.UnitType.RAT) {
+                if (rc.getType() == battlecode.common.UnitType.BABY_RAT) {
                     initBaby(rc);
                 }
             }
@@ -112,7 +112,7 @@ public class RobotPlayer {
             try {
                 if (rc.getType() == battlecode.common.UnitType.RAT_KING) {
                     runKing(rc);
-                } else if (rc.getType() == battlecode.common.UnitType.RAT) {
+                } else if (rc.getType() == battlecode.common.UnitType.BABY_RAT) {
                     runBaby(rc);
                 }
             } catch (GameActionException e) {
@@ -278,7 +278,7 @@ public class RobotPlayer {
                     cheeseMineCount += 1;
                 }
                 for (RobotInfo bot : nearbyBots) {
-                    if (bot.getType() == UnitType.RAT && bot.getTeam() == rc.getTeam() && bot.getLocation().distanceSquaredTo(loc.getMapLocation()) <= 8) { // An ally has been spotted next to this cheese mine; we assume that he's got it covered
+                    if (bot.getType() == UnitType.BABY_RAT && bot.getTeam() == rc.getTeam() && bot.getLocation().distanceSquaredTo(loc.getMapLocation()) <= 8) { // An ally has been spotted next to this cheese mine; we assume that he's got it covered
                         // TODO replace sensing with something done via soft squeaking
                         if (Arrays.stream(occupiedCheeseMines).noneMatch(x -> x != null && x.equals(loc.getMapLocation()))) {
                             occupiedCheeseMines[occupiedCheeseMineCount] = loc.getMapLocation();
@@ -334,7 +334,7 @@ public class RobotPlayer {
             return false;
         }
         MapLocation adjacentLocation = rc.getLocation().add(d);
-        if (rc.getType() == UnitType.RAT) {
+        if (rc.getType() == UnitType.BABY_RAT) {
             RobotInfo[] enemies = rc.senseNearbyRobots();
             for (RobotInfo enemy : enemies) {
                 if (enemy.team != rc.getTeam()) {

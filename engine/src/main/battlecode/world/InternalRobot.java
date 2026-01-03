@@ -440,7 +440,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         int cooldownUp = numActionCooldownToAdd
                 * (int) (this.carryingRobot != null ? GameConstants.CARRY_COOLDOWN_MULTIPLIER : 1); // TODO add support
                                                                                                     // for rat towers???
-        if (getType() == UnitType.RAT) {
+        if (getType() == UnitType.BABY_RAT) {
             cooldownUp = (int) (((double)cooldownUp)*(1.0 + this.cheeseAmount*GameConstants.CHEESE_COOLDOWN_PENALTY));
         }
         setActionCooldownTurns(this.actionCooldownTurns + cooldownUp);
@@ -451,7 +451,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      */
     public void addMovementCooldownTurns(Direction d) {
         int movementCooldown = this.getType().movementCooldown;
-        if (getType() == UnitType.RAT && this.dir != d) {
+        if (getType() == UnitType.BABY_RAT && this.dir != d) {
             movementCooldown = GameConstants.MOVE_STRAFE_COOLDOWN;
         }
         movementCooldown *= (int) (this.carryingRobot != null ? GameConstants.CARRY_COOLDOWN_MULTIPLIER : 1); // TODO
@@ -459,7 +459,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                                                                                               // support
                                                                                                               // for rat
                                                                                                               // towers???
-        if (getType() == UnitType.RAT) {
+        if (getType() == UnitType.BABY_RAT) {
             movementCooldown = (int) (((double)movementCooldown)*(1.0 + this.cheeseAmount*GameConstants.CHEESE_COOLDOWN_PENALTY));
         }
         this.setMovementCooldownTurns(this.movementCooldownTurns + movementCooldown);
@@ -829,7 +829,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      */
     public void attack(MapLocation loc) {
         switch (this.getType()) {
-            case RAT, RAT_KING:
+            case BABY_RAT, RAT_KING:
                 bite(loc, -1);
                 break;
             case CAT:
@@ -849,7 +849,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
      */
     public void attack(MapLocation loc, int cheese) {
         switch (this.getType()) {
-            case RAT, RAT_KING:
+            case BABY_RAT, RAT_KING:
                 bite(loc, cheese);
                 break;
             case CAT:
@@ -1072,7 +1072,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.sentMessagesCount = 0;
 
         // if rat is being carried
-        if (this.getType() == UnitType.RAT && this.isGrabbedByRobot()
+        if (this.getType() == UnitType.BABY_RAT && this.isGrabbedByRobot()
                 && this.getGrabbedByRobot().getTeam() != this.getTeam()) {
 
             // check if grabber has died
@@ -1101,7 +1101,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
 
         // if baby rat is being thrown
-        if (this.getType() == UnitType.RAT && this.isBeingThrown()) {
+        if (this.getType() == UnitType.BABY_RAT && this.isBeingThrown()) {
             // decrement first since we already moved once on the round where throwing was
             // initiated?
             this.remainingThrowDuration -= 1;
@@ -1163,7 +1163,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     RobotInfo rat = null;
 
                     for (RobotInfo r : nearbyRobots) {
-                        if (r.getType().isRatType() || r.getType().isRatKingType()) {
+                        if (r.getType().isBabyRatType() || r.getType().isRatKingType()) {
                             ratVisible = true;
                             rat = r;
                         }
@@ -1282,7 +1282,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     rat = null;
 
                     for (RobotInfo r : nearbyRobots) {
-                        if (r.getType().isRatType() || r.getType().isRatKingType()) {
+                        if (r.getType().isBabyRatType() || r.getType().isRatKingType()) {
                             ratVisible = true;
                             rat = r;
                         }

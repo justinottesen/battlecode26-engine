@@ -19,7 +19,7 @@ enum TrapType: byte {
 
 enum RobotType: byte {
     NONE,
-    RAT,
+    RAT, // baby rat
     RAT_KING,
     CAT
 }
