@@ -69,7 +69,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     private int currentWaypoint;
     private CatStateType catState;
-    private MapLocation[] catWaypoints;
+    private MapLocation[] rawCatWaypoints;
+    private MapLocation[] adjustedCatWaypoints;
     private MapLocation catTargetLoc;
     private int catTurns;
     private RobotInfo catTarget;
@@ -126,14 +127,36 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
             // set waypoints
             int[] waypointIndexLocations = gw.getGameMap().getCatWaypointsByID(this.ID);
-            catWaypoints = new MapLocation[waypointIndexLocations.length];
-            for (int i = 0; i < waypointIndexLocations.length; i++)
-                catWaypoints[i] = this.gameWorld.indexToLocation(waypointIndexLocations[i]);
+            rawCatWaypoints = new MapLocation[waypointIndexLocations.length];
+            adjustedCatWaypoints = new MapLocation[waypointIndexLocations.length];
+            for (int i = 0; i < waypointIndexLocations.length; i++){
+                rawCatWaypoints[i] = this.gameWorld.indexToLocation(waypointIndexLocations[i]);
+                if (this.chirality == 0){
+                    adjustedCatWaypoints[i] = rawCatWaypoints[i];
+                }
+                else{
+                    MapSymmetry symmetry = this.gameWorld.getGameMap().getSymmetry();
+                    switch (symmetry) {
+                        case VERTICAL:
+                            adjustedCatWaypoints[i] = rawCatWaypoints[i].add(Direction.EAST.opposite());
+                            break;
+                        case HORIZONTAL:
+                            adjustedCatWaypoints[i] = rawCatWaypoints[i].add(Direction.NORTH.opposite());
+                            break;
+                        case ROTATIONAL:
+                            adjustedCatWaypoints[i] = rawCatWaypoints[i].add(Direction.NORTHEAST.opposite());
+                            break;
+                        default:
+                            throw new RuntimeException("Invalid symmetry");
+                    }
+                }
+            }
 
-            this.catTargetLoc = this.catWaypoints[0];
+            this.catTargetLoc = this.adjustedCatWaypoints[0];
 
         } else {
-            this.catWaypoints = new MapLocation[0];
+            this.rawCatWaypoints = new MapLocation[0];
+            this.adjustedCatWaypoints = new MapLocation[0];
             this.catTargetLoc = null;
         }
 
@@ -1137,12 +1160,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         this.catTargetLoc = squeak.getSource();
                         this.catState = CatStateType.CHASE;
                     } else {
-                        MapLocation waypoint = catWaypoints[currentWaypoint];
+                        MapLocation waypoint = adjustedCatWaypoints[currentWaypoint];
 
                         if (this.location.equals(waypoint)) {
-                            currentWaypoint = (currentWaypoint + 1) % catWaypoints.length;
+                            currentWaypoint = (currentWaypoint + 1) % adjustedCatWaypoints.length;
                         }
-                        this.catTargetLoc = catWaypoints[currentWaypoint];
+                        this.catTargetLoc = adjustedCatWaypoints[currentWaypoint];
                     }
 
                     this.dir = this.gameWorld.getBfsDir(this.location, this.catTargetLoc);
