@@ -371,7 +371,7 @@ public final class RobotControllerImpl implements RobotController {
         assertCanRemoveRatTrap(loc);
         Trap trap = this.gameWorld.getTrap(loc);
         this.gameWorld.removeTrap(loc);
-        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getId(), trap.getTeam());
+        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getLocation(), trap.getTeam());
     }
 
     @Override
@@ -405,7 +405,7 @@ public final class RobotControllerImpl implements RobotController {
         assertCanRemoveCatTrap(loc);
         Trap trap = this.gameWorld.getTrap(loc);
         this.gameWorld.removeTrap(loc);
-        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getId(), trap.getTeam());
+        this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getLocation(), trap.getTeam());
     }
 
     @Override
