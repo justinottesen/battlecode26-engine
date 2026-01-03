@@ -422,10 +422,6 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {
         apply(round: Round): void {
             // remove trap from map
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-            const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
-
             round.map.trapData[this.actionData.loc()] = 0 // remove trap
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {

@@ -4,7 +4,8 @@ import {
     MapEditorBrushField,
     MapEditorBrushFieldType,
     SinglePointMapEditorBrush,
-    SymmetricMapEditorBrush
+    SymmetricMapEditorBrush,
+    UndoFunction
 } from '../components/sidebar/map-editor/MapEditorBrush'
 import { ACTION_DEFINITIONS } from './Actions'
 import Bodies from './Bodies'
@@ -488,7 +489,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.lastSelectedCat === -1) return null
             let currentCat = this.lastSelectedCat
             if (!robotOne) {
-                const symmetricPoint = this.map.applySymmetry(this.bodies.getById(this.lastSelectedCat)!.pos)
+                const symmetricPoint = this.map.applySymmetryCat(this.bodies.getById(this.lastSelectedCat)!.pos)
                 currentCat = this.bodies.getBodyAtLocation(symmetricPoint.x, symmetricPoint.y)!.id
             }
 
@@ -568,6 +569,32 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
                 }
             }
         }
+    }
+
+    // Override default symmetric apply behavior because cats occupy a 2x2 footprint
+    public apply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean): UndoFunction {
+        const undoFunctions: UndoFunction[] = []
+        const undo0 = this.symmetricApply(x, y, fields, robotOne)
+
+        // Return early if brush could not be applied
+        if (!undo0) return () => {}
+
+        undoFunctions.push(undo0)
+
+        const symmetryPoint = this.map.applySymmetryCat({ x: x, y: y })
+        if (symmetryPoint.x != x || symmetryPoint.y != y) {
+            const undo1 = this.symmetricApply(symmetryPoint.x, symmetryPoint.y, fields, !robotOne)
+
+            // If the symmetry is not applied, revert the original change
+            if (!undo1) {
+                undo0()
+                return () => {}
+            }
+
+            undoFunctions.push(undo1)
+        }
+
+        return () => undoFunctions.forEach((f) => f && f())
     }
 }
 

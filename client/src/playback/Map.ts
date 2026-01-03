@@ -522,6 +522,24 @@ export class StaticMap {
         }
     }
 
+    applySymmetryCat(point: Vector): Vector {
+        // Cats occupy a 2x2 footprint; adjust offsets so symmetry maps the cat's
+        // bottom-left anchor to the corresponding bottom-left anchor on the other side.
+        switch (this.symmetry) {
+            case Symmetry.VERTICAL:
+                // bottom-left -> bottom-right
+                return { x: this.width - point.x - 2, y: point.y }
+            case Symmetry.HORIZONTAL:
+                // bottom-left -> top-left
+                return { x: point.x, y: this.height - point.y - 2 }
+            case Symmetry.ROTATIONAL:
+                // bottom-left -> top-right
+                return { x: this.width - point.x - 2, y: this.height - point.y - 2 }
+            default:
+                throw new Error(`Invalid symmetry ${this.symmetry}`)
+        }
+    }
+
     draw(ctx: CanvasRenderingContext2D) {
         // Fill background
         ctx.fillStyle = Colors.TILES_COLOR.get()
