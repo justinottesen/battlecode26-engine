@@ -656,7 +656,7 @@ export class Body {
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
             `Direction: ${directionMap[this.direction]}`,
-            `${this.robotType === schema.RobotType.CAT ? 'Chirality: ' + this.chirality : ''}`,
+            `${this.robotType === schema.RobotType.CAT || schema.RobotType.RAT_KING ? 'Chirality: ' + this.chirality : ''}`,
             `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,

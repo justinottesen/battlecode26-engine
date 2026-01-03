@@ -629,7 +629,7 @@ export class RatKingBrush extends SymmetricMapEditorBrush<StaticMap> {
             }
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0, 0)
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0, robotOne ? 0:1)
 
             return id
         }
