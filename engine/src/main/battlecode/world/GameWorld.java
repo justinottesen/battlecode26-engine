@@ -547,7 +547,7 @@ public class GameWorld {
         int idx = locationToIndex(loc);
         this.trapLocations[idx] = trap;
 
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) {// set chirality to 0, only rats will be placing traps
             this.trapTriggers[locationToIndex(adjLoc)].add(trap);
         }
 
@@ -568,7 +568,7 @@ public class GameWorld {
         this.trapCounts.put(type, trapTypeCounts);
         this.trapLocations[locationToIndex(loc)] = null;
 
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) { // set chirality to 0, only rats will be removing traps
             this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
         }
     }
@@ -626,13 +626,13 @@ public class GameWorld {
         this.robots[loc.x - this.gameMap.getOrigin().x][loc.y - this.gameMap.getOrigin().y] = null;
     }
 
-    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared) {
-        return getAllRobotsWithinRadiusSquared(center, radiusSquared, null);
+    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, int chirality) {
+        return getAllRobotsWithinRadiusSquared(center, radiusSquared, null, chirality);
     }
 
-    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, Team team) {
+    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
-        for (MapLocation newLocation : getAllLocationsWithinRadiusSquared(center, radiusSquared))
+        for (MapLocation newLocation : getAllLocationsWithinRadiusSquared(center, radiusSquared, chirality))
             if (getRobot(newLocation) != null) {
                 if (team == null || getRobot(newLocation).getTeam() == team)
                     returnRobots.add(getRobot(newLocation));
@@ -641,15 +641,15 @@ public class GameWorld {
     }
 
     public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared) {
-        return getAllRobotsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared, null);
+            double totalAngle, int radiusSquared, int chirality) {
+        return getAllRobotsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared, null, chirality);
     }
 
     public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared, Team team) {
+            double totalAngle, int radiusSquared, Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
         for (MapLocation newLocation : getAllLocationsWithinConeRadiusSquared(center, lookDirection, totalAngle,
-                radiusSquared))
+                radiusSquared, chirality))
             if (getRobot(newLocation) != null) {
                 if (team == null || getRobot(newLocation).getTeam() == team)
                     returnRobots.add(getRobot(newLocation));
@@ -657,9 +657,9 @@ public class GameWorld {
         return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
     }
 
-    public InternalRobot[] getAllRobots(Team team) {
+    public InternalRobot[] getAllRobots(Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
-        for (MapLocation newLocation : getAllLocations()) {
+        for (MapLocation newLocation : getAllLocations(chirality)) {
             if (getRobot(newLocation) != null && (team == null || getRobot(newLocation).getTeam() == team)) {
                 returnRobots.add(getRobot(newLocation));
             }
@@ -667,30 +667,30 @@ public class GameWorld {
         return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
     }
 
-    public MapLocation[] getAllLocationsWithinRadiusSquared(MapLocation center, int radiusSquared) {
+    public MapLocation[] getAllLocationsWithinRadiusSquared(MapLocation center, int radiusSquared, int chirality) {
         return getAllLocationsWithinConeRadiusSquaredWithoutMap(
                 this.gameMap.getOrigin(),
                 this.gameMap.getWidth(),
                 this.gameMap.getHeight(),
-                center, Direction.CENTER, 360, radiusSquared);
+                center, Direction.CENTER, 360, radiusSquared, chirality);
     }
 
     public MapLocation[] getAllLocationsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared) {
+            double totalAngle, int radiusSquared, int chirality) {
         return getAllLocationsWithinConeRadiusSquaredWithoutMap(
                 this.gameMap.getOrigin(),
                 this.gameMap.getWidth(),
                 this.gameMap.getHeight(),
                 center,
                 lookDirection,
-                totalAngle, radiusSquared);
+                totalAngle, radiusSquared, chirality);
     }
 
-    public static MapLocation[] getAllLocationsWithinConeRadiusSquaredWithoutMap(MapLocation origin,
+    public MapLocation[] getAllLocationsWithinConeRadiusSquaredWithoutMap(MapLocation origin,
             int width, int height,
             MapLocation center,
             Direction lookDirection,
-            double angle, int radiusSquared) {
+            double angle, int radiusSquared, int chirality) {
         ArrayList<MapLocation> returnLocations = new ArrayList<MapLocation>();
         int ceiledRadius = (int) Math.ceil(Math.sqrt(radiusSquared)) + 1; // add +1 just to be safe
         int minX = Math.max(center.x - ceiledRadius, origin.x);
@@ -698,8 +698,33 @@ public class GameWorld {
         int maxX = Math.min(center.x + ceiledRadius, origin.x + width - 1);
         int maxY = Math.min(center.y + ceiledRadius, origin.y + height - 1);
 
+        ArrayList<Integer> x_list = new ArrayList<>();
+        ArrayList<Integer> y_list = new ArrayList<>();
         for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
+            x_list.add(x);
+        }
+        for (int y = minY; y <= maxY; y++) {
+            y_list.add(y);
+        }
+
+        if (chirality == 1){
+            MapSymmetry symmetry = this.getGameMap().getSymmetry();
+            switch (symmetry){
+                case HORIZONTAL:
+                    Collections.reverse(y_list);
+                    break;
+                case VERTICAL:
+                    Collections.reverse(x_list);
+                    break;
+                case ROTATIONAL:
+                    Collections.reverse(x_list);
+                    Collections.reverse(y_list);
+                    break;
+            }
+        }
+
+        for (int x : x_list) {
+            for (int y : y_list) {
                 MapLocation newLocation = new MapLocation(x, y);
 
                 if (center.isWithinDistanceSquared(newLocation, radiusSquared, lookDirection, angle)) {
@@ -713,8 +738,8 @@ public class GameWorld {
     /**
      * @return all of the locations on the grid
      */
-    private MapLocation[] getAllLocations() {
-        return getAllLocationsWithinRadiusSquared(new MapLocation(0, 0), Integer.MAX_VALUE);
+    private MapLocation[] getAllLocations(int chirality) {
+        return getAllLocationsWithinRadiusSquared(new MapLocation(0, 0), Integer.MAX_VALUE, chirality);
     }
 
     // *********************************
@@ -974,7 +999,7 @@ public class GameWorld {
 
     public void squeak(InternalRobot robot, Message message) {
         MapLocation robotLoc = robot.getLocation();
-        MapLocation[] locations = getAllLocationsWithinRadiusSquared(robotLoc, GameConstants.SQUEAK_RADIUS_SQUARED);
+        MapLocation[] locations = getAllLocationsWithinRadiusSquared(robotLoc, GameConstants.SQUEAK_RADIUS_SQUARED, 0); // chirality doesn't matter here
 
         for (MapLocation loc : locations) {
             InternalRobot otherRobot = getRobot(loc);
