@@ -16,7 +16,7 @@ const UnitsIcon: React.FC<UnitsIconProps> = (props: UnitsIconProps) => {
     const color = TEAM_COLOR_NAMES[props.teamIdx].toLowerCase()
     let imagePath: string = ''
     if (props.img == 'rat') {
-        imagePath = `robots/${color}/rat_0.png`
+        imagePath = `robots/${color}/rat_0_64x64.png`
     } else {
         imagePath = `icons/${props.img}.png`
     }
@@ -77,16 +77,16 @@ export const ResourceTable: React.FC<ResourceTableProps> = ({ map, teamStat, tea
         <div className="flex flex-col items-center">
             <div className="flex items-center w-full mt-2 mb-1 text-xs font-bold justify-around">
                 <div className="flex items-center w-[160px] ml-6">
-                    <div className="w-[30px] h-[30px] mr-2">
+                    <div className="w-[30px] h-[30px] mr-5">
                         <img style={{ transform: 'scale(1.5)' }} src={imageSource(`icons/cheese_64x64.png`)} />
                     </div>
-                    <div>Cheese:</div>
+                    <div>Count:</div>
                     <div className="ml-1">
                         <b>{cheeseAmount}</b>
                     </div>
                 </div>
                 <div className="flex items-center w-[145px]">
-                    <div>Cheese Percent:</div>
+                    <div>Percent:</div>
                     <div className="ml-1">
                         <b>{cheesePercent}</b>
                     </div>
@@ -94,16 +94,16 @@ export const ResourceTable: React.FC<ResourceTableProps> = ({ map, teamStat, tea
             </div>
             <div className="flex items-center w-full mt-2 mb-1 text-xs font-bold justify-around">
                 <div className="flex items-center w-[160px] ml-6">
-                    <div className="w-[30px] h-[30px] mr-2">
+                    <div className="w-[30px] h-[30px] mr-5">
                         <img style={{ transform: 'scale(1.5)' }} src={imageSource(`robots/cat/cat_0.png`)} />
                     </div>
-                    <div>Cat Damage:</div>
+                    <div>Count:</div>
                     <div className="ml-1">
                         <b>{catDamageAmount}</b>
                     </div>
                 </div>
                 <div className="flex items-center w-[145px]">
-                    <div>Cat Damage Percent:</div>
+                    <div>Percent:</div>
                     <div className="ml-1">
                         <b>{catDamagePercent}</b>
                     </div>
@@ -111,19 +111,19 @@ export const ResourceTable: React.FC<ResourceTableProps> = ({ map, teamStat, tea
             </div>
             <div className="flex items-center w-full mt-2 mb-1 text-xs font-bold justify-around">
                 <div className="flex items-center w-[160px] ml-6">
-                    <div className="w-[30px] h-[30px] mr-2">
+                    <div className="w-[30px] h-[30px] mr-5">
                         <img
                             style={{ transform: 'scale(1.5)' }}
                             src={imageSource(`robots/${teamName}/rat_king_64x64.png`)}
                         />
                     </div>
-                    <div>Rat Kings:</div>
+                    <div>Count:</div>
                     <div className="ml-1">
                         <b>{ratKingCount}</b>
                     </div>
                 </div>
                 <div className="flex items-center w-[145px]">
-                    <div>Rat King Percent:</div>
+                    <div>Percent:</div>
                     <div className="ml-1">
                         <b>{ratKingPercent}</b>
                     </div>
