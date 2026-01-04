@@ -39,7 +39,8 @@ export class CurrentMap {
     public readonly staticMap: StaticMap
     public readonly dirt: Int8Array
     public readonly markers: [Int8Array, Int8Array] // Each team has markers
-    public readonly trapData: Int8Array
+    public readonly ratTrapData: Int8Array
+    public readonly catTrapData: Int8Array
     public readonly cheeseData: Int8Array
     public readonly resourcePatterns: ResourcePatternData[]
 
@@ -62,7 +63,8 @@ export class CurrentMap {
             this.cheeseData = new Int8Array(from.cheese)
             this.markers = [new Int8Array(this.width * this.height), new Int8Array(this.width * this.height)]
             this.resourcePatterns = []
-            this.trapData = new Int8Array(this.width * this.height)
+            this.ratTrapData = new Int8Array(this.width * this.height)
+            this.catTrapData = new Int8Array(this.width * this.height)
         } else {
             // Create current map from current map (copy)
 
@@ -73,7 +75,8 @@ export class CurrentMap {
 
             // Assumes ResourcePatternData is immutable
             this.resourcePatterns = [...from.resourcePatterns]
-            this.trapData = new Int8Array(from.trapData)
+            this.ratTrapData = new Int8Array(from.ratTrapData)
+            this.catTrapData = new Int8Array(from.catTrapData)
         }
     }
 
@@ -173,11 +176,20 @@ export class CurrentMap {
                     )
                 }
 
-                const trap = this.trapData[schemaIdx]
-                if (trap) {
+                const ratTrap = this.ratTrapData[schemaIdx]
+                if (ratTrap) {
                     renderUtils.renderCenteredImageOrLoadingIndicator(
                         ctx,
-                        getImageIfLoaded('icons/trap.png'),
+                        getImageIfLoaded('icons/rat_trap.png'),
+                        coords,
+                        1.0
+                    )
+                }
+                const catTrap = this.catTrapData[schemaIdx]
+                if (catTrap) {
+                    renderUtils.renderCenteredImageOrLoadingIndicator(
+                        ctx,
+                        getImageIfLoaded('icons/cat_trap.png'),
                         coords,
                         1.0
                     )
@@ -287,10 +299,10 @@ export class CurrentMap {
         //     }
         // }
         if (markerA) {
-            info.push(`Silver Marker (${markerA === 1 ? 'Primary' : 'Secondary'})`)
+            info.push(`Cheddar Marker (${markerA === 1 ? 'Primary' : 'Secondary'})`)
         }
         if (markerB) {
-            info.push(`Gold Marker (${markerB === 3 ? 'Primary' : 'Secondary'})`)
+            info.push(`Plum Marker (${markerB === 3 ? 'Primary' : 'Secondary'})`)
         }
         if (wall) {
             info.push('Wall')
@@ -522,6 +534,24 @@ export class StaticMap {
         }
     }
 
+    applySymmetryCat(point: Vector): Vector {
+        // Cats occupy a 2x2 footprint; adjust offsets so symmetry maps the cat's
+        // bottom-left anchor to the corresponding bottom-left anchor on the other side.
+        switch (this.symmetry) {
+            case Symmetry.VERTICAL:
+                // bottom-left -> bottom-right
+                return { x: this.width - point.x - 2, y: point.y }
+            case Symmetry.HORIZONTAL:
+                // bottom-left -> top-left
+                return { x: point.x, y: this.height - point.y - 2 }
+            case Symmetry.ROTATIONAL:
+                // bottom-left -> top-right
+                return { x: this.width - point.x - 2, y: this.height - point.y - 2 }
+            default:
+                throw new Error(`Invalid symmetry ${this.symmetry}`)
+        }
+    }
+
     draw(ctx: CanvasRenderingContext2D) {
         // Fill background
         ctx.fillStyle = Colors.TILES_COLOR.get()
@@ -592,5 +622,24 @@ export class StaticMap {
 
     getEditorBrushes(): MapEditorBrush[] {
         return []
+    }
+
+    public inBounds(x: number, y: number) {
+        return x >= 0 && x < this.width && y >= 0 && y < this.height
+    }
+    public wallAt(x: number, y: number) {
+        return this.inBounds(x, y) && this.walls[this.locationToIndex(x, y)]
+    }
+    public getNeighbors(x: number, y: number): Vector[] {
+        const neighbors: Vector[] = []
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                if (Math.abs(dx) + Math.abs(dy) === 0) continue
+                const nx = x + dx
+                const ny = y + dy
+                neighbors.push({ x: nx, y: ny })
+            }
+        }
+        return neighbors
     }
 }

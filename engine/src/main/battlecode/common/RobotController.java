@@ -44,6 +44,15 @@ public interface RobotController {
      */
     int getMapHeight();
 
+    /**
+     * Returns the game state- true if in cooperation mode, false if in backstabbing mode. 
+     *
+     * @return boolean representing the game state
+     *
+     * @battlecode.doc.costlymethod
+     */
+    boolean isCooperation();
+
     // *********************************
     // ****** UNIT QUERY METHODS *******
     // *********************************
@@ -149,6 +158,34 @@ public interface RobotController {
      * @battlecode.doc.costlymethod
      */
     UnitType getType();
+
+    /**
+     * Returns robot that this robot is carrying or null if this robot is not carrying another robot.
+     * 
+     * @return RobotInfo for the carried robot or null.
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    RobotInfo getCarrying();
+
+    /**
+     * Returns whether robot is being thrown.
+     * 
+     * @return true if robot is being thrown, false if not
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    boolean isBeingThrown();
+
+    /**
+     * Returns whether robot is being carried.
+     * 
+     * @return true if robot is being carried, false if not
+     * 
+     * @battlecode.doc.costlymethod
+     */
+    boolean isBeingCarried();
+
 
     // ***********************************
     // ****** GENERAL VISION METHODS *****
@@ -752,21 +789,30 @@ public interface RobotController {
     // ****************************
 
     /**
-     * Tests whether this robot can attack the given location.
+     * Tests whether this robot can attack (aka bite) the given location.
      *
-     * @param loc target location to attack
+     * @param loc target location to attack (bite)
      * @return whether it is possible to attack the given location
      *
      * @battlecode.doc.costlymethod
      */
     boolean canAttack(MapLocation loc);
 
-    // TODO: update docstrings from paint related stuff to rat related stuff
     /**
-     * Performs the specific attack for this robot type, defaulting to a bite with 
-     * no cheese for rats and a scratch for cats
+     * Tests whether this robot can attack (bite) the given location with the given amount of cheese.
      *
-     * @param loc the target location to attack (for splashers, the center location)
+     * @param loc target location to attack (bite)
+     * @param cheeseAmount amount of cheese to spend on the attack
+     * @return whether it is possible to attack the given location with this cheese amount
+     *
+     * @battlecode.doc.costlymethod
+     */
+    boolean canAttack(MapLocation loc, int cheeseAmount);
+
+    /**
+     * Performs a rat attack (aka bite) action, defaulting to a bite with no cheese for rats
+     *
+     * @param loc the target location to attack
      * @throws GameActionException if conditions for attacking are not satisfied
      *
      * @battlecode.doc.costlymethod
@@ -774,10 +820,10 @@ public interface RobotController {
     void attack(MapLocation loc) throws GameActionException;
 
     /**
-     * Performs the specific attack for this robot type, defaulting to a bite with 
-     * no cheese for rats and a scratch for cats
+     * Performs the specific attack for this robot type, consuming the specified amount of cheese 
+     * for increasing bite strength
      *
-     * @param loc the target location to attack (for splashers, the center location)
+     * @param loc the target location to attack
      * @throws GameActionException if conditions for attacking are not satisfied
      *
      * @battlecode.doc.costlymethod

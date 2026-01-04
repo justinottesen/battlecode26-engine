@@ -19,7 +19,7 @@ enum TrapType: byte {
 
 enum RobotType: byte {
     NONE,
-    RAT,
+    RAT, // baby rat
     RAT_KING,
     CAT
 }
@@ -168,8 +168,14 @@ struct CatPounce {
 struct PlaceTrap {
     loc: ushort;
     team: byte;
+    isRatTrapType: bool;
 }
 
+/// Remove a trap at location
+struct RemoveTrap {
+    loc: ushort;
+    team: byte;
+}
 
 /// Triggers the trap
 struct TriggerTrap {
@@ -254,6 +260,7 @@ union Action {
     CatScratch,
     CatPounce,
     PlaceTrap,
+    RemoveTrap,
     TriggerTrap,
     ThrowRat,
     UpgradeToRatKing,
@@ -412,6 +419,7 @@ table Turn {
     y: ubyte;
     dir: ubyte;
     actions: [Action];
+    isCooperation: bool;
 }
 
 
@@ -419,8 +427,31 @@ table Turn {
 table Round {
     /// The IDs of teams in the Game.
     teamIds: [int];
+
     /// The total amount of cheese this round per team
     teamCheeseAmounts: [int];
+
+    /// The total amount of damage done to the enemy team
+    teamEnemyDamage: [int];
+
+    /// The total number of cat damage done by each team
+    teamCatDamage: [int];
+
+    /// The total number of alive rat kings per team
+    teamAliveRatKings: [int];
+   
+    /// The total number of alive baby rats per team
+    teamAliveBabyRats: [int];
+
+    /// The total number of live rat traps per team
+    teamRatTrapCount: [int];
+
+    /// The total number of live cat traps per team
+    teamCatTrapCount: [int];
+
+    /// The total number of live cat traps per team
+    teamDirtAmounts: [int];
+
    
     /// Ordered turn data for each robot during the round
     turns: [Turn];

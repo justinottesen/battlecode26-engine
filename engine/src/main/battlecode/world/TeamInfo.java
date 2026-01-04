@@ -16,9 +16,11 @@ public class TeamInfo {
     private int[] globalCheese;
     private int[] dirtCounts;
     private int[] oldCheeseCounts;
-    private int[] totalNumRats;
+    private int[] cheeseCollected;
+    private int[] numBabyRats;
     private int[] numRatKings;
     private int[] damageToCats;
+    private int[] damageSuffered;
     private int[] points;
 
     /**
@@ -31,8 +33,10 @@ public class TeamInfo {
         this.globalCheese = new int[2];
         this.dirtCounts = new int[2];
         this.oldCheeseCounts = new int[2];
-        this.totalNumRats = new int[2];
+        this.cheeseCollected = new int[2];
+        this.numBabyRats = new int[2];
         this.damageToCats = new int[2];
+        this.damageSuffered = new int[2];
         this.numRatKings = new int[2];
         this.points = new int[2];
     }
@@ -53,6 +57,17 @@ public class TeamInfo {
     }
 
     /**
+     * Get the amount of cheese collected.
+     * 
+     * @param team the team to query
+     * @return the team's cheese count
+     */
+
+    public int getCheeseCollected(Team team) {
+        return this.cheeseCollected[team.ordinal()];
+    }
+
+    /**
      * Get the amount of dirt.
      * 
      * @param team the team to query
@@ -68,8 +83,8 @@ public class TeamInfo {
      * @param team the team to query
      * @return the number of rats the team has
      */
-    public int getNumRats(Team team) {
-        return this.totalNumRats[team.ordinal()];
+    public int getNumBabyRats(Team team) {
+        return this.numBabyRats[team.ordinal()];
     }
 
     /**
@@ -93,6 +108,16 @@ public class TeamInfo {
     }
 
     /**
+     * Get how much damage this team suffered
+     * 
+     * @param team the team to query
+     * @return the team's total amount of health lost
+     */
+    public int getDamageSuffered(Team team) {
+        return this.damageSuffered[team.ordinal()];
+    }
+
+    /**
      * Get the amount of points belonging to a team
      * 
      * @param team the team to query
@@ -102,13 +127,18 @@ public class TeamInfo {
         return this.points[team.ordinal()];
     }
 
+    // *********************************
+    // ***** UPDATE METHODS ************
+    // *********************************
+
+
     /**
-     * Change the total number of rats belonging to a team
+     * Change the total number of baby rats belonging to a team
      * 
      * @param team the team to change
      */
-    public void addRats(int num, Team team) {
-        this.totalNumRats[team.ordinal()] += num;
+    public void addBabyRats(int num, Team team) {
+        this.numBabyRats[team.ordinal()] += num;
     }
 
     /**
@@ -119,10 +149,6 @@ public class TeamInfo {
     public void addRatKings(int num, Team team) {
         this.numRatKings[team.ordinal()] += num;
     }
-
-    // *********************************
-    // ***** UPDATE METHODS ************
-    // *********************************
 
     /**
      * Add to the amount of cheese. If amount is negative, subtract from cheese
@@ -141,6 +167,16 @@ public class TeamInfo {
     }
 
     /**
+     * Add to the amount of cheese collected.
+     * 
+     * @param team   the team to query
+     * @param amount    cheese collected
+     */
+    public void addCheeseCollected(Team team, int amount) {
+        this.cheeseCollected[team.ordinal()] += amount;
+    }
+
+    /**
      * Add to the damage done to cats for a team.
      * 
      * @param team   team to attribute damage to
@@ -148,6 +184,16 @@ public class TeamInfo {
      */
     public void addDamageToCats(Team team, int amount) {
         this.damageToCats[team.ordinal()] += amount;
+    }
+
+    /**
+     * Add to the damage done to other team's rats for a team.
+     * 
+     * @param team   team to attribute damage to
+     * @param amount the change in the amount of damage done to enemy rats
+     */
+    public void addDamageSuffered(Team team, int amount) {
+        this.damageSuffered[team.ordinal()] += amount;
     }
 
     /**

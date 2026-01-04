@@ -272,8 +272,6 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     [schema.Action.CheeseSpawn]: class CheeseSpawnAction extends Action<schema.CheeseSpawn> {
         apply(round: Round): void {
             // add cheese to map
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
             const amount = this.actionData.amount()
 
             round.map.cheeseData[this.actionData.loc()] = amount
@@ -366,13 +364,13 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
 
             let texture: string
             if (angle >= (7 * Math.PI) / 4 || angle <= Math.PI / 4) {
-                texture = 'robots/cat/cat_pounce_right.png'
+                texture = 'robots/cat/cat_pounce_5.png'
             } else if (angle > Math.PI / 4 && angle < (3 * Math.PI) / 4) {
-                texture = 'robots/cat/cat_pounce_up.png'
+                texture = 'robots/cat/cat_pounce_7.png'
             } else if (angle >= (3 * Math.PI) / 4 && angle <= (5 * Math.PI) / 4) {
-                texture = 'robots/cat/cat_pounce_left.png'
+                texture = 'robots/cat/cat_pounce_1.png'
             } else {
-                texture = 'robots/cat/cat_pounce_down.png'
+                texture = 'robots/cat/cat_pounce_3.png'
             }
             body.imgPath = texture
 
@@ -394,38 +392,49 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         apply(round: Round): void {
             // add a trap to map
             const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-            const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
 
-            round.map.trapData[this.actionData.loc()] = 1 + body.team.id // 1 for team 0, 2 for team 1
+            if (this.actionData.isRatTrapType()) {
+                round.map.ratTrapData[this.actionData.loc()] = 1 + body.team.id // 1 for team 0, 2 for team 1
+            } else {
+                round.map.catTrapData[this.actionData.loc()] = 1 + body.team.id // 1 for team 0, 2 for team 1
+            }
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // place trap animation
-            const map = match.currentRound.map
-            const body = match.currentRound.bodies.getById(this.robotId)
-            const coords = renderUtils.getRenderCoords(body.pos.x, body.pos.y, map.dimension, false)
+            const to = match.map.indexToLocation(this.actionData.loc())
+            const coords = renderUtils.getRenderCoords(to.x, to.y, match.map.dimension, false)
             const factor = match.getInterpolationFactor()
             const isEndpoint = factor == 0 || factor == 1
             const size = isEndpoint ? 1 : Math.max(factor * 1.5, 0.3)
             const alpha = isEndpoint ? 1 : (factor < 0.5 ? factor : 1 - factor) * 2
+            let imgPath: string
+            if (this.actionData.isRatTrapType()) {
+                imgPath = 'icons/rat_trap.png'
+            } else {
+                imgPath = 'icons/cat_trap.png'
+            }
 
             ctx.globalAlpha = alpha
             ctx.shadowBlur = 4
             ctx.shadowColor = 'black'
-            renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded('icons/trap.png'), coords, size)
+            renderUtils.renderCenteredImageOrLoadingIndicator(ctx, getImageIfLoaded(imgPath), coords, size)
             ctx.shadowBlur = 0
             ctx.shadowColor = ''
             ctx.globalAlpha = 1
         }
     },
+    [schema.Action.RemoveTrap]: class RemoveTrapAction extends Action<schema.RemoveTrap> {
+        apply(round: Round): void {
+            // remove a trap from map
+            round.map.ratTrapData[this.actionData.loc()] = 0
+            round.map.catTrapData[this.actionData.loc()] = 0
+        }
+    },
     [schema.Action.TriggerTrap]: class TriggerTrapAction extends Action<schema.TriggerTrap> {
         apply(round: Round): void {
             // remove trap from map
-            const body = round.bodies.getById(this.robotId)
-            const pos = round.map.indexToLocation(this.actionData.loc())
-            const teamId = body.team.id // there is also the `team` attribute of the action, but it seems to be unnecessary.
-
-            round.map.trapData[this.actionData.loc()] = 0 // remove trap
+            round.map.ratTrapData[this.actionData.loc()] = 0 // remove trap
+            round.map.catTrapData[this.actionData.loc()] = 0 // remove trap
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // trap triggering animation

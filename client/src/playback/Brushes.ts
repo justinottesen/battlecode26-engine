@@ -4,7 +4,8 @@ import {
     MapEditorBrushField,
     MapEditorBrushFieldType,
     SinglePointMapEditorBrush,
-    SymmetricMapEditorBrush
+    SymmetricMapEditorBrush,
+    UndoFunction
 } from '../components/sidebar/map-editor/MapEditorBrush'
 import { ACTION_DEFINITIONS } from './Actions'
 import Bodies from './Bodies'
@@ -130,7 +131,7 @@ const makeEditorActionData = (
         case schema.Action.DieAction:
             return { id: () => targetId, dieType: () => 0 }
         case schema.Action.PlaceTrap:
-            return { loc: () => loc, team: () => 0 }
+            return { isRatTrapType: () => true, loc: () => loc, team: () => 0 }
         case schema.Action.PlaceDirt:
             return { loc: () => loc }
         case schema.Action.RatAttack:
@@ -488,7 +489,7 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.lastSelectedCat === -1) return null
             let currentCat = this.lastSelectedCat
             if (!robotOne) {
-                const symmetricPoint = this.map.applySymmetry(this.bodies.getById(this.lastSelectedCat)!.pos)
+                const symmetricPoint = this.map.applySymmetryCat(this.bodies.getById(this.lastSelectedCat)!.pos)
                 currentCat = this.bodies.getBodyAtLocation(symmetricPoint.x, symmetricPoint.y)!.id
             }
 
@@ -507,12 +508,16 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             }
 
             // if adding a waypoint
-            if (this.bodies.getBodyAtLocation(x, y)) {
+            for (let nei of this.map.getNeighbors(x, y)) {
+                if (this.map.wallAt(nei.x, nei.y) || !this.map.inBounds(nei.x, nei.y)) {
+                    return null
+                }
+            }
+
+            if (this.bodies.getBodyAtLocation(x, y) || this.map.wallAt(x, y)) {
                 return null
             }
-            if (!this.map.catWaypoints.has(currentCat)) {
-                this.map.catWaypoints.set(currentCat, [])
-            }
+
             this.map.catWaypoints.get(currentCat)?.push({ x, y })
 
             return () => {
@@ -529,7 +534,8 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
             if (this.bodies.checkBodyCollisionAtLocation(schema.RobotType.CAT, pos)) return null
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, (robotOne ? 0 : 1))
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.CAT, team, pos, 0, robotOne ? 0 : 1)
+            this.map.catWaypoints.set(id, [{ x: x, y: y }]) // add initial waypoint at spawn location
 
             return id
         }
@@ -562,6 +568,32 @@ export class CatBrush extends SymmetricMapEditorBrush<StaticMap> {
                 }
             }
         }
+    }
+
+    // Override default symmetric apply behavior because cats occupy a 2x2 footprint
+    public apply(x: number, y: number, fields: Record<string, MapEditorBrushField>, robotOne: boolean): UndoFunction {
+        const undoFunctions: UndoFunction[] = []
+        const undo0 = this.symmetricApply(x, y, fields, robotOne)
+
+        // Return early if brush could not be applied
+        if (!undo0) return () => {}
+
+        undoFunctions.push(undo0)
+
+        const symmetryPoint = this.map.applySymmetryCat({ x: x, y: y })
+        if (symmetryPoint.x != x || symmetryPoint.y != y) {
+            const undo1 = this.symmetricApply(symmetryPoint.x, symmetryPoint.y, fields, !robotOne)
+
+            // If the symmetry is not applied, revert the original change
+            if (!undo1) {
+                undo0()
+                return () => {}
+            }
+
+            undoFunctions.push(undo1)
+        }
+
+        return () => undoFunctions.forEach((f) => f && f())
     }
 }
 
@@ -597,7 +629,7 @@ export class RatKingBrush extends SymmetricMapEditorBrush<StaticMap> {
             }
 
             const id = this.bodies.getNextID()
-            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0, 0)
+            this.bodies.spawnBodyFromValues(id, schema.RobotType.RAT_KING, team, pos, 0, robotOne ? 0:1)
 
             return id
         }

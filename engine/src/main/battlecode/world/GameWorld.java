@@ -58,6 +58,10 @@ public class GameWorld {
     private ArrayList<CheeseMine> cheeseMines;
     private CheeseMine[] cheeseMineLocs;
 
+    // bfs map
+    private Direction[][] bfs_map_0;
+    private Direction[][] bfs_map_1;
+
     private int numCats;
 
     private int[][] sharedArray;
@@ -92,6 +96,28 @@ public class GameWorld {
                 return gameMap.getWidth() - 1 - x;
         }
     }
+
+
+    public Direction flipDirBySymmetry(Direction d){
+        MapSymmetry symmetry = this.gameMap.getSymmetry();
+        int dx = d.getDeltaX();
+        int dy = d.getDeltaY();
+        switch (symmetry) {
+            case HORIZONTAL:
+                dy *= -1;
+                break;
+            case VERTICAL:
+                dx *= -1;
+                break;
+            case ROTATIONAL:
+                dx *= -1;
+                dy *= -1;
+                break;
+        } 
+
+        return Direction.fromDelta(dx, dy);
+    }
+
 
     public MapLocation symmetryLocation(MapLocation p) {
         return new MapLocation(symmetricX(p.x), symmetricY(p.y));
@@ -167,6 +193,85 @@ public class GameWorld {
             spawnRobot(robotInfo.ID, robotInfo.type, newLocation, robotInfo.direction, robotInfo.chirality,
                     robotInfo.team);
         }
+
+        // cat bfs map
+        this.bfs_map_0 = new Direction[width*height][width*height];
+        this.bfs_map_1 = new Direction[width*height][width*height];
+        
+        for (int target_x=0; target_x < width; target_x++){
+            for (int target_y=0; target_y < height; target_y++){
+                MapLocation source = new MapLocation(target_x, target_y);
+                bfsFromTarget(source, 0);
+                bfsFromTarget(source, 1);
+            }
+        }
+
+
+    }
+
+    public void bfsFromTarget(MapLocation target, int chirality){
+        // bfs form target to all possible sources, set source direction to target
+
+        Direction[][] bfs_map;
+        if (chirality == 0)
+            bfs_map = this.bfs_map_0;
+        else
+            bfs_map = this.bfs_map_1;
+
+        Queue<MapLocation> queue = new LinkedList<MapLocation>();
+        queue.add(target);
+
+        bfs_map[locationToIndex(target)][locationToIndex(target)] = Direction.CENTER;
+
+        while(!queue.isEmpty()){
+            MapLocation nextLoc = queue.poll();
+            
+            // check neighbors
+            for (Direction d : Direction.allDirections()){
+                if (d == Direction.CENTER)
+                    continue;
+                if (chirality == 1)
+                    d = flipDirBySymmetry(d);
+                
+                MapLocation neighbor = nextLoc.add(d);
+
+                if (this.gameMap.onTheMap(neighbor) && bfs_map[locationToIndex(neighbor)][locationToIndex(target)] != null){
+                    // visited already
+                    continue;
+                }
+
+                // check this path works for all cat locations
+                boolean validPath = true;
+                
+                Direction[] dirsFromCenterLoc;
+                if (chirality == 0){
+                    dirsFromCenterLoc = new Direction[]{Direction.CENTER, Direction.NORTH, Direction.NORTHEAST, Direction.EAST};
+                }
+                else{
+                    dirsFromCenterLoc = new Direction[]{flipDirBySymmetry(Direction.CENTER), flipDirBySymmetry(Direction.NORTH), flipDirBySymmetry(Direction.NORTHEAST), flipDirBySymmetry(Direction.EAST)};
+                }
+                for (Direction dirFromCenter : dirsFromCenterLoc){
+                    MapLocation neighborCorner = neighbor.add(dirFromCenter);
+                    if (!this.gameMap.onTheMap(neighborCorner) || this.getWall(neighborCorner)){
+                        // location not on map or has walls
+                        validPath = false;
+                        break;
+                    }
+                }
+                if (validPath){
+                    Direction reverseDirection = d.opposite();
+                    bfs_map[locationToIndex(neighbor)][locationToIndex(target)] = reverseDirection;
+                    queue.add(neighbor);
+                }
+            }   
+        }
+    }
+
+    public Direction getBfsDir(MapLocation from, MapLocation to, int chirality){
+        if (chirality==0)
+            return bfs_map_0[locationToIndex(from)][locationToIndex(to)];
+        else
+            return bfs_map_1[locationToIndex(from)][locationToIndex(to)];
     }
 
     /**
@@ -358,36 +463,47 @@ public class GameWorld {
             int dx = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
             int dy = rand.nextInt(-GameConstants.SQ_CHEESE_SPAWN_RADIUS, GameConstants.SQ_CHEESE_SPAWN_RADIUS);
 
-            // if rotational, flip both symmetries, if vertical/horizontal, only flip the
-            // corresponding one
-            int pair_dx = gameMap.getSymmetry() == MapSymmetry.VERTICAL ? dx : -dx;
-            int pair_dy = gameMap.getSymmetry() == MapSymmetry.HORIZONTAL ? dy : -dy;
+            MapLocation ogSpawnLoc = mine.getLocation();
+            MapLocation pairedSpawnLoc = mine.getPair().getLocation();
             CheeseMine pairedMine = mine.getPair();
 
-            int cheeseX = mine.getLocation().x + dx;
-            int cheeseY = mine.getLocation().y + dy;
+            for (int invalidSpawns = 0; invalidSpawns < 5; invalidSpawns++) {
+                int pair_dx = gameMap.getSymmetry() == MapSymmetry.VERTICAL ? dx : -dx;
+                int pair_dy = gameMap.getSymmetry() == MapSymmetry.HORIZONTAL ? dy : -dy;
 
-            int pairedX = pairedMine.getLocation().x + pair_dx;
-            int pairedY = pairedMine.getLocation().y + pair_dy;
+                int cheeseX = mine.getLocation().x + dx;
+                int cheeseY = mine.getLocation().y + dy;
 
-            // check cheeseX and cheeseY is on map
-            if (cheeseX >= 0 && cheeseX < this.gameMap.getWidth() && cheeseY >= 0 && cheeseY < this.gameMap.getHeight()
-                    && pairedX >= 0 && pairedX < this.gameMap.getWidth() && pairedY >= 0
-                    && pairedY < this.gameMap.getHeight()) {
-                spawn = true;
-            } else {
-                spawn = false;
+                int pairedX = pairedMine.getLocation().x + pair_dx;
+                int pairedY = pairedMine.getLocation().y + pair_dy;
+
+                // check cheeseX and cheeseY is on map
+                if (cheeseX >= 0 && cheeseX < this.gameMap.getWidth() && cheeseY >= 0
+                        && cheeseY < this.gameMap.getHeight()
+                        && pairedX >= 0 && pairedX < this.gameMap.getWidth() && pairedY >= 0
+                        && pairedY < this.gameMap.getHeight()
+                        && !this.getWall(new MapLocation(cheeseX, cheeseY))
+                        && !this.getWall(new MapLocation(pairedX, pairedY))) {
+                    ogSpawnLoc = new MapLocation(cheeseX, cheeseY);
+                    pairedSpawnLoc = new MapLocation(pairedX, pairedY);
+                    System.out.println("Found a good cheese loc! " + ogSpawnLoc);
+                    break;
+                }
+
             }
 
+            // if rotational, flip both symmetries, if vertical/horizontal, only flip the
+            // corresponding one
+
             if (spawn) {
-                addCheese(new MapLocation(cheeseX, cheeseY), GameConstants.CHEESE_SPAWN_AMOUNT);
-                addCheese(new MapLocation(pairedX, pairedY), GameConstants.CHEESE_SPAWN_AMOUNT);
+                addCheese(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
+                addCheese(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
 
                 mine.setLastRound(this.currentRound);
                 pairedMine.setLastRound(this.currentRound);
 
-                matchMaker.addCheeseSpawnAction(new MapLocation(cheeseX, cheeseY), GameConstants.CHEESE_SPAWN_AMOUNT);
-                matchMaker.addCheeseSpawnAction(new MapLocation(pairedX, pairedY), GameConstants.CHEESE_SPAWN_AMOUNT);
+                matchMaker.addCheeseSpawnAction(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
+                matchMaker.addCheeseSpawnAction(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
             }
 
         }
@@ -427,20 +543,17 @@ public class GameWorld {
 
         TrapType type = trap.getType();
         Team team = trap.getTeam();
-        int trapId = trap.getId();
 
         int idx = locationToIndex(loc);
         this.trapLocations[idx] = trap;
 
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) {// set chirality to 0, only rats will be placing traps
             this.trapTriggers[locationToIndex(adjLoc)].add(trap);
         }
 
-        matchMaker.addTrap(trap);
         int[] trapTypeCounts = this.trapCounts.get(type);
         trapTypeCounts[team.ordinal()] += 1;
         this.trapCounts.put(type, trapTypeCounts);
-        trapId++;
     }
 
     public void removeTrap(MapLocation loc) {
@@ -455,7 +568,7 @@ public class GameWorld {
         this.trapCounts.put(type, trapTypeCounts);
         this.trapLocations[locationToIndex(loc)] = null;
 
-        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared)) {
+        for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) { // set chirality to 0, only rats will be removing traps
             this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
         }
     }
@@ -482,7 +595,7 @@ public class GameWorld {
         }
 
         this.trapLocations[locationToIndex(loc)] = null;
-        matchMaker.addTriggeredTrap(trap.getId()); 
+        // matchMaker.addTriggeredTrap(trap.getId());
         matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
 
         removeTrap(loc);
@@ -513,13 +626,13 @@ public class GameWorld {
         this.robots[loc.x - this.gameMap.getOrigin().x][loc.y - this.gameMap.getOrigin().y] = null;
     }
 
-    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared) {
-        return getAllRobotsWithinRadiusSquared(center, radiusSquared, null);
+    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, int chirality) {
+        return getAllRobotsWithinRadiusSquared(center, radiusSquared, null, chirality);
     }
 
-    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, Team team) {
+    public InternalRobot[] getAllRobotsWithinRadiusSquared(MapLocation center, int radiusSquared, Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
-        for (MapLocation newLocation : getAllLocationsWithinRadiusSquared(center, radiusSquared))
+        for (MapLocation newLocation : getAllLocationsWithinRadiusSquared(center, radiusSquared, chirality))
             if (getRobot(newLocation) != null) {
                 if (team == null || getRobot(newLocation).getTeam() == team)
                     returnRobots.add(getRobot(newLocation));
@@ -528,15 +641,15 @@ public class GameWorld {
     }
 
     public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared) {
-        return getAllRobotsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared, null);
+            double totalAngle, int radiusSquared, int chirality) {
+        return getAllRobotsWithinConeRadiusSquared(center, lookDirection, totalAngle, radiusSquared, null, chirality);
     }
 
     public InternalRobot[] getAllRobotsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared, Team team) {
+            double totalAngle, int radiusSquared, Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
         for (MapLocation newLocation : getAllLocationsWithinConeRadiusSquared(center, lookDirection, totalAngle,
-                radiusSquared))
+                radiusSquared, chirality))
             if (getRobot(newLocation) != null) {
                 if (team == null || getRobot(newLocation).getTeam() == team)
                     returnRobots.add(getRobot(newLocation));
@@ -544,9 +657,9 @@ public class GameWorld {
         return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
     }
 
-    public InternalRobot[] getAllRobots(Team team) {
+    public InternalRobot[] getAllRobots(Team team, int chirality) {
         ArrayList<InternalRobot> returnRobots = new ArrayList<InternalRobot>();
-        for (MapLocation newLocation : getAllLocations()) {
+        for (MapLocation newLocation : getAllLocations(chirality)) {
             if (getRobot(newLocation) != null && (team == null || getRobot(newLocation).getTeam() == team)) {
                 returnRobots.add(getRobot(newLocation));
             }
@@ -554,30 +667,30 @@ public class GameWorld {
         return returnRobots.toArray(new InternalRobot[returnRobots.size()]);
     }
 
-    public MapLocation[] getAllLocationsWithinRadiusSquared(MapLocation center, int radiusSquared) {
+    public MapLocation[] getAllLocationsWithinRadiusSquared(MapLocation center, int radiusSquared, int chirality) {
         return getAllLocationsWithinConeRadiusSquaredWithoutMap(
                 this.gameMap.getOrigin(),
                 this.gameMap.getWidth(),
                 this.gameMap.getHeight(),
-                center, Direction.CENTER, 360, radiusSquared);
+                center, Direction.CENTER, 360, radiusSquared, chirality);
     }
 
     public MapLocation[] getAllLocationsWithinConeRadiusSquared(MapLocation center, Direction lookDirection,
-            double totalAngle, int radiusSquared) {
+            double totalAngle, int radiusSquared, int chirality) {
         return getAllLocationsWithinConeRadiusSquaredWithoutMap(
                 this.gameMap.getOrigin(),
                 this.gameMap.getWidth(),
                 this.gameMap.getHeight(),
                 center,
                 lookDirection,
-                totalAngle, radiusSquared);
+                totalAngle, radiusSquared, chirality);
     }
 
-    public static MapLocation[] getAllLocationsWithinConeRadiusSquaredWithoutMap(MapLocation origin,
+    public MapLocation[] getAllLocationsWithinConeRadiusSquaredWithoutMap(MapLocation origin,
             int width, int height,
             MapLocation center,
             Direction lookDirection,
-            double angle, int radiusSquared) {
+            double angle, int radiusSquared, int chirality) {
         ArrayList<MapLocation> returnLocations = new ArrayList<MapLocation>();
         int ceiledRadius = (int) Math.ceil(Math.sqrt(radiusSquared)) + 1; // add +1 just to be safe
         int minX = Math.max(center.x - ceiledRadius, origin.x);
@@ -585,8 +698,33 @@ public class GameWorld {
         int maxX = Math.min(center.x + ceiledRadius, origin.x + width - 1);
         int maxY = Math.min(center.y + ceiledRadius, origin.y + height - 1);
 
+        ArrayList<Integer> x_list = new ArrayList<>();
+        ArrayList<Integer> y_list = new ArrayList<>();
         for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
+            x_list.add(x);
+        }
+        for (int y = minY; y <= maxY; y++) {
+            y_list.add(y);
+        }
+
+        if (chirality == 1){
+            MapSymmetry symmetry = this.getGameMap().getSymmetry();
+            switch (symmetry){
+                case HORIZONTAL:
+                    Collections.reverse(y_list);
+                    break;
+                case VERTICAL:
+                    Collections.reverse(x_list);
+                    break;
+                case ROTATIONAL:
+                    Collections.reverse(x_list);
+                    Collections.reverse(y_list);
+                    break;
+            }
+        }
+
+        for (int x : x_list) {
+            for (int y : y_list) {
                 MapLocation newLocation = new MapLocation(x, y);
 
                 if (center.isWithinDistanceSquared(newLocation, radiusSquared, lookDirection, angle)) {
@@ -600,8 +738,8 @@ public class GameWorld {
     /**
      * @return all of the locations on the grid
      */
-    private MapLocation[] getAllLocations() {
-        return getAllLocationsWithinRadiusSquared(new MapLocation(0, 0), Integer.MAX_VALUE);
+    private MapLocation[] getAllLocations(int chirality) {
+        return getAllLocationsWithinRadiusSquared(new MapLocation(0, 0), Integer.MAX_VALUE, chirality);
     }
 
     // *********************************
@@ -691,7 +829,7 @@ public class GameWorld {
         int[] totalRobotsAlive = new int[2];
 
         for (UnitType type : UnitType.values()) {
-            if (type.isRatType()) {
+            if (type.isBabyRatType() || type.isRatKingType()) {
                 totalRobotsAlive[Team.A.ordinal()] += this.getObjectInfo().getRobotTypeCount(Team.A, type);
                 totalRobotsAlive[Team.B.ordinal()] += this.getObjectInfo().getRobotTypeCount(Team.B, type);
             }
@@ -711,34 +849,34 @@ public class GameWorld {
      * @return whether a team has more points depending on the game state
      */
     public boolean setWinnerIfMorePoints() {
-        double cat_weight;
-        double king_weight;
-        double cheese_weight;
+        double cat_weight; // cat damage
+        double king_weight; // number of kings
+        double rat_damage_weight; // amount damage lost by other team throughout the game
 
         if (isCooperation()) {
             cat_weight = 0.5;
             king_weight = 0.3;
-            cheese_weight = 0.2;
+            rat_damage_weight = 0.2;
         } else {
             cat_weight = 0.3;
             king_weight = 0.5;
-            cheese_weight = 0.2;
+            rat_damage_weight = 0.2;
         }
 
         ArrayList<Integer> teamPoints = new ArrayList<>();
 
         int total_num_rat_kings = teamInfo.getNumRatKings(Team.A) + teamInfo.getNumRatKings(Team.B);
-        int total_amount_cheese = teamInfo.getCheese(Team.A) + teamInfo.getCheese(Team.B);
+        int total_amount_rat_damage = teamInfo.getDamageSuffered(Team.A) + teamInfo.getDamageSuffered(Team.B);
         int total_amount_cat_damage = teamInfo.getDamageToCats(Team.A) + teamInfo.getDamageToCats(Team.B);
 
         for (Team team : List.of(Team.A, Team.B)) {
 
             float proportion_rat_kings = teamInfo.getNumRatKings(team) / total_num_rat_kings;
-            float proportion_cheese = teamInfo.getCheese(team) / total_amount_cheese;
+            float proportion_damage_to_other_rats = teamInfo.getDamageSuffered(team.opponent()) / total_amount_rat_damage;
             float proportion_cat_damage = teamInfo.getDamageToCats(team) / total_amount_cat_damage;
 
             int points = (int) (cat_weight * 100 * (proportion_cat_damage) + king_weight * 100 * proportion_rat_kings
-                    + cheese_weight * 100 * proportion_cheese);
+                    + rat_damage_weight * 100 * proportion_damage_to_other_rats);
             this.teamInfo.addPoints(team, points);
             teamPoints.add(points);
         }
@@ -799,9 +937,10 @@ public class GameWorld {
             spawnCheese(mine);
         }
 
-        // TODO: new team info stuff in matchmaker
-        this.matchMaker.addTeamInfo(Team.A, this.teamInfo.getCheese(Team.A));
-        this.matchMaker.addTeamInfo(Team.B, this.teamInfo.getCheese(Team.B));
+        Team[] teams = {Team.A, Team.B};
+        for (Team t : teams){
+            this.matchMaker.addTeamInfo(t, this.teamInfo.getCheese(t), this.teamInfo.getDamageSuffered(t.opponent()), this.teamInfo.getDamageToCats(t), this.teamInfo.getNumRatKings(t), this.teamInfo.getNumBabyRats(t), this.teamInfo.getDirt(t), this.getTrapCount(TrapType.RAT_TRAP, t), this.getTrapCount(TrapType.CAT_TRAP, t));
+        }
         this.teamInfo.processEndOfRound();
 
         this.getMatchMaker().endRound();
@@ -831,15 +970,15 @@ public class GameWorld {
 
         InternalRobot robot = new InternalRobot(this, ID, team, type, location, dir, chirality);
 
-        for (MapLocation loc : type.getAllLocations(location)) {
+        for (MapLocation loc : type.getAllTypeLocations(location)) {
             addRobot(loc, robot);
         }
 
         objectInfo.createRobot(robot);
         controlProvider.robotSpawned(robot);
 
-        if (type.isRatType()) {
-            this.teamInfo.addRats(1, team);
+        if (type.isBabyRatType()) {
+            this.teamInfo.addBabyRats(1, team);
         } else if (type.isRatKingType()) {
             this.teamInfo.addRatKings(1, team);
         } else if (type.isCatType()) {
@@ -860,7 +999,7 @@ public class GameWorld {
 
     public void squeak(InternalRobot robot, Message message) {
         MapLocation robotLoc = robot.getLocation();
-        MapLocation[] locations = getAllLocationsWithinRadiusSquared(robotLoc, GameConstants.SQUEAK_RADIUS_SQUARED);
+        MapLocation[] locations = getAllLocationsWithinRadiusSquared(robotLoc, GameConstants.SQUEAK_RADIUS_SQUARED, 0); // chirality doesn't matter here
 
         for (MapLocation loc : locations) {
             InternalRobot otherRobot = getRobot(loc);
@@ -905,13 +1044,21 @@ public class GameWorld {
     }
 
     public void destroyRobot(int id, boolean fromException, boolean fromDamage) {
+        // System.out.println("A ROBOT DIED!!");
+        // System.out.println(id);
         InternalRobot robot = objectInfo.getRobotByID(id);
+        if (robot == null) {
+            // robot was already killed
+            return;
+        }
+
+        // System.out.println(robot);
         Team robotTeam = robot.getTeam();
         MapLocation loc = robot.getLocation();
 
         if (loc != null) {
-            if (robot.getType().isRatType()) {
-                this.teamInfo.addRats(-1, robotTeam);
+            if (robot.getType().isBabyRatType()) {
+                this.teamInfo.addBabyRats(-1, robotTeam);
             } else if (robot.getType().isRatKingType()) {
                 this.teamInfo.addRatKings(-1, robotTeam);
             } else if (robot.getType().isCatType()) {
@@ -923,6 +1070,10 @@ public class GameWorld {
             if (robot.isCarryingRobot()) {
                 InternalRobot carryingRobot = robot.getCarryingRobot();
                 carryingRobot.getDropped(loc);
+            }
+            if (robot.getCheese() > 0) {
+                addCheese(loc, robot.getCheese());
+                matchMaker.addCheeseSpawnAction(loc, robot.getCheese());
             }
         }
         controlProvider.robotKilled(robot);
@@ -940,7 +1091,7 @@ public class GameWorld {
             System.out
                     .println("DEBUGGING: number of rat kings = " + this.getTeamInfo().getNumRatKings(robot.getTeam()));
             checkWin(robotTeam);
-        } else if (robot.getType() == UnitType.CAT && this.getNumCats() == 0) {
+        } else if (this.isCooperation && robot.getType() == UnitType.CAT && this.getNumCats() == 0) {
             System.out.println("DEBUGGING: number of cats = " + this.getNumCats());
             checkWin(robotTeam);
         }

@@ -231,7 +231,7 @@ export default class Bodies {
             }
 
             const selected = selectedBodyID === body.id || !!selectedBodyIDs?.includes(body.id)
-            const hovered = !!hoveredTile && vectorEq(body.pos, hoveredTile)
+            const hovered = !!hoveredTile && this.getBodyAtLocation(hoveredTile.x, hoveredTile.y)?.id === body.id
             const focused = !!focusedBodyIDs?.includes(body.id)
             if (overlayCtx) {
                 body.drawOverlay(match, overlayCtx, config, selected && focused, hovered || (selected && !focused))
@@ -468,19 +468,30 @@ export class Body {
         direction: number,
         fov: number
     ) {
+        const directionAngles = [
+            -1, //should not happen
+            180,
+            225,
+            270,
+            315,
+            0,
+            45,
+            90,
+            135
+        ]
         const ceiledRadius = Math.ceil(Math.sqrt(radius)) + 1
         const minX = Math.max(location.x - ceiledRadius, 0)
         const minY = Math.max(location.y - ceiledRadius, 0)
         const maxX = Math.min(location.x + ceiledRadius, match.map.width - 1)
         const maxY = Math.min(location.y + ceiledRadius, match.map.height - 1)
 
-        const coords: Vector[] = []
+        const coords: Vector[] = [location]
         const halfFOV = fov / 2
         if (direction == 0) {
             return coords
         }
-        const dirAngle = (direction * 45 + 135) % 360
-        const directionRad = (dirAngle * Math.PI) / 180
+
+        const directionRad = (directionAngles[direction] * Math.PI) / 180
 
         for (let x = minX; x <= maxX; x++) {
             for (let y = minY; y <= maxY; y++) {
@@ -490,7 +501,7 @@ export class Body {
                     const angleToPoint = Math.atan2(dy, dx)
                     let angleDiff = angleToPoint - directionRad
                     angleDiff = ((((angleDiff + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI
-                    if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180) {
+                    if (Math.abs(angleDiff) <= (halfFOV * Math.PI) / 180 + 0.0001) {
                         coords.push({ x, y })
                     }
                 }
@@ -608,10 +619,11 @@ export class Body {
         const dimension = match.currentRound.map.staticMap.dimension
         const interpCoords = this.getInterpolatedCoords(match)
         const renderCoords = renderUtils.getRenderCoords(interpCoords.x, interpCoords.y, dimension)
-        const hpBarWidth = 0.8
+        const hpBarWidth = 0.8 * this.size
         const hpBarHeight = 0.1
-        const hpBarYOffset = 0.4
-        const hpBarX = renderCoords.x + 0.5 - hpBarWidth / 2
+        const hpBarYOffset = this.robotType === schema.RobotType.RAT_KING ? 1.4 : 0.4
+        const hpBarXOffset = this.robotType === schema.RobotType.CAT ? 0.5 : 0
+        const hpBarX = renderCoords.x + 0.5 - hpBarWidth / 2 + hpBarXOffset
         const hpBarY = renderCoords.y + 0.5 + hpBarYOffset
         ctx.fillStyle = 'rgba(0,0,0,.3)'
         ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight)
@@ -644,11 +656,11 @@ export class Body {
             `HP: ${this.hp}/${this.maxHp}`,
             `Location: (${this.pos.x}, ${this.pos.y})`,
             `Direction: ${directionMap[this.direction]}`,
-            `${this.robotType === schema.RobotType.CAT ? 'Chirality: ' + this.chirality : ''}`,
+            `${this.robotType === schema.RobotType.CAT || schema.RobotType.RAT_KING ? 'Chirality: ' + this.chirality : ''}`,
             `${this.robotType === schema.RobotType.RAT ? 'Cheese: ' + this.cheese : ''}`,
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
-            `Turning Cooldown: ${this.turningCooldown}`,
+            `${this.robotType !== schema.RobotType.CAT ? 'Turning Cooldown: ' + this.turningCooldown : ''}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
                 this.bytecodesUsed >= this.metadata.bytecodeLimit() ? ' <EXCEEDED!>' : ''
             }`
@@ -704,7 +716,7 @@ export class Body {
         this.robotName = `${this.team.colorName} Rat King`
         this.size = 3
         const dir = this.direction
-        this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
+        this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_64x64.png`
         this.populateDefaultValues()
     }
 }
@@ -770,7 +782,7 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const dir = this.direction
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_${dir}_64x64.png`
+            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_64x64.png`
             super.draw(match, ctx)
         }
     },
