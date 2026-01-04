@@ -1,8 +1,6 @@
 package battlecode.world;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import battlecode.world.CatStateType;
 import battlecode.common.Direction;
@@ -184,11 +182,52 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.dir = newDir;
     }
 
+    public MapLocation[] getAllRatLocations() {
+        // return part location in order based on chirality
+        MapLocation[] locs = new MapLocation[this.type.size * this.type.size];
+        int c = 0;
+
+        ArrayList<Integer> x_values = new ArrayList<>();
+        ArrayList<Integer> y_values = new ArrayList<>();
+
+        for (int i = -(this.type.size - 1) / 2; i <= this.type.size / 2; i++) {
+            x_values.add(i);
+        }
+
+        for (int j = -(this.type.size - 1) / 2; j <= this.type.size / 2; j++) {
+            y_values.add(j);
+        }
+
+        if (chirality == 1){
+            MapSymmetry symmetry = this.gameWorld.getGameMap().getSymmetry();
+            switch (symmetry){
+                case HORIZONTAL:
+                    Collections.reverse(y_values);
+                    break;
+                case VERTICAL:
+                    Collections.reverse(x_values);
+                    break;
+                case ROTATIONAL:
+                    Collections.reverse(x_values);
+                    Collections.reverse(y_values);
+                    break;
+            }
+        }
+
+        for (int i : x_values) {
+            for (int j : y_values) {
+                locs[c] = new MapLocation(this.location.x + i, this.location.y - j);
+                c += 1;
+            }
+        }
+        return locs;
+    }
+
     public MapLocation[] getAllPartLocations() {
         if (this.type.isCatType())
-            return getAllPartLocationsByChirality();
+            return getAllCatLocationsByChirality();
         else
-            return this.getType().getAllLocations(this.location);
+            return this.getAllRatLocations();
     }
 
     public MapLocation getDiedLocation() {
@@ -879,7 +918,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             return null;
         }
 
-        for (MapLocation cornerToTest : getAllPartLocationsByChirality()){
+        for (MapLocation cornerToTest : getAllPartLocations()){
             // attempt pounce that matches cornerToTest to target location
             Direction directionFromCornerToTestToCenter = cornerToTest.directionTo(this.getLocation());
 
@@ -967,7 +1006,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         return chiralityCorner;
     }
     
-    public MapLocation[] getAllPartLocationsByChirality(){
+    public MapLocation[] getAllCatLocationsByChirality(){
         // returns part locations in proper order based on cat chirality
         MapLocation startingCorner = getCatCornerByChirality();
         Direction rotateDir;

@@ -970,7 +970,7 @@ public class GameWorld {
 
         InternalRobot robot = new InternalRobot(this, ID, team, type, location, dir, chirality);
 
-        for (MapLocation loc : type.getAllLocations(location)) {
+        for (MapLocation loc : type.getAllTypeLocations(location)) {
             addRobot(loc, robot);
         }
 
