@@ -632,17 +632,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void grabRobot(MapLocation loc) {
-        if (!this.type.isThrowingType()) {
-            throw new RuntimeException("Unit must be a rat to grab other rats");
-        } else if (!loc.isAdjacentTo(this.getLocation())) {
-            throw new RuntimeException("A rat can only grab adjacent rats");
-        } else if (!canSenseLocation(loc)) {
-            throw new RuntimeException("A rat can only grab robots in front of it");
-        } else if (this.isCarryingRobot()) {
-            throw new RuntimeException("Already carrying a rat");
-        } else if (this.isGrabbedByRobot()) { // This should never occur, since grabbed robots are on action cooldown
-            throw new RuntimeException("Cannot grab while being carried");
-        }
 
         InternalRobot targetRobot = this.gameWorld.getRobot(loc);
 

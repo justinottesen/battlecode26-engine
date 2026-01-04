@@ -1278,6 +1278,11 @@ public final class RobotControllerImpl implements RobotController {
         assertCanActLocation(loc, 1);
         assertIsActionReady();
 
+        if (!this.robot.getType().isThrowingType()) {
+            throw new RuntimeException("Unit must be a rat to grab other rats");
+        } else if (this.robot.isCarryingRobot()) {
+            throw new RuntimeException("Already carrying a rat");
+        } 
         // Must be a rat-type
         if (!this.robot.getType().isBabyRatType()) {
             throw new GameActionException(CANT_DO_THAT, "Only rats can grab other rats!");
