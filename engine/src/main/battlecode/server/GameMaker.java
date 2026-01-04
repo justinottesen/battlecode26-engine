@@ -565,9 +565,9 @@ public class GameMaker {
             });
         }
 
-        public void addRatNapAction(int grabbedRobotID) {
+        public void addRatNapAction(int grabberRobotID) {
             applyToBuilders((builder) -> {
-                int action = RatNap.createRatNap(builder, grabbedRobotID);
+                int action = RatNap.createRatNap(builder, grabberRobotID);
                 builder.addAction(action, Action.RatNap);
             });
         }
@@ -588,9 +588,9 @@ public class GameMaker {
         }
 
         /// Visually indicate an rat bite
-        public void addBiteAction(int otherID) {
+        public void addBiteAction(int biterID) {
             applyToBuilders((builder) -> {
-                int action = RatAttack.createRatAttack(builder, otherID);
+                int action = RatAttack.createRatAttack(builder, biterID);
                 builder.addAction(action, Action.RatAttack);
             });
         }

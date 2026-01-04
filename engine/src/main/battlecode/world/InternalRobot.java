@@ -611,7 +611,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                 if (targetRobot.getType() == UnitType.CAT) {
                     this.gameWorld.getTeamInfo().addDamageToCats(team, damage);
                 }
-                this.gameWorld.getMatchMaker().addBiteAction(targetRobot.getID());
+                this.gameWorld.getMatchMaker().addBiteAction(this.getID());
 
                 this.gameWorld.isCooperation = false;
             }
@@ -650,7 +650,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             if (canGrab) {
                 this.carryingRobot = this.gameWorld.getRobot(loc);
                 this.carryingRobot.getGrabbed(this); // Notify the grabbed robot that it has been picked up
-                this.gameWorld.getMatchMaker().addRatNapAction(this.carryingRobot.getID());
+                this.gameWorld.getMatchMaker().addRatNapAction(this.getID());
 
                 this.gameWorld.isCooperation = false;
                 // TODO: make any changes that need to happen with switch to cooperation

@@ -171,7 +171,7 @@ public final class RobotControllerImpl implements RobotController {
 
     @Override
     public RobotInfo getCarrying() {
-        if (this.robot.isCarryingRobot())
+        if (!this.robot.isCarryingRobot())
             return null;
         else
             return this.robot.getCarryingRobot().getRobotInfo();
