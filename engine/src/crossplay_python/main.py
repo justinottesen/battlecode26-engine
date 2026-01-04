@@ -3,7 +3,8 @@ sys.path.append("engine/src")
 
 import os
 from argparse import ArgumentParser
-from collections import OrderedDict
+from subprocess import Popen
+DETACHED_PROCESS = 0x00000008
 
 from crossplay_python.runner import RobotRunner
 from crossplay_python.crossplay import BYTECODE_LIMIT, CrossPlayLiteral as lit, \
@@ -11,7 +12,7 @@ from crossplay_python.crossplay import BYTECODE_LIMIT, CrossPlayLiteral as lit, 
     wait, reset_files, clear_temp_files
 from crossplay_python.wrappers import _GAME_METHODS, Team
 
-CROSSPLAY_PYTHON_DIR = "example-bots/src/crossplay_python"
+CROSSPLAY_PYTHON_DIR = "example-bots/src/crossplay_python" # TODO change for scaffold
 
 TEAM_NAMES = {
     Team.A: "A",
@@ -43,6 +44,11 @@ def get_error_printer(team=None, id=None, round=None):
     return format_print
 
 def play(team_a=None, team_b=None, debug=False):
+    if team_a == "/":
+        team_a = None
+    if team_b == "/":
+        team_b = None
+
     print(f"Starting cross-play Python runner with teams {team_a} and {team_b}")
 
     code = {
@@ -79,11 +85,30 @@ def play(team_a=None, team_b=None, debug=False):
     finally:
         clear_temp_files()
 
-if __name__ == "__main__":
+def main():
+    if sys.version_info.major != 3 or sys.version_info.minor != 12:
+        print(f"Error: The Battlecode Python runner requires Python 3.12. Found version {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}.")
+        sys.exit(1)
+
     parser = ArgumentParser()
     parser.add_argument("--teamA", help="Path to team A code file")
     parser.add_argument("--teamB", help="Path to team B code file")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--new-process", action="store_true", help="Start the Python runner in a new process")
     args = parser.parse_args()
 
-    play(team_a=args.teamA, team_b=args.teamB, debug=args.debug)
+    if args.new_process:
+        new_args = [sys.executable, __file__,
+                    "--teamA", args.teamA if args.teamA else "/",
+                    "--teamB", args.teamB if args.teamB else "/"]
+        
+        if args.debug:
+            new_args.append("--debug")
+
+        Popen(new_args, shell=False, stdin=None, stdout=None, stderr=None,
+            close_fds=True, creationflags=DETACHED_PROCESS)
+    else:
+        play(team_a=args.teamA, team_b=args.teamB, debug=args.debug)
+
+if __name__ == "__main__":
+    main()

@@ -55,7 +55,7 @@ dependencies {
 
     [group: 'net.sf.trove4j', name: 'trove4j', version: '2.1.0'],
 
-    [group: 'org.json', name: 'json', version: '20250517'],
+    [group: 'org.json', name: 'json', version: '20251224'],
   )
   // implementation files('lib/jsi-1.0.jar')
 
