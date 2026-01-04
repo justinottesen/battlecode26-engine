@@ -317,6 +317,15 @@ export class WallsBrush extends SymmetricMapEditorBrush<StaticMap> {
             const cheeseMine = this.map.cheeseMines.findIndex((l) => squareIntersects(l, pos, 2))
             const dirt = this.map.initialDirt[idx]
 
+            for(const waypoints of this.map.catWaypoints.values()){
+                for(const waypoint of waypoints){
+                    if(waypoint.x === pos.x && waypoint.y === pos.y) return true
+                    for(let nei of this.map.getNeighbors(waypoint.x, waypoint.y)){
+                        if(nei.x === pos.x && nei.y === pos.y) return true
+                    }
+                }
+            }
+
             if (cheeseMine !== -1 || dirt) return true
 
             this.map.walls[idx] = 1
