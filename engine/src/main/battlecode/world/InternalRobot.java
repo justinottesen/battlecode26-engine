@@ -548,6 +548,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
      */
     public void addHealth(int healthAmount) {
         this.health += healthAmount;
+
+        if (healthAmount < 0)
+            this.gameWorld.getTeamInfo().addDamageSuffered(this.team, -healthAmount);
+
         this.health = Math.min(this.health, this.type.health);
         if (this.type == UnitType.CAT) {
             this.gameWorld.updateCatHealth(this.ID, health);
@@ -958,7 +962,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             InternalRobot crushedRobot = this.gameWorld.getRobot(translatedLoc);
             if (crushedRobot != null && (crushedRobot.getID() != this.ID)) {
                 // destroy robot
-                gameWorld.destroyRobot(crushedRobot.getID(), false, true);
+                crushedRobot.addHealth(crushedRobot.getHealth());
             }
         }
 
