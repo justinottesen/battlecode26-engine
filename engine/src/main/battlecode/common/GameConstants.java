@@ -34,7 +34,7 @@ public class GameConstants {
     public static final int MAX_DIRT_PERCENTAGE = 50;
 
     /** The maximum percentage of the map that can be walls */
-    public static final int MAX_WALL_PERCENTAGE = 20; // TODO remove if not using walls
+    public static final int MAX_WALL_PERCENTAGE = 20;
 
     // *********************************
     // ****** GAME PARAMETERS **********
@@ -62,7 +62,7 @@ public class GameConstants {
     public static final int INITIAL_TEAM_CHEESE = 2500;
 
     /** The maximum number of rat kings that a team can have. */
-    public static final int MAX_NUMBER_OF_RAT_KINGS = 5; // TODO need to specify!
+    public static final int MAX_NUMBER_OF_RAT_KINGS = 5;
 
     /**
      * The maximum execution time that can be spent on a team in one match. If the
@@ -133,9 +133,6 @@ public class GameConstants {
     /** The maximum distance from a robot for building traps or dirt */
     public static final int BUILD_DISTANCE_SQUARED = 2;
 
-    /** The maximum amount of bytes that can be encoded in a message */
-    public static final int MAX_MESSAGE_BYTES = 4; // TODO need to spec messages as a whole!
-
     /** The maximum squared radius a robot can send a message to */
     public static final int MESSAGE_RADIUS_SQUARED = 20; // TODO need to spec messages as a whole!
 
@@ -146,7 +143,7 @@ public class GameConstants {
     public static final int MESSAGE_ROUND_DURATION = 5; // TODO need to spec messages as a whole!
 
     /** The maximum number of messages a robot can send per turn */
-    public static final int MAX_MESSAGES_SENT_ROBOT = 1; // TODO need to spec messages as a whole!
+    public static final int MAX_MESSAGES_SENT_ROBOT = 1;
 
     /** The maximum squared radius a robot can squeak to */
     public static final int SQUEAK_RADIUS_SQUARED = 16;

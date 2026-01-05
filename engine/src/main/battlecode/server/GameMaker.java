@@ -316,7 +316,7 @@ public class GameMaker {
             RobotTypeMetadata.addMovementCooldown(builder, type.movementCooldown);
             RobotTypeMetadata.addVisionConeRadiusSquared(builder, type.visionConeRadiusSquared);
             RobotTypeMetadata.addVisionConeAngle(builder, type.visionConeAngle);
-            RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.MESSAGE_RADIUS_SQUARED);
+            RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.SQUEAK_RADIUS_SQUARED);
             robotTypeMetadataOffsets.add(RobotTypeMetadata.endRobotTypeMetadata(builder));
         }
         return GameHeader.createRobotTypeMetadataVector(builder, robotTypeMetadataOffsets.toNativeArray());

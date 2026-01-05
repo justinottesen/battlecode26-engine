@@ -839,10 +839,10 @@ public interface RobotController {
      * 
      * @param messageContent an int representing the content of the
      *                       message (up to 4 bytes)
-     * 
+     * @return true if squeak was sent, false if not (i.e. if reached max. number of messages fo this turn)
      * @battlecode.doc.costlymethod
      */
-    void squeak(int messageContent);
+    boolean squeak(int messageContent);
 
     /**
      * Reads all squeaks sent to this unit within the past 5 rounds if roundNum =

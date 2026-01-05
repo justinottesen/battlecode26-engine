@@ -1099,11 +1099,14 @@ public final class RobotControllerImpl implements RobotController {
     // ***********************************
 
     @Override
-    public void squeak(int messageContent) {
+    public boolean squeak(int messageContent) {
+        if(this.robot.getSentMessagesCount() >= GameConstants.MAX_MESSAGES_SENT_ROBOT)
+            return false;
         Message message = new Message(messageContent, this.robot.getID(), this.gameWorld.getCurrentRound(),
                 this.getLocation());
         this.gameWorld.squeak(this.robot, message);
         this.robot.incrementMessageCount();
+        return true;
     }
 
     @Override
