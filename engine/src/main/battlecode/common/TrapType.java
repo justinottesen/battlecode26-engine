@@ -9,7 +9,7 @@ public enum TrapType {
     /**
      * Traps enemy rats
      */
-    RAT_TRAP(5, 10, 20, 25, 5, 0, 25, 2),
+    RAT_TRAP(5, 50, 20, 25, 5, 0, 25, 2),
 
     /**
      * Traps the cat
