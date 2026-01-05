@@ -101,7 +101,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.bytecodesUsed = 0;
 
         this.roundsAlive = 0;
-        this.actionCooldownTurns = type.actionCooldown;
+        this.actionCooldownTurns = GameConstants.COOLDOWN_LIMIT;
         this.movementCooldownTurns = GameConstants.COOLDOWN_LIMIT;
         this.turningCooldownTurns = GameConstants.COOLDOWN_LIMIT;
 
