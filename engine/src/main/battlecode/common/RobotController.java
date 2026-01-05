@@ -882,30 +882,6 @@ public interface RobotController {
      */
     int readSharedArray(int index) throws GameActionException;
 
-    /**
-     * Writes a value to the persistent array at the given index.
-     * This is only allowed for rat kings.
-     * 
-     * @param index the index to write to, between 0 and 4
-     * @param value the value to write in the index (must be between 0 and 1023)
-     * @throws GameActionException if the action is invalid
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    void writePersistentArray(int index, int value) throws GameActionException;
-
-    /**
-     * Reads a value from the persistent array at the given index.
-     * All rats and rat kings can read from the persistent array.
-     * 
-     * @param index the index to read from, between 0 and 4
-     * @return the value stored at the given index (between 0 and 1023)
-     * @throws GameActionException if the action is invalid
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    int readPersistentArray(int index) throws GameActionException;
-
     // ***********************************
     // ****** OTHER ACTION METHODS *******
     // ***********************************
