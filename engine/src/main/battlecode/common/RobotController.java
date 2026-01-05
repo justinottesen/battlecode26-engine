@@ -583,7 +583,6 @@ public interface RobotController {
     /**
      * Checks whether this robot can turn.
      * 
-     * @param d
      * @return
      */
     boolean canTurn();
