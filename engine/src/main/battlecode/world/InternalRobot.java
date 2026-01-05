@@ -900,6 +900,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
          * Returns dx, dy of pounce if allowed; otherwise returns null
          */
 
+        if (!this.canMoveCooldown())
+            throw new RuntimeException("Cat's movement cooldown has not expired.");
+        
         // Must be a cat
         if (this.type != UnitType.CAT) {
             throw new RuntimeException("Unit must be a cat to pounce!");
