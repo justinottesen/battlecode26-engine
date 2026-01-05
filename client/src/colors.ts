@@ -116,9 +116,9 @@ export const Colors = {
     ),
     LIGHT_CARD: new Color('LIGHT_CARD', '#f7f7f722', '--color-light-card', 'Light Card', Sections.INTERFACE),
 
-    WALLS_COLOR: new Color('WALLS_COLOR', '#547f31', '--color-walls', 'Walls', Sections.GENERAL),
-    DIRT_COLOR: new Color('DIRT_COLOR', '#991111', '--color-dirt', 'Dirt', Sections.GENERAL),
-    TILES_COLOR: new Color('TILES_COLOR', '#4c301e', '--color-tile', 'Tiles', Sections.GENERAL),
+    WALLS_COLOR: new Color('WALLS_COLOR', '#52485a', '--color-walls', 'Walls', Sections.GENERAL),
+    DIRT_COLOR: new Color('DIRT_COLOR', '#3b2931', '--color-dirt', 'Dirt', Sections.GENERAL),
+    TILES_COLOR: new Color('TILES_COLOR', '#221725', '--color-tile', 'Tiles', Sections.GENERAL),
 
     TEAM_ONE: new Color('TEAM_ONE', '#fcc00d', '--color-team0', 'Text', Sections.CHEDDAR),
 
@@ -148,8 +148,8 @@ export const Presets: ColorPreset[] = [
                 LIGHT: '#aaaaaa22',
                 LIGHT_HIGHLIGHT: '#ffffff33',
                 LIGHT_CARD: '#f7f7f722',
-                WALLS_COLOR: '#547f31',
-                TILES_COLOR: '#4c301e',
+                WALLS_COLOR: '#52485A',
+                TILES_COLOR: '#221725',
                 TEAM_ONE: '#fcc00d',
                 TEAM_TWO: '#c91c7e'
             }
