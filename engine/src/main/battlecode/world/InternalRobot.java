@@ -127,20 +127,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
             catWaypoints = new MapLocation[waypointIndexLocations.length];
             for (int i = 0; i < waypointIndexLocations.length; i++){
                 catWaypoints[i] = this.gameWorld.indexToLocation(waypointIndexLocations[i]);
-                if (chirality == 1){ // TODO: THIS IS TEMPORARY, REMOVE ONCE CLIENT MAKES CAT WAYPOINT CHANGE
-                    MapSymmetry symmetry = this.gameWorld.getGameMap().getSymmetry();
-                    switch(symmetry){
-                        case VERTICAL:
-                            catWaypoints[i] = new MapLocation(catWaypoints[i].x+1, catWaypoints[i].y);
-                            break;
-                        case ROTATIONAL:
-                            catWaypoints[i] = new MapLocation(catWaypoints[i].x+1, catWaypoints[i].y+1);
-                            break;
-                        case HORIZONTAL:
-                            catWaypoints[i] = new MapLocation(catWaypoints[i].x, catWaypoints[i].y+1);
-                            break;
-                    }
-                }
             }
 
             this.catTargetLoc = this.catWaypoints[0];
@@ -901,7 +887,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
          */
 
         if (!this.canMoveCooldown())
-            throw new RuntimeException("Cat's movement cooldown has not expired.");
+            return null;
         
         // Must be a cat
         if (this.type != UnitType.CAT) {
