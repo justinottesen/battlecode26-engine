@@ -940,10 +940,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
         int dy = delta[1];
 
         MapLocation[] oldLocs = this.getAllPartLocations();
+
         for (MapLocation partLoc : oldLocs) {
             // shift location by dx, dy
             MapLocation translatedLoc = partLoc.translate(dx, dy);
             InternalRobot crushedRobot = this.gameWorld.getRobot(translatedLoc);
+
             if (crushedRobot != null && (crushedRobot.getID() != this.ID)) {
                 // destroy robot
                 crushedRobot.addHealth(-crushedRobot.getHealth());
@@ -953,10 +955,15 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // actually translate the cat
         this.translateLocation(dx, dy);
 
+        MapLocation[] newLocs = this.getAllPartLocations();
+
+        for (MapLocation partLoc : newLocs) {
+            this.controller.processTrapsAtLocation(partLoc);
+        }
+
         // incur double the movement cooldown
         this.addMovementCooldownTurns(this.dir);
         this.addMovementCooldownTurns(this.dir);
-
     }
 
     public MapLocation getCatCornerByChirality(){

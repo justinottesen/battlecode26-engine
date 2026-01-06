@@ -797,6 +797,7 @@ public final class RobotControllerImpl implements RobotController {
             if (trap.getTeam() == this.robot.getTeam() || wrongTrapType) {
                 continue;
             }
+            
             this.gameWorld.triggerTrap(trap, robot);
 
         }
