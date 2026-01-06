@@ -1153,13 +1153,13 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void processEndOfTurn() {
-        // eat cheese if ratking
+        // eat cheese if rat king
         if (this.type.isRatKingType() && this.gameWorld.getTeamInfo().getNumRatKings(this.getTeam()) > 0) {
-            // ratking starves
-            if (this.gameWorld.getTeamInfo().getCheese(team) < GameConstants.RATKING_CHEESE_CONSUMPTION) {
-                this.addHealth(-GameConstants.RATKING_HEALTH_LOSS);
+            // rat king starves
+            if (this.gameWorld.getTeamInfo().getCheese(team) < GameConstants.RAT_KING_CHEESE_CONSUMPTION) {
+                this.addHealth(-GameConstants.RAT_KING_HEALTH_LOSS);
             } else {
-                this.addCheese(-GameConstants.RATKING_CHEESE_CONSUMPTION);
+                this.addCheese(-GameConstants.RAT_KING_CHEESE_CONSUMPTION);
             }
         }
 
