@@ -336,8 +336,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const target = round.bodies.getById(this.actionData.id())
             const amount = this.actionData.amount()
 
-            body.cheese -= amount
-            target.cheese += amount
+            body.cheese -= Math.min(body.cheese, amount)
+            target.cheese += Math.min(body.cheese, amount)
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const srcBody = match.currentRound.bodies.getById(this.robotId)
