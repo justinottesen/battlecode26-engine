@@ -602,15 +602,12 @@ public class GameWorld {
         if (type == TrapType.CAT_TRAP && robot.getType().isCatType()) {
             this.teamInfo.addDamageToCats(trap.getTeam(), type.damage);
         }
-        // TODO once the cat exists, alert cat of trap trigger
 
         if (trap.getType() != TrapType.CAT_TRAP) {
             // initiate backstab
             this.isCooperation = false;
         }
 
-        this.trapLocations[locationToIndex(loc)] = null;
-        // matchMaker.addTriggeredTrap(trap.getId());
         matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
 
         removeTrap(loc);
