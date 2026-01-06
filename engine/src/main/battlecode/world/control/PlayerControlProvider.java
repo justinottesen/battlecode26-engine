@@ -2,7 +2,6 @@ package battlecode.world.control;
 
 import battlecode.common.GameConstants;
 import battlecode.common.Team;
-import battlecode.crossplay.CrossPlayLanguage;
 import battlecode.instrumenter.InstrumentationException;
 import battlecode.instrumenter.TeamClassLoaderFactory;
 import battlecode.instrumenter.SandboxedRobotPlayer;
@@ -52,11 +51,6 @@ public class PlayerControlProvider implements RobotControlProvider {
     private final String teamPackage;
 
     /**
-     * The language that the team's code is written in.
-     */
-    private final CrossPlayLanguage teamLanguage;
-
-    /**
      * The printstream robots should write to (besides System.out).
      */
     private final OutputStream robotOut;
@@ -93,12 +87,10 @@ public class PlayerControlProvider implements RobotControlProvider {
      */
     public PlayerControlProvider(Team team,
                                  String teamPackage,
-                                 CrossPlayLanguage teamLanguage,
                                  String teamURL,
                                  OutputStream robotOut,
                                  boolean profilingEnabled) {
         this.teamPackage = teamPackage;
-        this.teamLanguage = teamLanguage;
         this.sandboxes = new HashMap<>(); // GameWorld maintains order for us
         this.factory = new TeamClassLoaderFactory(teamURL);
         this.robotOut = robotOut;
@@ -151,7 +143,6 @@ public class PlayerControlProvider implements RobotControlProvider {
 
             final SandboxedRobotPlayer player = new SandboxedRobotPlayer(
                     teamPackage,
-                    teamLanguage,
                     robot.getController(),
                     robot.getID(),
                     factory.createLoader(profiler != null),

@@ -1,6 +1,5 @@
 package battlecode.instrumenter;
 
-import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.Team;
 import battlecode.instrumenter.profiler.Profiler;
@@ -9,8 +8,6 @@ import battlecode.instrumenter.stream.SilencedPrintStream;
 import battlecode.server.ErrorReporter;
 import battlecode.world.control.PlayerControlProvider;
 import battlecode.server.Config;
-import battlecode.crossplay.CrossPlay;
-import battlecode.crossplay.CrossPlayLanguage;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -49,11 +46,6 @@ public class SandboxedRobotPlayer {
     private final RobotController robotController;
 
     /**
-     * The cross-play helper object for non-Java languages.
-     */
-    private final CrossPlay crossPlay;
-
-    /**
      * The seed to use in all "random" operations.
      */
     private final int seed;
@@ -77,16 +69,6 @@ public class SandboxedRobotPlayer {
      * The cached 'killRobot' method of the monitor.
      */
     private final Method killMethod;
-
-    /**
-     * Used to pause the player thread after loading.
-     */
-    private final Method pauseMethod;
-
-    /**
-     * Used to initialize the RobotMonitor for the player.
-     */
-    private final Method initMethod;
 
     /**
      * The cached 'setBytecodeLimit' method of the monitor.
@@ -118,7 +100,6 @@ public class SandboxedRobotPlayer {
      * Create a new sandboxed robot player.
      *
      * @param teamName          the name of the team to create a player for
-     * @param teamLanguage      the language that the team's code is written in
      * @param robotController   the robot we're loading a player for
      * @param seed              the seed the robot should use for random operations
      * @param loader            the classloader to load classes with
@@ -127,7 +108,6 @@ public class SandboxedRobotPlayer {
      * @throws RuntimeException if our code fails for some reason
      */
     public SandboxedRobotPlayer(String teamName,
-                                CrossPlayLanguage teamLanguage,
                                 RobotController robotController,
                                 int seed,
                                 TeamClassLoaderFactory.Loader loader,
@@ -136,7 +116,6 @@ public class SandboxedRobotPlayer {
                                 PlayerControlProvider provider)
             throws InstrumentationException {
         this.robotController = robotController;
-        this.crossPlay = new CrossPlay();
         this.seed = seed;
         this.terminated = false;
         this.notifier = new Object();
@@ -145,7 +124,10 @@ public class SandboxedRobotPlayer {
         individualLoader = loader;
 
         // Load monitor / monitor methods
-
+        // Used to initialize the RobotMonitor for the player
+        final Method initMethod;
+        // Used to pause the player thread after loading
+        final Method pauseMethod;
         try {
             // The loaded, uninstrumented-but-individual RobotMonitor for this player.
             Class<?> monitor = individualLoader
@@ -199,14 +181,14 @@ public class SandboxedRobotPlayer {
                 // Pause immediately
                 pauseMethod.invoke(null);
                 // Run the robot!
-                loadAndRunPlayer(teamName, teamLanguage, PLAYER_CLASS_NAME);
+                loadAndRunPlayer(teamName, PLAYER_CLASS_NAME);
                 // If we get here, we've returned from the 'run' method. Tell the user.
-                if (robotController.getLocation() != null) {
+                if (robotController.getLocation() != null){
                 System.out.println(robotController.getTeam().toString() + "'s " +
                         robotController.getID() + " at location " + robotController.getLocation().toString()
-                        + " froze in round " + robotController.getRoundNum() +
+                        + " froze in round " +robotController.getRoundNum() +
                         " because it returned from its run() method!"); }
-                else {
+                else{
                     System.out.println(robotController.getTeam().toString() + "'s " +
                         robotController.getID() + " that has not spawned yet " 
                         + " froze in round " +robotController.getRoundNum() +
@@ -264,21 +246,7 @@ public class SandboxedRobotPlayer {
      * static initialization will be counted as part of the bytecode used of
      * the first step.
      */
-    private void loadAndRunPlayer(String teamName, CrossPlayLanguage teamLanguage, String playerClassName)
-            throws InvocationTargetException, IllegalAccessException, InstrumentationException {
-        switch (teamLanguage) {
-            case JAVA:
-                loadAndRunPlayerJava(teamName, playerClassName);
-                break;
-            case PYTHON:
-                loadAndRunPlayerCrossPlay(teamName, playerClassName);
-                break;
-            default:
-                throw new InstrumentationException(ILLEGAL, "Unsupported cross-play language: " + teamLanguage);
-        }
-    }
-
-    private void loadAndRunPlayerJava(String teamName, String playerClassName)
+    private void loadAndRunPlayer(String teamName, String playerClassName)
             throws InvocationTargetException, IllegalAccessException, InstrumentationException {
         // Load player in sandbox
         Class<?> robotPlayer;
@@ -305,26 +273,6 @@ public class SandboxedRobotPlayer {
 
         // Run!
         runMethod.invoke(null, robotController);
-    }
-
-    private void loadAndRunPlayerCrossPlay(String teamName, String playerClassName)
-            throws InvocationTargetException, IllegalAccessException, InstrumentationException {
-        while (true) {
-            try {
-                /*int bytecodeUsed =*/ crossPlay.playTurn(robotController, systemOut);
-                // TODO set bytecode limit somehow (maybe in python, maybe here)
-            } catch (GameActionException e) {
-                String message = "GameActionException thrown during cross-play turn: " + e.getMessage();
-
-                if (systemOut instanceof RoboPrintStream rps) {
-                    rps.println(message);
-                } else {
-                    System.out.println(message);
-                }
-            }
-
-            this.pauseMethod.invoke(null);
-        }
     }
 
     /**
