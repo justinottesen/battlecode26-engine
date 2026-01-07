@@ -829,10 +829,16 @@ public final class RobotControllerImpl implements RobotController {
                 // kill this rat
                 crushedRobot.addHealth(-crushedRobot.getHealth());
             }
-            processTrapsAtLocation(newLoc);
+            // processTrapsAtLocation(newLoc);
         }
 
         this.robot.translateLocation(d.dx, d.dy);
+
+        for (int i = 0; i < curLocs.length; i++) {
+            MapLocation newLoc = curLocs[i].add(d);
+            processTrapsAtLocation(newLoc);
+        }
+
         this.robot.addMovementCooldownTurns(d);
 
     }
