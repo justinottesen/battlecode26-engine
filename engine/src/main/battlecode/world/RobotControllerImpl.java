@@ -1022,29 +1022,45 @@ public final class RobotControllerImpl implements RobotController {
 
     public void assertCanBecomeRatKing() throws GameActionException {
         assertIsActionReady();
-        if (this.gameWorld.getTeamInfo().getCheese(this.robot.getTeam()) < GameConstants.RAT_KING_UPGRADE_CHEESE_COST) {
+        TeamInfo teamInfo = this.gameWorld.getTeamInfo();
+
+        if (teamInfo.getCheese(this.robot.getTeam()) < GameConstants.RAT_KING_UPGRADE_CHEESE_COST) {
             throw new GameActionException(CANT_DO_THAT, "Not enough cheese to upgrade to a rat king");
         }
-        if (this.gameWorld.getTeamInfo().getNumRatKings(this.robot.getTeam()) >= GameConstants.MAX_NUMBER_OF_RAT_KINGS){
+
+        if (teamInfo.getNumRatKings(this.robot.getTeam()) >= GameConstants.MAX_NUMBER_OF_RAT_KINGS){
             throw new GameActionException(CANT_DO_THAT, "Cannot have more than " +GameConstants.MAX_NUMBER_OF_RAT_KINGS + "rat kings per team!" );
         }
+
         int numAllyRats = 0;
+
         for (Direction d : Direction.allDirections()) {
             MapLocation curLoc = this.adjacentLocation(d);
+
+            if (!onTheMap(curLoc)) {
+                throw new GameActionException(CANT_DO_THAT,
+                        "Can't become a rat king when the 3x3 vicinity goes off the map!");
+            }
+
             InternalRobot curRobot = this.gameWorld.getRobot(curLoc);
+
             if (curRobot != null && curRobot.getTeam() == this.robot.getTeam() && curRobot.getType() == UnitType.BABY_RAT) {
                 numAllyRats += 1;
             }
+
             if (curRobot != null && !curRobot.getType().isBabyRatType()) {
                 throw new GameActionException(CANT_DO_THAT,
                         "Can't become a rat king when there are nearby cats or rat kings!");
             }
+
             MapInfo mapInfo = this.getMapInfo(curLoc);
+
             if (!mapInfo.isPassable()) {
                 throw new GameActionException(CANT_DO_THAT,
                         "Can only upgrade if all squares in the 3x3 vicinity are passable");
             }
         }
+
         if (numAllyRats < 7) {
             throw new GameActionException(CANT_DO_THAT, "Not enough rats in the 3x3 square");
         }
