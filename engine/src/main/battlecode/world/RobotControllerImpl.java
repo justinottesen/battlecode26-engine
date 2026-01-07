@@ -1228,6 +1228,7 @@ public final class RobotControllerImpl implements RobotController {
     public void assertCanThrowRat(Direction dir) throws GameActionException {
         assertIsActionReady();
         MapLocation nextLoc = this.getLocation().add(dir);
+
         if (!this.robot.getType().isBabyRatType()) {
             throw new GameActionException(CANT_DO_THAT, "Only rats can throw other rats!");
         }
@@ -1244,6 +1245,7 @@ public final class RobotControllerImpl implements RobotController {
     public void assertCanDropRat(Direction dir) throws GameActionException {
         assertIsActionReady();
         MapLocation nextLoc = this.getLocation().add(dir);
+        
         if (!this.robot.getType().isBabyRatType()) {
             throw new GameActionException(CANT_DO_THAT, "Only rats can drop other rats!");
         }

@@ -2,7 +2,6 @@ package battlecode.world;
 
 import java.util.*;
 
-import battlecode.world.CatStateType;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -616,7 +615,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void grabRobot(MapLocation loc) {
-
         this.robotBeingCarried = this.gameWorld.getRobot(loc);
         this.robotBeingCarried.getGrabbed(this); // Notify the grabbed robot that it has been picked up
         this.gameWorld.getMatchMaker().addRatNapAction(this.getID());
@@ -627,21 +625,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void dropRobot(Direction dir) {
-        if (!this.type.isThrowingType()) {
-            throw new RuntimeException("Unit must be a rat to drop other rats");
-        } else if (!this.isCarryingRobot()) {
-            throw new RuntimeException("Not carrying a robot to drop");
-        }
         MapLocation dropLoc = this.getLocation().add(dir);
-        if (!this.gameWorld.getGameMap().onTheMap(dropLoc)) {
-            throw new RuntimeException("Cannot drop outside of map");
-        } else if (this.gameWorld.getRobot(dropLoc) != null) {
-            throw new RuntimeException("Cannot drop into occupied space");
-        } else if (!this.gameWorld.isPassable(dropLoc)) {
-            throw new RuntimeException("Cannot drop into impassable terrain");
-        }
-
-        // Drop the robot
         this.robotBeingCarried.getDropped(dropLoc);
         this.robotBeingCarried = null;
     }
@@ -676,10 +660,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private void getGrabbed(InternalRobot grabber) {
         this.grabbedByRobot = grabber;
         this.gameWorld.removeRobot(getLocation());
+
         if (this.isCarryingRobot()) { // If we were carrying a robot, drop it
             this.robotBeingCarried.getDropped(getLocation());
             this.robotBeingCarried = null;
         }
+        
         this.setInternalLocationOnly(grabber.getLocation());
 
         if (grabber.getTeam() != this.getTeam()) {
@@ -689,19 +675,6 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void throwRobot() {
-        if (!this.type.isThrowingType()) {
-            throw new RuntimeException("Unit must be a rat to throw other rats");
-        } else if (!this.isCarryingRobot()) {
-            throw new RuntimeException("Not carrying a robot to throw");
-        }
-        if (!this.gameWorld.getGameMap().onTheMap(this.getLocation().add(this.dir))) {
-            throw new RuntimeException("Cannot throw outside of map");
-        } else if (this.gameWorld.getRobot(this.getLocation().add(this.dir)) != null
-                && this.gameWorld.getRobot(this.getLocation().add(this.dir)).getType() != UnitType.CAT) {
-            throw new RuntimeException("Cannot throw into a space occupied by another rat");
-        }
-
-        // Throw the robot
         this.robotBeingCarried.getThrown(this.dir);
         this.gameWorld.getMatchMaker().addThrowAction(this.robotBeingCarried.getID(),
                 this.getLocation().add(this.dir));
@@ -737,6 +710,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         } else if (!this.gameWorld.isPassable(loc)) {
             throw new RuntimeException("Cannot drop into impassable terrain");
         }
+
         this.grabbedByRobot = null;
         this.remainingCarriedDuration = 0;
         this.setInternalLocationOnly(loc);
