@@ -74,11 +74,11 @@ public enum UnitType {
         return locs;
     }
 
-    UnitType(int health, int size, int visionConeRadius, int visionConeAngle, int actionCooldown,
+    UnitType(int health, int size, int visionConeRadiusSquared, int visionConeAngle, int actionCooldown,
             int movementCooldown, int bytecodeLimit) {
         this.health = health;
         this.size = size;
-        this.visionConeRadiusSquared = visionConeRadius;
+        this.visionConeRadiusSquared = visionConeRadiusSquared;
         this.visionConeAngle = visionConeAngle;
         this.actionCooldown = actionCooldown;
         this.movementCooldown = movementCooldown;

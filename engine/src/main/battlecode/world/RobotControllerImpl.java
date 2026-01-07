@@ -239,6 +239,7 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         // Use unit action radius as the allowed range for the action
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         // state checks :
         if (this.gameWorld.getTeamInfo().getDirt(this.robot.getTeam()) <= 0)
@@ -259,6 +260,7 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         assertIsActionReady();
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         if ((this.robot.getType().isBabyRatType()
                 || this.robot.getType().isRatKingType()) && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
@@ -314,6 +316,7 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         assertIsActionReady();
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         if (trapType == TrapType.CAT_TRAP && !this.gameWorld.isCooperation)
             throw new GameActionException(CANT_DO_THAT, "Can't place new cat traps in backstabbing mode!");
@@ -875,9 +878,11 @@ public final class RobotControllerImpl implements RobotController {
         assertNotNull(loc);
         assertCanActLocation(loc, GameConstants.BUILD_ROBOT_RADIUS_SQUARED);
         assertIsActionReady();
+
         if (!this.robot.getType().isRatKingType()) {
             throw new GameActionException(CANT_DO_THAT, "Only rat kings can spawn other rats!");
         }
+
         int cost = getCurrentRatCost();
 
         if (this.gameWorld.getTeamInfo().getCheese(this.robot.getTeam()) < cost) {
@@ -906,11 +911,11 @@ public final class RobotControllerImpl implements RobotController {
     @Override
     public void buildRat(MapLocation loc) throws GameActionException {
         assertCanBuildRat(loc);
+        int cost = getCurrentRatCost();
+        this.robot.addCheese(-cost);
         this.robot.addActionCooldownTurns(GameConstants.BUILD_ROBOT_COOLDOWN);
         this.gameWorld.spawnRobot(UnitType.BABY_RAT, loc, this.getDirection(), this.robot.getChirality(),
                 this.robot.getTeam());
-        int cost = getCurrentRatCost();
-        this.robot.addCheese(-cost);
         InternalRobot robotSpawned = this.gameWorld.getRobot(loc);
         this.gameWorld.getMatchMaker().addSpawnAction(robotSpawned.getID(), loc, this.robot.getDirection(),
                 this.robot.getChirality(), getTeam(), UnitType.BABY_RAT);
