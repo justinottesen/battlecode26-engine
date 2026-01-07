@@ -238,6 +238,7 @@ public final class RobotControllerImpl implements RobotController {
         assertIsRobotType(this.robot.getType());
         // Use unit action radius as the allowed range for the action
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         // state checks :
         if (this.gameWorld.getTeamInfo().getDirt(this.robot.getTeam()) <= 0)
@@ -257,6 +258,7 @@ public final class RobotControllerImpl implements RobotController {
     private void assertCanRemoveDirt(MapLocation loc) throws GameActionException {
         assertIsRobotType(this.robot.getType());
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         if ((this.robot.getType().isBabyRatType()
                 || this.robot.getType().isRatKingType()) && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
@@ -310,6 +312,7 @@ public final class RobotControllerImpl implements RobotController {
     private void assertCanPlaceTrap(MapLocation loc, TrapType trapType) throws GameActionException {
         assertIsRobotType(this.robot.getType());
         assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        assertIsActionReady();
 
         if (trapType == TrapType.CAT_TRAP && !this.gameWorld.isCooperation)
             throw new GameActionException(CANT_DO_THAT, "Can't place new cat traps in backstabbing mode!");

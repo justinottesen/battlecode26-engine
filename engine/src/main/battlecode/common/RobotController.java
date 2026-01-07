@@ -130,7 +130,7 @@ public interface RobotController {
      *
      * @battlecode.doc.costlymethod
      */
-    public int getGlobalCheese();
+    int getGlobalCheese();
 
     /**
      * Returns the amount of cheese the robot has access to.
@@ -139,7 +139,7 @@ public interface RobotController {
      *
      * @battlecode.doc.costlymethod
      */
-    public int getAllCheese();
+    int getAllCheese();
 
     /**
      * Returns the amount of dirt that this robot's team has.
