@@ -532,17 +532,7 @@ public final class RobotControllerImpl implements RobotController {
         assertRadiusNonNegative(radiusSquared);
         int actualRadiusSquared = radiusSquared == -1 ? this.robot.getVisionRadiusSquared()
                 : Math.min(radiusSquared, this.robot.getVisionRadiusSquared());
-        actualRadiusSquared = (int) ((Math.sqrt(actualRadiusSquared) + 2) * (Math.sqrt(actualRadiusSquared) + 2)); // expand
-                                                                                                                   // slightly
-                                                                                                                   // to
-                                                                                                                   // account
-                                                                                                                   // for
-                                                                                                                   // cat
-                                                                                                                   // center
-                                                                                                                   // being
-                                                                                                                   // bottom
-                                                                                                                   // left
-                                                                                                                   // corner
+
         InternalRobot[] allSensedRobots = gameWorld.getAllRobotsWithinRadiusSquared(center, actualRadiusSquared, team, this.robot.getChirality());
         List<RobotInfo> validSensedRobots = new ArrayList<>();
         HashSet<Integer> uniqueRobotIds = new HashSet<>();
@@ -605,7 +595,7 @@ public final class RobotControllerImpl implements RobotController {
         int actualRadiusSquared = radiusSquared == -1 ? this.getType().visionConeRadiusSquared
                 : Math.min(radiusSquared, this.getType().visionConeRadiusSquared);
         MapLocation[] allSensedLocs = gameWorld.getAllLocationsWithinRadiusSquared(center,
-                (int) ((Math.sqrt(actualRadiusSquared) + 2) * (Math.sqrt(actualRadiusSquared) + 2)), this.robot.getChirality()); // expand slightly
+                actualRadiusSquared, this.robot.getChirality()); // expand slightly
                                                                                                       // to allow
                                                                                                       // off-center
                                                                                                       // sensing
