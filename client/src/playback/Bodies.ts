@@ -522,18 +522,22 @@ export class Body {
         const maxX = Math.min(location.x + ceiledRadius, match.map.width - 1)
         const maxY = Math.min(location.y + ceiledRadius, match.map.height - 1)
 
-        const coords: Vector[] = [location]
+        const coords: Vector[] = []
+
         const halfFOV = fov / 2
         if (direction == 0) {
             return coords
         }
 
+        const OFFSET = this.robotType === schema.RobotType.CAT ? {x: 0.5, y: 0.5} : {x: 0, y: 0}
+        const center = {x: location.x + OFFSET.x, y: location.y + OFFSET.y}
+
         const directionRad = (directionAngles[direction] * Math.PI) / 180
 
         for (let x = minX; x <= maxX; x++) {
             for (let y = minY; y <= maxY; y++) {
-                const dx = x - location.x
-                const dy = y - location.y
+                const dx = x - center.x
+                const dy = y - center.y
                 if (dx * dx + dy * dy <= radius) {
                     const angleToPoint = Math.atan2(dy, dx)
                     let angleDiff = angleToPoint - directionRad
