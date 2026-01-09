@@ -1195,11 +1195,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         if (isStuck){
                             if (this.controller.canTurn()) {
                                 try {
-                                    Direction newDirection = this.dir.rotateRight();
-                                    if (this.chirality == 0) this.controller.turn(newDirection);
-                                    else this.controller.turn(this.gameWorld.flipDirBySymmetry(newDirection));
-                                } catch (GameActionException e) {
-                                }
+                                    if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                    else this.controller.turn(this.dir.rotateLeft());
+                                } catch (GameActionException e) {}
                             }
                         }
                     }
@@ -1224,8 +1222,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     } else if (this.controller.canMove(this.dir)) {
                         try {
                             this.controller.move(this.dir);
-                        } catch (GameActionException e) {
-                        }
+                        } catch (GameActionException e) {}
                     } else {
                         boolean isStuck = true;
                         for (MapLocation partLoc : this.getAllPartLocations()) {
@@ -1252,9 +1249,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             if (isStuck){
                                 if (this.controller.canTurn()) {
                                     try {
-                                        Direction newDirection = this.dir.rotateRight();
-                                        if (this.chirality == 0) this.controller.turn(newDirection);
-                                        else this.controller.turn(this.gameWorld.flipDirBySymmetry(newDirection));
+                                        if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                        else this.controller.turn(this.dir.rotateLeft());
                                     } catch (GameActionException e) {
                                         continue;
                                     }
@@ -1352,13 +1348,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                 } catch (GameActionException e) {
                                     continue;
                                 }
-
-                            }
-                            else if (this.controller.canAttack(nextLoc)) {
+                            } else if (this.controller.canAttack(nextLoc)) {
                                 try {
-                                    Direction newDirection = this.dir.rotateRight();
-                                    if (this.chirality == 0) this.controller.turn(newDirection);
-                                    else this.controller.turn(this.gameWorld.flipDirBySymmetry(newDirection));
+                                    if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                    else this.controller.turn(this.dir.rotateLeft());
                                 } catch (GameActionException e) {
                                     continue;
                                 }
@@ -1367,11 +1360,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                         if (isStuck){
                             try {
-                                Direction newDirection = this.dir.rotateRight();
-                                if (this.chirality == 0) this.controller.turn(newDirection);
-                                else this.controller.turn(this.gameWorld.flipDirBySymmetry(newDirection));
-                            } catch (GameActionException e) {
-                            }
+                                if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                else this.controller.turn(this.dir.rotateLeft());
+                            } catch (GameActionException e) {}
                         }
                     }
                     break;

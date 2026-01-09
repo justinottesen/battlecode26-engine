@@ -967,10 +967,13 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanAttackRat(MapLocation loc, int cheeseConsumed) throws GameActionException {
         assertIsActionReady();
+        UnitType myType = this.getType();
         // Attack is limited to vision radius
-        assertCanActLocation(loc, this.getType().getVisionRadiusSquared());
+        assertCanActLocation(loc, myType.getVisionRadiusSquared());
 
-        if (!this.getLocation().isAdjacentTo(loc)) {
+        MapLocation myLoc = this.getLocation();
+
+        if (!myLoc.isAdjacentTo(loc) || myType.isRatKingType() && myLoc.distanceSquaredTo(loc) > GameConstants.RAT_KING_ATTACK_DISTANCE_SQUARED) {
             throw new GameActionException(CANT_DO_THAT, "Rats can only attack adjacent squares!");
         }
 
