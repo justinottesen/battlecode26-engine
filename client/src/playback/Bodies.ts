@@ -99,10 +99,8 @@ export default class Bodies {
 
         return body
     }
+
     checkBodyCollisionAtLocation(type: schema.RobotType, pos: Vector): boolean {
-        const bodyClass = BODY_DEFINITIONS[type] ?? assert.fail(`Body type ${type} not found in BODY_DEFINITIONS`)
-        const tempBody = new bodyClass(this.game, pos, this.game.getTeamByID(1), 0)
-        const bodySize = tempBody.size
         const occupiedSpaces: Vector[] = []
 
         for (const otherBody of this.bodies.values()) {
@@ -152,6 +150,34 @@ export default class Bodies {
             }
         }
         return false
+    }
+
+    checkBodyOutofBoundsAtLocation(type: schema.RobotType, pos: Vector): boolean {
+        const map = this.game.currentMatch?.map
+        if(!map) return false
+
+        const dimension = map.dimension
+        const occupiedSpaces: Vector[] = []
+
+        if (type == schema.RobotType.RAT) {
+            if(!map.inBounds(pos.x, pos.y)) return false
+        }
+        if (type == schema.RobotType.CAT) {
+            for (let xoff = 0; xoff <= 1; xoff++) {
+                for (let yoff = 0; yoff <= 1; yoff++) {
+                    if(!map.inBounds(pos.x+xoff, pos.y+yoff)) return false
+                }
+            }
+        }
+        if (type == schema.RobotType.RAT_KING) {
+            for (let xoff = -1; xoff <= 1; xoff++) {
+                for (let yoff = -1; yoff <= 1; yoff++) {
+                    if(!map.inBounds(pos.x+xoff, pos.y+yoff)) return false
+                }
+            }
+        }
+        
+        return true
     }
 
     markBodyAsDead(id: number): void {
@@ -337,8 +363,11 @@ export class Body {
     public moveCooldown: number = 0
     public actionCooldown: number = 0
     public turningCooldown: number = 0
+    public carriedRobot: number | undefined = undefined  // id of carried robot
+    public beingCarried: boolean = false
     public bytecodesUsed: number = 0
     public cheese: number = 0
+    public textureOverride: boolean = false
 
     constructor(
         private game: Game,
@@ -661,6 +690,7 @@ export class Body {
             `Move Cooldown: ${this.moveCooldown}`,
             `Action Cooldown: ${this.actionCooldown}`,
             `${this.robotType !== schema.RobotType.CAT ? 'Turning Cooldown: ' + this.turningCooldown : ''}`,
+            `${this.carriedRobot !== undefined ? 'Carrying: ' + this.carriedRobot : ''}`,
             `Bytecodes Used: ${this.bytecodesUsed}${
                 this.bytecodesUsed >= this.metadata.bytecodeLimit() ? ' <EXCEEDED!>' : ''
             }`
@@ -764,7 +794,7 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const dir = this.direction
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_${dir}_64x64.png`
+            if (!this.textureOverride) this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_${dir}_64x64.png`
             super.draw(match, ctx)
         }
     },
@@ -782,7 +812,7 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const dir = this.direction
-            this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_64x64.png`
+            if (!this.textureOverride) this.imgPath = `robots/${this.team.colorName.toLowerCase()}/rat_king_64x64.png`
             super.draw(match, ctx)
         }
     },
@@ -800,7 +830,7 @@ export const BODY_DEFINITIONS: Record<schema.RobotType, typeof Body> = {
 
         public draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const dir = this.direction
-            this.imgPath = `robots/cat/cat_${dir}.png`
+            if (!this.textureOverride) this.imgPath = `robots/cat/cat_${dir}.png`
             super.draw(match, ctx)
         }
     }

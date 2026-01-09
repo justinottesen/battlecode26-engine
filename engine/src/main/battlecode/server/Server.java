@@ -7,8 +7,6 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
-import battlecode.crossplay.CrossPlay;
-import battlecode.crossplay.CrossPlayLanguage;
 import battlecode.world.*;
 import battlecode.world.control.*;
 
@@ -34,7 +32,7 @@ public class Server implements Runnable {
     /**
      * The GameInfo that signals the server to terminate when it is encountered on the game queue.
      */
-    private static final GameInfo POISON = new GameInfo(null, null, null, null, null, null, null, null, null, null, false) {};
+    private static final GameInfo POISON = new GameInfo(null, null, null, null, null, null, null, null, false) {};
 
     /**
      * The queue of games to run.
@@ -275,7 +273,6 @@ public class Server implements Runnable {
 
         // Get started
         if (interactive) {
-            // TODO necessary?
             // Poll for RUNNING, if we're in interactive mode
             while (!ServerState.RUNNING.equals(state)) {
                 try {
@@ -289,7 +286,7 @@ public class Server implements Runnable {
 
         long startTime = System.currentTimeMillis();
         say("-------------------- Match Starting --------------------");
-        say(String.format("%s (%s) vs. %s (%s) on %s", currentGame.getTeamAPackage(), currentGame.getTeamALanguage(), currentGame.getTeamBPackage(), currentGame.getTeamBLanguage(), mapName));
+        say(String.format("%s vs. %s on %s", currentGame.getTeamAPackage(), currentGame.getTeamBPackage(), mapName));
 
         // If there are more rounds to be run, run them and
         // and send the round (and optionally stats) bytes to

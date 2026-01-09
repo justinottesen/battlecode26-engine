@@ -46,8 +46,8 @@ export default class Actions {
                 //this.actions.splice(i, 1)
 
                 // Otherwise, this is faster
-                this.actions[i] = this.actions[this.actions.length - 1]
-                this.actions[i].finish(round)
+                [this.actions[i], this.actions[this.actions.length-1]] = [this.actions[this.actions.length - 1], this.actions[i]]
+                this.actions[this.actions.length-1].finish(round)
                 this.actions.pop()
 
                 i--
@@ -183,15 +183,51 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
     },
     [schema.Action.RatNap]: class RatNapAction extends Action<schema.RatNap> {
+        private static readonly OFFSET = { x: -0.35, y: 0 }
         apply(round: Round): void {
             // move the target onto the source adjust target's size using scale factor
             const src = round.bodies.getById(this.robotId)
             const target = round.bodies.getById(this.actionData.id()) // rat getting napped
+            
+            if (target.beingCarried) {
+                // drop the target
+                target.size = 1
+                target.beingCarried = false
+            } else {
+                // pick up the target
+                src.carriedRobot = target.id
+                target.carriedRobot = undefined
+                target.beingCarried = true
+
+                // target.lastPos = { ...target.pos }
+                // target.pos = { x: src.pos.x + RatNapAction.OFFSET.x, y: src.pos.y + RatNapAction.OFFSET.y }
+                target.size = 0.6
+            }
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             //target rat moves onto src rat, circle around carried group thing
-            const src = match.currentRound.bodies.getById(this.robotId)
-            const target = match.currentRound.bodies.getById(this.actionData.id()) // rat getting napped
+            const src = match.currentRound.bodies.getById(this.robotId) 
+            const srcCoords = renderUtils.getRenderCoords(src.pos.x, src.pos.y, match.map.dimension, true)
+            const t = match.getInterpolationFactor()
+            const bump = Math.sin(t * Math.PI * 8) * 0.03
+            const half = 0.5 + bump
+            const radius = 0.08 // corner radius
+
+            ctx.save()
+            ctx.shadowBlur = 12
+            ctx.shadowColor = src.team.color
+            ctx.strokeStyle = src.team.color
+            ctx.globalAlpha = 0.7
+            ctx.lineWidth = 0.04
+            ctx.beginPath()
+            ctx.moveTo(srcCoords.x - half + radius, srcCoords.y - half)
+            ctx.arcTo(srcCoords.x + half, srcCoords.y - half, srcCoords.x + half, srcCoords.y + half, radius)
+            ctx.arcTo(srcCoords.x + half, srcCoords.y + half, srcCoords.x - half, srcCoords.y + half, radius)
+            ctx.arcTo(srcCoords.x - half, srcCoords.y + half, srcCoords.x - half, srcCoords.y - half, radius)
+            ctx.arcTo(srcCoords.x - half, srcCoords.y - half, srcCoords.x + half, srcCoords.y - half, radius)
+            ctx.stroke()
+            ctx.restore()
+            ctx.restore() 
         }
     },
     [schema.Action.RatCollision]: class RatCollisionAction extends Action<schema.RatCollision> {
@@ -200,6 +236,33 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const src = match.currentRound.bodies.getById(this.robotId)
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+            const t = match.getInterpolationFactor()
+
+            ctx.save()
+            // dusty base color that fills the cell and fades out
+            const baseAlpha = 0.4 * (1 - t)
+            ctx.fillStyle = `rgba(150,130,110,${baseAlpha})`
+            ctx.fillRect(coords.x - 0.5, coords.y - 0.5, 1, 1)
+
+            // these are the random rocks that fill the cell
+            const rockCount = 10
+            for (let i = 0; i < rockCount; i++) {
+                const rx = coords.x - 0.5 + Math.random() * 1
+                const ry = coords.y - 0.5 + Math.random() * 1
+                const size = 0.08 + Math.random() * 0.15
+                const shade = 90 + Math.floor(Math.random() * 50)
+                const alpha = 0.7 * (1 - t)
+                ctx.fillStyle = `rgba(${shade},${shade - 10},${shade - 20},${alpha})`
+                ctx.fillRect(rx, ry, size, size)
+            }
+
+            // ring outside the cell (also fades out)
+            ctx.strokeStyle = src.team.color
+            ctx.globalAlpha = 0.35 * (1 - t)
+            ctx.lineWidth = 0.04
+            ctx.strokeRect(coords.x - 0.5, coords.y - 0.5, 1, 1)
+            ctx.restore()
+
         }
     },
     [schema.Action.PlaceDirt]: class PlaceDirtAction extends Action<schema.PlaceDirt> {
@@ -284,8 +347,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const target = round.bodies.getById(this.actionData.id())
             const amount = this.actionData.amount()
 
-            body.cheese -= amount
-            target.cheese += amount
+            body.cheese -= Math.min(body.cheese, amount)
+            target.cheese += Math.min(body.cheese, amount)
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const srcBody = match.currentRound.bodies.getById(this.robotId)
@@ -322,10 +385,14 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
     [schema.Action.CatScratch]: class CatScratchAction extends Action<schema.CatScratch> {
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // cat scratching animation
-
             const body = match.currentRound.bodies.getById(this.robotId)
             const pos = match.map.indexToLocation(this.actionData.loc())
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
+            
+            const dir = body.direction
+            body.textureOverride = true
+            body.imgPath = `robots/cat/cat_scratch_${dir}.png`
+            
             const reflected = body.pos.x < pos.x
 
             const interpolationFactor = match.getInterpolationFactor()
@@ -344,12 +411,11 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             }
             ctx.stroke()
             ctx.globalAlpha = 1
-            body.imgPath = `robots/cat/cat_scratch_${body.direction}.png`
         }
 
         finish(round: Round): void {
             const body = round.bodies.getById(this.robotId)
-            body.imgPath = 'robots/cat/cat.png'
+            body.textureOverride = false
         }
     },
     [schema.Action.CatPounce]: class CatPounceAction extends Action<schema.CatPounce> {
@@ -358,6 +424,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const body = round.bodies.getById(this.robotId)
             const startPos = round.map.indexToLocation(this.actionData.startLoc())
             const endPos = round.map.indexToLocation(this.actionData.endLoc())
+            console.log('pounce from', startPos, 'to', endPos)
         }
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // cat pouncing animation
@@ -368,6 +435,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             const endCoords = renderUtils.getRenderCoords(endPos.x, endPos.y, match.map.dimension, true)
             const angle = Math.atan2(endPos.y - startPos.y, endPos.x - startPos.x)
 
+            body.textureOverride = true
             let texture: string
             if (angle >= (7 * Math.PI) / 4 || angle <= Math.PI / 4) {
                 texture = 'robots/cat/cat_pounce_5.png'
@@ -391,7 +459,7 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         }
         finish(round: Round): void {
             const body = round.bodies.getById(this.robotId)
-            body.imgPath = 'robots/cat/cat.png'
+            body.textureOverride = false
         }
     },
     [schema.Action.PlaceTrap]: class PlaceTrapAction extends Action<schema.PlaceTrap> {
@@ -445,7 +513,8 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             // trap triggering animation
             const body = match.currentRound.bodies.getById(this.robotId)
-            const pos = match.map.indexToLocation(this.actionData.loc())
+            // const pos = match.map.indexToLocation(this.actionData.loc())
+            const pos = body.getInterpolatedCoords(match)
             const coords = renderUtils.getRenderCoords(pos.x, pos.y, match.map.dimension, true)
 
             const size = body.size - 1
@@ -600,16 +669,15 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
         draw(match: Match, ctx: CanvasRenderingContext2D): void {
             const body = match.currentRound.bodies.getById(this.robotId)
             const renderCoords = renderUtils.getRenderCoords(
-                body.pos.x - 1 + body.size / 2,
-                body.pos.y + body.size / 2,
+                body.pos.x,
+                body.pos.y,
                 match.map.dimension,
-                true
             )
             renderUtils.renderCenteredImageOrLoadingIndicator(
                 ctx,
                 getImageIfLoaded('robots/squeak.png'),
                 renderCoords,
-                1
+                body.size
             )
         }
     },

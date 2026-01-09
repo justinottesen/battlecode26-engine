@@ -43,6 +43,7 @@ public class GameWorld {
     private final LiveMap gameMap;
     private final TeamInfo teamInfo;
     private final ObjectInfo objectInfo;
+    private boolean hasRunCheeseMinesThisRound; // whether we've run the cheese mines yet
 
     private int[] currentNumberUnits = { 0, 0 };
 
@@ -118,6 +119,15 @@ public class GameWorld {
         return Direction.fromDelta(dx, dy);
     }
 
+    public void runCheeseMines(){
+        if (hasRunCheeseMinesThisRound)
+            return;
+
+        for (CheeseMine mine : this.cheeseMines) {
+            spawnCheese(mine);
+        }
+        hasRunCheeseMinesThisRound = true;
+    }
 
     public MapLocation symmetryLocation(MapLocation p) {
         return new MapLocation(symmetricX(p.x), symmetricY(p.y));
@@ -134,6 +144,7 @@ public class GameWorld {
         this.trapLocations = new Trap[numSquares]; // We guarantee that no maps will contain traps at t = 0
         this.robots = new InternalRobot[width][height]; // if represented in cartesian, should be height-width, but this
                                                         // should allow us to index x-y
+        this.hasRunCheeseMinesThisRound = false;
         this.currentRound = 0;
         this.idGenerator = new IDGenerator(gm.getSeed());
         this.gameStats = new GameStats();
@@ -182,8 +193,6 @@ public class GameWorld {
         }
 
         this.sharedArray = new int[2][GameConstants.SHARED_ARRAY_SIZE];
-        this.persistentArray = new int[2][GameConstants.PERSISTENT_ARRAY_SIZE];
-        // TODO make persistent array last between matches
 
         RobotInfo[] initialBodies = gm.getInitialBodies();
 
@@ -312,10 +321,9 @@ public class GameWorld {
             }
         } catch (Exception e) {
             ErrorReporter.report(e);
-            // TODO throw out file?
             return GameState.DONE;
         }
-        // todo: should I end the round here or in processEndofRound?
+
         return GameState.RUNNING;
     }
 
@@ -492,7 +500,6 @@ public class GameWorld {
                         && !this.getWall(new MapLocation(pairedX, pairedY))) {
                     ogSpawnLoc = new MapLocation(cheeseX, cheeseY);
                     pairedSpawnLoc = new MapLocation(pairedX, pairedY);
-                    System.out.println("Found a good cheese loc! " + ogSpawnLoc);
                     break;
                 }
 
@@ -502,14 +509,15 @@ public class GameWorld {
             // corresponding one
 
             if (spawn) {
-                addCheese(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
-                addCheese(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
 
                 mine.setLastRound(this.currentRound);
                 pairedMine.setLastRound(this.currentRound);
 
-                matchMaker.addCheeseSpawnAction(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
-                matchMaker.addCheeseSpawnAction(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
+                matchMaker.addCheeseSpawnAction(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT + this.getCheeseAmount(ogSpawnLoc));
+                matchMaker.addCheeseSpawnAction(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT + this.getCheeseAmount(pairedSpawnLoc));
+
+                addCheese(ogSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
+                addCheese(pairedSpawnLoc, GameConstants.CHEESE_SPAWN_AMOUNT);
             }
 
         }
@@ -593,15 +601,12 @@ public class GameWorld {
         if (type == TrapType.CAT_TRAP && robot.getType().isCatType()) {
             this.teamInfo.addDamageToCats(trap.getTeam(), type.damage);
         }
-        // TODO once the cat exists, alert cat of trap trigger
 
         if (trap.getType() != TrapType.CAT_TRAP) {
             // initiate backstab
             this.isCooperation = false;
         }
 
-        this.trapLocations[locationToIndex(loc)] = null;
-        // matchMaker.addTriggeredTrap(trap.getId());
         matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
 
         removeTrap(loc);
@@ -945,9 +950,8 @@ public class GameWorld {
     }
 
     public void processEndOfRound() {
-        for (CheeseMine mine : this.cheeseMines) {
-            spawnCheese(mine);
-        }
+        // clear hasRunCheeseMinesThisRound for next round
+        this.hasRunCheeseMinesThisRound =  false;
 
         Team[] teams = {Team.A, Team.B};
         for (Team t : teams){
@@ -1056,15 +1060,12 @@ public class GameWorld {
     }
 
     public void destroyRobot(int id, boolean fromException, boolean fromDamage) {
-        // System.out.println("A ROBOT DIED!!");
-        // System.out.println(id);
         InternalRobot robot = objectInfo.getRobotByID(id);
         if (robot == null) {
             // robot was already killed
             return;
         }
 
-        // System.out.println(robot);
         Team robotTeam = robot.getTeam();
         MapLocation loc = robot.getLocation();
 
@@ -1076,34 +1077,43 @@ public class GameWorld {
             } else if (robot.getType().isCatType()) {
                 this.numCats -= 1;
             }
+
             for (MapLocation robotLoc : robot.getAllPartLocations()) {
                 removeRobot(robotLoc);
             }
+
             if (robot.isCarryingRobot()) {
-                InternalRobot carryingRobot = robot.getCarryingRobot();
+                InternalRobot carryingRobot = robot.getRobotBeingCarried();
                 carryingRobot.getDropped(loc);
             }
+
             if (robot.isGrabbedByRobot()) {
                 InternalRobot carrier = robot.getGrabbedByRobot();
                 robot.clearGrabbedByRobot();
-                if (carrier != null && carrier.getCarryingRobot() == robot) {
+
+                if (carrier != null && carrier.getRobotBeingCarried() == robot) {
                     carrier.clearCarryingRobot();
                 }
             }
+
             if (robot.getCheese() > 0) {
                 addCheese(loc, robot.getCheese());
                 matchMaker.addCheeseSpawnAction(loc, robot.getCheese());
             }
         }
+
         controlProvider.robotKilled(robot);
         objectInfo.destroyRobot(id);
-        if (fromDamage || fromException)
-            matchMaker.addDieAction(id, fromException);
-        else
-            matchMaker.addDied(id);
 
-        if (robot.getType() != UnitType.CAT)
+        if (fromDamage || fromException) {
+            matchMaker.addDieAction(id, fromException);
+        } else {
+            matchMaker.addDied(id);
+        }
+
+        if (robot.getType() != UnitType.CAT) {
             this.currentNumberUnits[robot.getTeam().ordinal()] -= 1;
+        }
 
         // check win
         if (robot.getType() == UnitType.RAT_KING && this.getTeamInfo().getNumRatKings(robot.getTeam()) == 0) {
@@ -1121,6 +1131,7 @@ public class GameWorld {
         if (profilerCollections == null) {
             profilerCollections = new HashMap<>();
         }
+        
         profilerCollections.put(team, profilerCollection);
     }
 }

@@ -1,6 +1,5 @@
 package battlecode.instrumenter;
 
-import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.Team;
 import battlecode.instrumenter.profiler.Profiler;
@@ -9,8 +8,6 @@ import battlecode.instrumenter.stream.SilencedPrintStream;
 import battlecode.server.ErrorReporter;
 import battlecode.world.control.PlayerControlProvider;
 import battlecode.server.Config;
-import battlecode.crossplay.CrossPlay;
-import battlecode.crossplay.CrossPlayLanguage;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -79,16 +76,6 @@ public class SandboxedRobotPlayer {
     private final Method killMethod;
 
     /**
-     * Used to pause the player thread after loading.
-     */
-    private final Method pauseMethod;
-
-    /**
-     * Used to initialize the RobotMonitor for the player.
-     */
-    private final Method initMethod;
-
-    /**
      * The cached 'setBytecodeLimit' method of the monitor.
      */
     private final Method setBytecodeLimitMethod;
@@ -147,7 +134,10 @@ public class SandboxedRobotPlayer {
         individualLoader = loader;
 
         // Load monitor / monitor methods
-
+        // Used to initialize the RobotMonitor for the player
+        final Method initMethod;
+        // Used to pause the player thread after loading
+        final Method pauseMethod;
         try {
             // The loaded, uninstrumented-but-individual RobotMonitor for this player.
             Class<?> monitor = individualLoader
@@ -201,14 +191,14 @@ public class SandboxedRobotPlayer {
                 // Pause immediately
                 pauseMethod.invoke(null);
                 // Run the robot!
-                loadAndRunPlayer(teamName, teamLanguage, PLAYER_CLASS_NAME);
+                loadAndRunPlayer(teamName, PLAYER_CLASS_NAME);
                 // If we get here, we've returned from the 'run' method. Tell the user.
-                if (robotController.getLocation() != null) {
+                if (robotController.getLocation() != null){
                 System.out.println(robotController.getTeam().toString() + "'s " +
                         robotController.getID() + " at location " + robotController.getLocation().toString()
-                        + " froze in round " + robotController.getRoundNum() +
+                        + " froze in round " +robotController.getRoundNum() +
                         " because it returned from its run() method!"); }
-                else {
+                else{
                     System.out.println(robotController.getTeam().toString() + "'s " +
                         robotController.getID() + " that has not spawned yet " 
                         + " froze in round " +robotController.getRoundNum() +
@@ -266,21 +256,7 @@ public class SandboxedRobotPlayer {
      * static initialization will be counted as part of the bytecode used of
      * the first step.
      */
-    private void loadAndRunPlayer(String teamName, CrossPlayLanguage teamLanguage, String playerClassName)
-            throws InvocationTargetException, IllegalAccessException, InstrumentationException {
-        switch (teamLanguage) {
-            case JAVA:
-                loadAndRunPlayerJava(teamName, playerClassName);
-                break;
-            case PYTHON:
-                loadAndRunPlayerCrossPlay(teamName, playerClassName);
-                break;
-            default:
-                throw new InstrumentationException(ILLEGAL, "Unsupported cross-play language: " + teamLanguage);
-        }
-    }
-
-    private void loadAndRunPlayerJava(String teamName, String playerClassName)
+    private void loadAndRunPlayer(String teamName, String playerClassName)
             throws InvocationTargetException, IllegalAccessException, InstrumentationException {
         // Load player in sandbox
         Class<?> robotPlayer;
@@ -351,7 +327,6 @@ public class SandboxedRobotPlayer {
         // Is the RobotPlayer terminated?
         if (terminated) {
             return; // the player screwed up but they're not gonna lose the robot hehehe
-            // TODO: restore this for future games
             //throw new RuntimeException("Step called after robot killed");
         }
         // Update the robot's information

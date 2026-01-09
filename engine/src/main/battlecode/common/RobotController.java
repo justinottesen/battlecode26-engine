@@ -130,7 +130,7 @@ public interface RobotController {
      *
      * @battlecode.doc.costlymethod
      */
-    public int getGlobalCheese();
+    int getGlobalCheese();
 
     /**
      * Returns the amount of cheese the robot has access to.
@@ -139,7 +139,7 @@ public interface RobotController {
      *
      * @battlecode.doc.costlymethod
      */
-    public int getAllCheese();
+    int getAllCheese();
 
     /**
      * Returns the amount of dirt that this robot's team has.
@@ -345,8 +345,7 @@ public interface RobotController {
     RobotInfo[] senseNearbyRobots(MapLocation center, int radiusSquared, Team team) throws GameActionException;
 
     /**
-     * Given a senseable location, returns whether that location is passable (a
-     * wall).
+     * Given a senseable location, returns whether that location is passable (i.e. no wall or dirt)
      * 
      * @param loc the given location
      * @return whether that location is passable
@@ -511,7 +510,7 @@ public interface RobotController {
 
     /**
      * Returns the number of turning cooldown turns remaining before this unit can
-     * move again.
+     * turn again.
      * When this number is strictly less than {@link GameConstants#COOLDOWN_LIMIT},
      * isTurningReady()
      * is true and the robot can turn again. This number decreases by
@@ -534,7 +533,7 @@ public interface RobotController {
      * location is not on the map, if the target location is occupied, if the target
      * location is impassible, or if there are cooldown turns remaining.
      *
-     * @return true if it is possible to call <code>move</code> without an exception
+     * @return true if it is possible to call <code>moveForward</code> without an exception
      *
      * @battlecode.doc.costlymethod
      */
@@ -588,6 +587,15 @@ public interface RobotController {
     boolean canTurn();
 
     /**
+     * Checks whether this robot can turn to the specified direction.
+     * Effectively just canTurn() with an extra check that d is not null
+     * and not {@link Direction#CENTER}.
+     * 
+     * @param d the direction to turn to
+     */
+    boolean canTurn(Direction d);
+
+    /**
      * Turns to the specified direction 
      * 
      * @param d direction to turn to (cannot be Direction.CENTER)
@@ -609,25 +617,25 @@ public interface RobotController {
     int getCurrentRatCost();
 
     /**
-     * Checks if a rat king can spawn a robot at the given location.
-     * Robots can spawn within a circle of radius of sqrt(4) of the rat king.
+     * Checks if a rat king can spawn a baby rat at the given location.
+     * Rats can spawn within a circle of radius of sqrt(4) of the rat king.
      * 
-     * @param loc the location to spawn the robot at
-     * @return true if robot can be built at loc
+     * @param loc the location to spawn the rat at
+     * @return true if rat can be built at loc
      * 
      * @battlecode.doc.costlymethod
      */
-    boolean canBuildRobot(MapLocation loc);
+    boolean canBuildRat(MapLocation loc);
 
     /**
-     * Spawns a robot at the given location.
-     * Robots can spawn within a circle of radius of sqrt(4) of the rat king.
+     * Spawns a baby rat at the given location.
+     * Rats can spawn within a circle of radius of sqrt(4) of the rat king.
      * 
-     * @param loc the location to spawn the robot at
+     * @param loc the location to spawn the rat at
      * 
      * @battlecode.doc.costlymethod
      */
-    void buildRobot(MapLocation loc) throws GameActionException;
+    void buildRat(MapLocation loc) throws GameActionException;
 
     /**
      * Checks if a rat can become a rat king, when 7 allied rats are in the 3x3
@@ -823,11 +831,12 @@ public interface RobotController {
      * for increasing bite strength
      *
      * @param loc the target location to attack
+     * @param cheeseAmount amount of cheese to spend on the attack
      * @throws GameActionException if conditions for attacking are not satisfied
      *
      * @battlecode.doc.costlymethod
      */
-    void attack(MapLocation loc, int cheese) throws GameActionException;
+    void attack(MapLocation loc, int cheeseAmount) throws GameActionException;
 
     // ***********************************
     // ****** COMMUNICATION METHODS ******
@@ -839,10 +848,10 @@ public interface RobotController {
      * 
      * @param messageContent an int representing the content of the
      *                       message (up to 4 bytes)
-     * 
+     * @return true if squeak was sent, false if not (i.e. if reached max. number of messages fo this turn)
      * @battlecode.doc.costlymethod
      */
-    void squeak(int messageContent);
+    boolean squeak(int messageContent);
 
     /**
      * Reads all squeaks sent to this unit within the past 5 rounds if roundNum =
@@ -881,30 +890,6 @@ public interface RobotController {
      * @battlecode.doc.costlymethod
      */
     int readSharedArray(int index) throws GameActionException;
-
-    /**
-     * Writes a value to the persistent array at the given index.
-     * This is only allowed for rat kings.
-     * 
-     * @param index the index to write to, between 0 and 4
-     * @param value the value to write in the index (must be between 0 and 1023)
-     * @throws GameActionException if the action is invalid
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    void writePersistentArray(int index, int value) throws GameActionException;
-
-    /**
-     * Reads a value from the persistent array at the given index.
-     * All rats and rat kings can read from the persistent array.
-     * 
-     * @param index the index to read from, between 0 and 4
-     * @return the value stored at the given index (between 0 and 1023)
-     * @throws GameActionException if the action is invalid
-     * 
-     * @battlecode.doc.costlymethod
-     */
-    int readPersistentArray(int index) throws GameActionException;
 
     // ***********************************
     // ****** OTHER ACTION METHODS *******
@@ -1058,5 +1043,3 @@ public interface RobotController {
      */
     void setTimelineMarker(String label, int red, int green, int blue);
 }
-// TODO: update bytecode costs, particularly for new methods + methods that got
-// renamed from last year

@@ -30,8 +30,6 @@ import java.util.zip.GZIPOutputStream;
 
 import static battlecode.util.FlatHelpers.*;
 
-// TODO: new actions for this year's game and update all call sites
-
 /**
  * Writes a game to a flatbuffer, hooray.
  */
@@ -262,15 +260,7 @@ public class GameMaker {
             int specVersionOffset = builder.createString(GameConstants.SPEC_VERSION);
 
             int name = builder.createString(gameInfo.getTeamAName());
-            String rawPackageName = gameInfo.getTeamAPackage();
-            String language = gameInfo.getTeamALanguage();
-            
-            if (!language.equals("java")) {
-                rawPackageName = language + "/" + rawPackageName;
-            }
-            
-            int packageName = builder.createString(rawPackageName);
-
+            int packageName = builder.createString(gameInfo.getTeamAPackage());
             TeamData.startTeamData(builder);
             TeamData.addName(builder, name);
             TeamData.addPackageName(builder, packageName);
@@ -279,15 +269,7 @@ public class GameMaker {
             int teamAOffset = TeamData.endTeamData(builder);
 
             name = builder.createString(gameInfo.getTeamBName());
-            rawPackageName = gameInfo.getTeamBPackage();
-            language = gameInfo.getTeamBLanguage();
-            
-            if (!language.equals("java")) {
-                rawPackageName = language + "/" + rawPackageName;
-            }
-            
-            packageName = builder.createString(rawPackageName);
-            
+            packageName = builder.createString(gameInfo.getTeamBPackage());
             TeamData.startTeamData(builder);
             TeamData.addName(builder, name);
             TeamData.addPackageName(builder, packageName);
@@ -332,7 +314,7 @@ public class GameMaker {
             RobotTypeMetadata.addMovementCooldown(builder, type.movementCooldown);
             RobotTypeMetadata.addVisionConeRadiusSquared(builder, type.visionConeRadiusSquared);
             RobotTypeMetadata.addVisionConeAngle(builder, type.visionConeAngle);
-            RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.MESSAGE_RADIUS_SQUARED);
+            RobotTypeMetadata.addMessageRadiusSquared(builder, GameConstants.SQUEAK_RADIUS_SQUARED);
             robotTypeMetadataOffsets.add(RobotTypeMetadata.endRobotTypeMetadata(builder));
         }
         return GameHeader.createRobotTypeMetadataVector(builder, robotTypeMetadataOffsets.toNativeArray());
@@ -577,9 +559,9 @@ public class GameMaker {
             });
         }
 
-        public void addRatNapAction(int grabberRobotID) {
+        public void addRatNapAction(int nappedID) {
             applyToBuilders((builder) -> {
-                int action = RatNap.createRatNap(builder, grabberRobotID);
+                int action = RatNap.createRatNap(builder, nappedID);
                 builder.addAction(action, Action.RatNap);
             });
         }
