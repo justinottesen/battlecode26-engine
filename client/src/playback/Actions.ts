@@ -104,10 +104,10 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             // chomping animation
             const src = match.currentRound.bodies.getById(this.robotId) // cat
             // const target = match.currentRound.bodies.getById(this.actionData.id()) // rat being eaten
-            const coords = renderUtils.getRenderCoords(src.pos.x, src.pos.y, match.map.dimension, true)
-            const random1 = ((src.pos.x * 491 + src.pos.y * 603 + match.currentRound.roundNumber * 343) / 100) % 1 // https://xkcd.com/221/
-            const random2 = ((src.pos.x * 259 + src.pos.y * 429 + match.currentRound.roundNumber * 224) / 100) % 1
-            const interpolationFactor = match.getInterpolationFactor()
+            // const coords = renderUtils.getRenderCoords(src.pos.x, src.pos.y, match.map.dimension, true)
+            // const random1 = ((src.pos.x * 491 + src.pos.y * 603 + match.currentRound.roundNumber * 343) / 100) % 1 // https://xkcd.com/221/
+            // const random2 = ((src.pos.x * 259 + src.pos.y * 429 + match.currentRound.roundNumber * 224) / 100) % 1
+            // const interpolationFactor = match.getInterpolationFactor()
 
             // ctx.save()
             // ctx.globalAlpha = 0.5 - 0.5 * interpolationFactor * interpolationFactor
@@ -194,8 +194,11 @@ export const ACTION_DEFINITIONS: Record<schema.Action, typeof Action<ActionUnion
             
             if (target.beingCarried) {
                 // drop the target
-                const carrier = round.bodies.getById(target.carrierRobot!)
-                carrier.carriedRobot = undefined
+                // const carrier = round.bodies.getById(target.carrierRobot!)
+                if(target.carrierRobot !== undefined) {
+                    const carrier = round.bodies.getById(target.carrierRobot)
+                    carrier.carriedRobot = undefined
+                }
                 target.size = 1
                 target.beingCarried = false
                 target.carrierRobot = undefined

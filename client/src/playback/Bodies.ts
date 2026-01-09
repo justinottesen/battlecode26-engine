@@ -435,10 +435,8 @@ export class Body {
         const OFFSET = { x: .35, y: 0 } // to center the rat on the tile
         const ratnapped = this.robotType === schema.RobotType.RAT && this.beingCarried
 
-        if(ratnapped) this.pos.x += OFFSET.x
         const pos = this.getInterpolatedCoords(match)
-        if(ratnapped) this.pos.x -= OFFSET.x
-
+        
         const renderCoords = renderUtils.getRenderCoords(pos.x, pos.y, match.currentRound.map.staticMap.dimension)
 
         if (this.robotType == schema.RobotType.CAT) {
