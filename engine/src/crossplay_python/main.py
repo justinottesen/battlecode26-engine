@@ -13,9 +13,9 @@ from battlecode.crossplay import (
     connect,
     close,
     send,
-    send_and_wait,
     send_null,
     CrossPlayMethod,
+    _destroy_queue,
 )
 from battlecode.wrappers import _GAME_METHODS, Team
 
@@ -64,8 +64,10 @@ def play(team_a=None, team_b=None, debug=False):
         team_b = None
 
     code = {Team.A: get_code(team_a), Team.B: get_code(team_b), Team.NEUTRAL: None}
-    active_bots = {}
+    active_bots: dict[int, RobotRunner] = {}
     current_round = 0
+    # _spawn_queue.clear()
+    _destroy_queue.clear()
 
     def get_round():
         return current_round
@@ -77,28 +79,42 @@ def play(team_a=None, team_b=None, debug=False):
         while True:
             # wait for server message
             response = receive()
-            print("Received message:", response)
+            
+            if debug:
+                print("Received message:", response)
 
             if not response:
                 # For null responses
                 continue
 
-            msg_type = response.get("type")
+            msg_type = response["type"]
+            # pending_spawns = len(_spawn_queue) > 0
+            pending_destroys = len(_destroy_queue) > 0
+            handled = False
 
             if msg_type == "end_game":
+                handled = True
+
                 for runner in active_bots.values():
                     runner.kill()
                     
                 break
 
-            elif msg_type == "spawn_bot":
+            if msg_type == "spawn_bot":  # or pending_spawns:
+                # while True:  # faking a do-while loop in Python
+                    # if pending_spawns:
+                        # team, robot_id = _spawn_queue.popleft()
+                    # else:
+
+                handled = True
                 send_null()
-                print("Sending null...")
                 team_ordinal = response["team"]
+                team = Team(team_ordinal)
                 robot_id = response["id"]
 
-                print(f"Spawning bot {robot_id} for team {team_ordinal}")
-                team = Team(team_ordinal)
+                if debug:
+                    print(f"Spawning bot {robot_id} for team {team}")
+
                 runner = RobotRunner(
                     code=code[team],
                     game_methods=_GAME_METHODS,
@@ -119,29 +135,60 @@ def play(team_a=None, team_b=None, debug=False):
                     raise e
                 except GameActionException as e:
                     runner.kill()
-                    print(f"GameActionException during initialization of bot {robot_id}: {e}")
+
+                    if debug:
+                        print(f"GameActionException during initialization of bot {robot_id}: {e}")
+
                     traceback.print_exc()
                     send(CrossPlayMethod.THROW_GAME_ACTION_EXCEPTION, [e.type.value, traceback.format_exc()])
                 except Exception as e:
                     runner.kill()
-                    print(f"Exception during initialization of bot {robot_id}: {e}")
-                    traceback.print_exc()
+                    
+                    if debug:
+                        print(f"Exception during initialization of bot {robot_id}: {e}")
+                        traceback.print_exc()
+
                     send(CrossPlayMethod.THROW_EXCEPTION, [traceback.format_exc()])
+                    
+                    # pending_spawns = len(_spawn_queue) > 0
 
-            elif msg_type == "destroy_bot":
-                send_null()
-                robot_id = response["id"]
-                print(f"Destroying bot {robot_id}")
+                    # if not pending_spawns:
+                    #     break
 
-                if robot_id in active_bots:
-                    runner = active_bots.pop(robot_id)
-                    runner.kill()
+            if msg_type == "destroy_bot" or pending_destroys:
+                need_to_destroy_current = msg_type == "destroy_bot"
 
-            elif msg_type == "start_turn":
+                if need_to_destroy_current:
+                    handled = True
+
+                while True:  # faking a do-while loop in Python
+                    if pending_destroys:
+                        robot_id = _destroy_queue.popleft()
+                    else:
+                        send_null()
+                        robot_id = response["id"]
+                        need_to_destroy_current = False
+
+                    if debug:
+                        print(f"Destroying bot {robot_id}")
+
+                    if robot_id in active_bots:
+                        runner = active_bots.pop(robot_id)
+                        runner.kill()
+                    
+                    pending_destroys = len(_destroy_queue) > 0
+
+                    if not need_to_destroy_current and not pending_destroys:
+                        break
+
+            if msg_type == "start_turn":
+                handled = True
                 current_round = response["round"]
                 robot_id = response["id"]
 
-                print(f"Running turn {current_round} for id {robot_id}")
+                if debug:
+                    print(f"Running turn {current_round} for id {robot_id}")
+
                 if robot_id in active_bots:
                     runner = active_bots[robot_id]
 
@@ -154,20 +201,26 @@ def play(team_a=None, team_b=None, debug=False):
                         raise e
                     except GameActionException as e:
                         runner.kill()
-                        print(f"GameActionException during turn {current_round} of bot {robot_id}: {e}")
-                        traceback.print_exc()
+
+                        if debug:
+                            print(f"GameActionException during turn {current_round} of bot {robot_id}: {e}")
+                            traceback.print_exc()
+
                         send(CrossPlayMethod.THROW_GAME_ACTION_EXCEPTION, [e.type.value, traceback.format_exc()])
                     except Exception as e:
                         runner.kill()
-                        print(f"Exception during turn {current_round} of bot {robot_id}: {e}")
-                        traceback.print_exc()
+
+                        if debug:
+                            print(f"Exception during turn {current_round} of bot {robot_id}: {e}")
+                            traceback.print_exc()
+
                         send(CrossPlayMethod.THROW_EXCEPTION, [traceback.format_exc()])
                 else:
                     # bot init must have thrown an exception
                     send(CrossPlayMethod.RC_DISINTEGRATE)
 
-            else:
-                print(f"Unknown message type: {msg_type}")
+            if not handled:
+                raise CrossPlayException(f"Unknown message type: {msg_type}")
 
     except KeyboardInterrupt:
         pass

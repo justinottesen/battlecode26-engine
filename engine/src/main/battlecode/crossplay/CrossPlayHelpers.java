@@ -15,10 +15,10 @@ public class CrossPlayHelpers {
         C apply(A a, B b);
     }
 
-    public static final Direction[] directions = Direction.values();
-    public static final Team[] teams = Team.values();
-    public static final TrapType[] trapTypes = TrapType.values();
-    public static final UnitType[] unitTypes = UnitType.values();
+    private static final Direction[] directions = Direction.values();
+    private static final Team[] teams = Team.values();
+    private static final TrapType[] trapTypes = TrapType.values();
+    private static final UnitType[] unitTypes = UnitType.values();
     public static final GameActionExceptionType[] gameActionExceptionTypes = GameActionExceptionType.values();
 
     public static void checkParams(CrossPlayMessage message, int expected) {
@@ -111,6 +111,26 @@ public class CrossPlayHelpers {
         return unitTypes[val];
     }
 
+    public static JsonNode makeTrapTypeNode(JsonNodeFactory nodeFactory, TrapType trapType) {
+        if (trapType == null) {
+            return null;
+        }
+
+        ObjectNode trapTypeNode = nodeFactory.objectNode();
+        trapTypeNode.put("type", TRAP_TYPE.ordinal());
+        trapTypeNode.put("val", trapType.ordinal());
+        return trapTypeNode;
+    }
+
+    public static TrapType parseTrapTypeNode(JsonNode node) {
+        if (node.isNull()) {
+            return null;
+        }
+
+        int val = node.get("val").asInt();
+        return trapTypes[val];
+    }
+
     public static JsonNode makeRobotInfoNode(JsonNodeFactory nodeFactory, RobotInfo robotInfo) {
         if (robotInfo == null) {
             return nodeFactory.nullNode();
@@ -119,33 +139,33 @@ public class CrossPlayHelpers {
         ObjectNode robotNode = nodeFactory.objectNode();
         robotNode.put("type", ROBOT_INFO.ordinal());
         robotNode.put("id", robotInfo.getID());
-        robotNode.put("team", robotInfo.getTeam().ordinal());
+        robotNode.set("team", makeTeamNode(nodeFactory, robotInfo.getTeam()));
         robotNode.set("loc", makeLocNode(nodeFactory, robotInfo.getLocation()));
         robotNode.set("dir", makeDirNode(nodeFactory, robotInfo.getDirection()));
         robotNode.put("chir", robotInfo.getChirality());
         robotNode.put("hp", robotInfo.getHealth());
-        robotNode.put("ut", robotInfo.getType().ordinal());
+        robotNode.set("ut", makeUnitTypeNode(nodeFactory, robotInfo.getType()));
         robotNode.put("ch", robotInfo.getRawCheeseAmount());
         robotNode.set("carry", makeRobotInfoNode(nodeFactory, robotInfo.getCarryingRobot()));
         return robotNode;
     }
 
-    // public static RobotInfo parseRobotInfoNode(JsonNode node) {
-    //     if (node.isNull()) {
-    //         return null;
-    //     }
+    public static RobotInfo parseRobotInfoNode(JsonNode node) {
+        if (node.isNull()) {
+            return null;
+        }
 
-    //     int id = node.get("id").asInt();
-    //     Team team = teams[node.get("team").asInt()];
-    //     MapLocation loc = parseLocNode(node.get("loc"));
-    //     Direction dir = parseDirNode(node.get("dir"));
-    //     int chir = node.get("chir").asInt();
-    //     int hp = node.get("hp").asInt();
-    //     UnitType type = unitTypes[node.get("ut").asInt()];
-    //     int cheese = node.get("ch").asInt();
-    //     RobotInfo carrying = parseRobotInfoNode(node.get("carry"));
-    //     return new RobotInfo(id, team, type, hp, loc, dir, chir, cheese, carrying);
-    // }
+        int id = node.get("id").asInt();
+        Team team = teams[node.get("team").asInt()];
+        MapLocation loc = parseLocNode(node.get("loc"));
+        Direction dir = parseDirNode(node.get("dir"));
+        int chir = node.get("chir").asInt();
+        int hp = node.get("hp").asInt();
+        UnitType type = unitTypes[node.get("ut").asInt()];
+        int cheese = node.get("ch").asInt();
+        RobotInfo carrying = parseRobotInfoNode(node.get("carry"));
+        return new RobotInfo(id, team, type, hp, loc, dir, chir, cheese, carrying);
+    }
 
     public static JsonNode makeMapInfoNode(JsonNodeFactory nodeFactory, MapInfo mapInfo) {
         if (mapInfo == null) {
@@ -158,26 +178,26 @@ public class CrossPlayHelpers {
         mapNode.put("pass", mapInfo.isPassable());
         mapNode.put("wall", mapInfo.isWall());
         mapNode.put("dirt", mapInfo.isDirt());
-        mapNode.put("trap", mapInfo.getTrap().ordinal());
+        mapNode.set("trap", makeTrapTypeNode(nodeFactory, mapInfo.getTrap()));
         mapNode.put("cm", mapInfo.hasCheeseMine());
         mapNode.put("ch", mapInfo.getCheeseAmount());
         return mapNode;
     }
 
-    // public static MapInfo parseMapInfoNode(JsonNode node) {
-    //     if (node.isNull()) {
-    //         return null;
-    //     }
+    public static MapInfo parseMapInfoNode(JsonNode node) {
+        if (node.isNull()) {
+            return null;
+        }
 
-    //     MapLocation loc = parseLocNode(node.get("loc"));
-    //     boolean passable = node.get("pass").asBoolean();
-    //     boolean wall = node.get("wall").asBoolean();
-    //     boolean dirt = node.get("dirt").asBoolean();
-    //     TrapType trap = trapTypes[node.get("trap").asInt()];
-    //     boolean hasCheeseMine = node.get("cm").asBoolean();
-    //     int cheeseAmount = node.get("ch").asInt();
-    //     return new MapInfo(loc, passable, wall, dirt, cheeseAmount, trap, hasCheeseMine);
-    // }
+        MapLocation loc = parseLocNode(node.get("loc"));
+        boolean passable = node.get("pass").asBoolean();
+        boolean wall = node.get("wall").asBoolean();
+        boolean dirt = node.get("dirt").asBoolean();
+        TrapType trap = trapTypes[node.get("trap").asInt()];
+        boolean hasCheeseMine = node.get("cm").asBoolean();
+        int cheeseAmount = node.get("ch").asInt();
+        return new MapInfo(loc, passable, wall, dirt, cheeseAmount, trap, hasCheeseMine);
+    }
 
     public static JsonNode makeMessageNode(JsonNodeFactory nodeFactory, Message message) {
         if (message == null) {
@@ -193,17 +213,17 @@ public class CrossPlayHelpers {
         return messageNode;
     }
 
-    // public static Message parseMessageNode(JsonNode node) {
-    //     if (node.isNull()) {
-    //         return null;
-    //     }
+    public static Message parseMessageNode(JsonNode node) {
+        if (node.isNull()) {
+            return null;
+        }
 
-    //     int senderID = node.get("sid").asInt();
-    //     int round = node.get("round").asInt();
-    //     MapLocation source = parseLocNode(node.get("loc"));
-    //     int bytes = node.get("bytes").asInt();
-    //     return new Message(bytes, senderID, round, source);
-    // }
+        int senderID = node.get("sid").asInt();
+        int round = node.get("round").asInt();
+        MapLocation source = parseLocNode(node.get("loc"));
+        int bytes = node.get("bytes").asInt();
+        return new Message(bytes, senderID, round, source);
+    }
 
     public static <T> JsonNode makeArrayNode(JsonNodeFactory nodeFactory, T[] array, Function2<JsonNodeFactory, T, JsonNode> mapper) {
         if (array == null) {

@@ -150,9 +150,6 @@ public class PlayerControlProvider implements RobotControlProvider {
 
     @Override
     public void robotSpawned(InternalRobot robot) {
-        if (teamLanguage != CrossPlayLanguage.JAVA) {
-            crossPlayServer.sendSpawnBot(robot.getController());
-        }
         try {
             Profiler profiler = null;
             if (profilerCollection != null && robot.getTeam() == team) {

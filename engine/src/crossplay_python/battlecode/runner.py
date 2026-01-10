@@ -236,7 +236,7 @@ class RobotRunner:
         #     self.error_method(traceback.format_exc(limit=5))
 
     def do_turn(self):
-        print("Doing turn")
+        # print("Doing turn")
         if 'turn' in self.locals and isinstance(self.locals['turn'], type(lambda: 1)):
             # try:
             exec(self.locals['turn'].__code__, self.globals, self.locals)

@@ -40,3 +40,5 @@ def turn():
                 rc.turn(directions[random_direction])
     except GameActionException as e:
         log("GameActionException: " + str(e))
+    except Exception as e:
+        log("Exception: " + str(e))

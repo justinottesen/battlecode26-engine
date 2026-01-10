@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,11 +35,13 @@ public class CrossPlay {
     private DataInputStream socketIn;
     private DataOutputStream socketOut;
     private GameActionException recentException;
+    private Set<Integer> initializedBots;
 
     private final ObjectMapper objectMapper;
 
     public CrossPlay() {
         this.objectMapper = new ObjectMapper();
+        this.initializedBots = new java.util.HashSet<>();
     }
 
     private void initSocket() {
@@ -619,7 +622,7 @@ public class CrossPlay {
             case RC_SENSE_NEARBY_ROBOTS__INT_TEAM: {
                 checkParams(message, 2);
                 int radiusSquared = message.params().get(0).asInt();
-                Team team = teams[message.params().get(1).asInt()];
+                Team team = parseTeamNode(message.params().get(1));
                 RobotInfo[] robotInfos = this.processingRobot.senseNearbyRobots(radiusSquared, team);
                 return makeArrayNode(nodeFactory, robotInfos, CrossPlayHelpers::makeRobotInfoNode);
             }
@@ -628,7 +631,7 @@ public class CrossPlay {
                 checkParams(message, 3);
                 MapLocation center = parseLocNode(message.params().get(0));
                 int radiusSquared = message.params().get(1).asInt();
-                Team team = teams[message.params().get(2).asInt()];
+                Team team = parseTeamNode(message.params().get(2));
                 RobotInfo[] robotInfos = this.processingRobot.senseNearbyRobots(center, radiusSquared, team);
                 return makeArrayNode(nodeFactory, robotInfos, CrossPlayHelpers::makeRobotInfoNode);
             }
@@ -784,7 +787,7 @@ public class CrossPlay {
 
             case UT_GET_ALL_TYPE_LOCATIONS: {
                 checkParams(message, 2);
-                UnitType type = unitTypes[message.params().get(0).asInt()];
+                UnitType type = parseUnitTypeNode(message.params().get(0));
                 MapLocation center = parseLocNode(message.params().get(1));
                 MapLocation[] locations = type.getAllTypeLocations(center);
                 return makeArrayNode(nodeFactory, locations, CrossPlayHelpers::makeLocNode);
@@ -853,7 +856,7 @@ public class CrossPlay {
             runMessagePassing(true);
             // TODO make this check bytecode by using runMessagePassing's return value
         } catch (IOException e) {
-            throw new CrossPlayException("Failed to send spawn bot: " + e.toString());
+            throw new CrossPlayException("Failed to send 'spawn bot': " + e.toString());
         } catch (NonJavaBotException e) {
             printException(team, id, rc.getRoundNum(), e);
         } catch (RethrownGameActionException e) {
@@ -908,7 +911,7 @@ public class CrossPlay {
         try {
             sendJsonAndReceiveNull(destroyBot);
         } catch (IOException e) {
-            throw new CrossPlayException("Failed to send destroy bot: " + e.toString());
+            throw new CrossPlayException("Failed to send 'destroy bot': " + e.toString());
         }
     }
     
@@ -929,9 +932,15 @@ public class CrossPlay {
     public int playTurn(RobotController rc, OutputStream systemOut) throws RethrownGameActionException, NonJavaBotException {
         this.processingRobot = rc;
         this.out = systemOut;
+        int id = rc.getID();
+
+        if (!initializedBots.contains(id)) {
+            sendSpawnBot(rc);
+            initializedBots.add(id);
+        }
 
         // Send start turn message to prime the client
-        this.sendStartTurn();
+        sendStartTurn();
         return runMessagePassing(false);
     }
 }

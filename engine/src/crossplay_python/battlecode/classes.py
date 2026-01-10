@@ -36,7 +36,7 @@ class Team(_Enum):
     B = 1
     NEUTRAL = 2
 
-    def opposite(self):
+    def opponent(self) -> 'Team':
         match self:
             case Team.A:
                 return Team.B
@@ -45,24 +45,14 @@ class Team(_Enum):
             case Team.NEUTRAL:
                 return Team.NEUTRAL
     
-    def __str__(self):
+    def ordinal(self) -> int:
+        return self.value
+    
+    def __str__(self) -> str:
         return self.name
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Team.{self.name}"
-
-
-_dir_to_index = {
-    (0, 1): 0,
-    (1, 1): 1,
-    (1, 0): 2,
-    (1, -1): 3,
-    (0, -1): 4,
-    (-1, -1): 5,
-    (-1, 0): 6,
-    (-1, 1): 7,
-    (0, 0): 8
-}
 
 
 # make sure this matches the Java Direction enum, this could cause bugs
@@ -84,38 +74,42 @@ class Direction(_Enum):
     def opposite(self) -> 'Direction':
         if self == Direction.CENTER:
             return self
-        return _dir_order[(_dir_to_index[self.value] + 4) % 8]
+        return _dir_order[(_dir_to_index[self] + 4) % 8]
 
     def rotate_left(self) -> 'Direction':
         if self == Direction.CENTER:
             return self
-        return _dir_order[(_dir_to_index[self.value] - 1) % 8]
+        return _dir_order[(_dir_to_index[self] - 1) % 8]
     
     def rotate_right(self) -> 'Direction':
         if self == Direction.CENTER:
             return self
-        return _dir_order[(_dir_to_index[self.value] + 1) % 8]
+        return _dir_order[(_dir_to_index[self] + 1) % 8]
     
-    def all_directions():
-        return Direction.__members__.values()
-    
-    def cardinal_directions():
+    def all_directions() -> list['Direction']:
+        return list(Direction)
+
+    def cardinal_directions() -> list['Direction']:
         return [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
     
-    def get_delta_x(self):
+    def get_delta_x(self) -> int:
         return self.dx
     
-    def get_delta_y(self):
+    def get_delta_y(self) -> int:
         return self.dy
     
-    def __str__(self):
+    def ordinal(self) -> int:
+        return _dir_to_index[self]
+    
+    def __str__(self) -> str:
         return self.name
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Direction.{self.name}"
 
 
 _dir_order = list(Direction)
+_dir_to_index = {dir: index for index, dir in enumerate(_dir_order)}
 
 
 class MapLocation:
@@ -132,15 +126,15 @@ class MapLocation:
     def translate(self, dx: int, dy: int) -> 'MapLocation':
         return MapLocation(self.x + dx, self.y + dy)
     
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, MapLocation):
             return False
         return self.x == other.x and self.y == other.y
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.x}, {self.y}]"
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"MapLocation({self.x}, {self.y})"
 
 
@@ -179,13 +173,20 @@ class UnitType(_Enum):
     
     def is_cat_type(self) -> bool:
         return self == UnitType.CAT
+    
+    def ordinal(self) -> int:
+        return _ut_to_index[self]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"UnitType.{self.name}"
-    
+
+
+_ut_order = list(UnitType)
+_ut_to_index = {ut: index for index, ut in enumerate(_ut_order)}
+
 
 class TrapType(_Enum):
     RAT_TRAP = (30, 50, 20, 25, 15, 0, 25, 2)
@@ -203,17 +204,24 @@ class TrapType(_Enum):
         self.max_count = max_count
         self.trigger_radius_squared = trigger_radius_squared
     
-    def __str__(self):
+    def ordinal(self) -> int:
+        return _trap_to_index[self]
+    
+    def __str__(self) -> str:
         return self.name
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"TrapType.{self.name}"
 
 
+_trap_order = list(TrapType)
+_trap_to_index = {trap: index for index, trap in enumerate(_trap_order)}
+
+
 class MapInfo:
-    def __init__(self, loc: MapLocation, is_passable: bool, is_wall: bool, is_dirt: bool,
+    def __init__(self, location: MapLocation, is_passable: bool, is_wall: bool, is_dirt: bool,
                  cheese_amount: int, trap: TrapType, has_cheese_mine: bool):
-        self.loc = loc
+        self.location = location
         self.is_passable = is_passable
         self.is_wall = is_wall
         self.is_dirt = is_dirt
@@ -243,11 +251,11 @@ class Message:
         self.sender_id = sender_id
         self.round = round
         self.source_loc = source_loc
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return f"Message with value {self.bytes} sent from robot with ID {self.sender_id} during round {self.round} from location {self.source_loc}."
-    
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return f"Message({self.bytes}, sender_id={self.sender_id}, round={self.round}, source_loc={self.source_loc})"
 
 
@@ -298,7 +306,6 @@ class GameConstants:
     RAT_BITE_DAMAGE = 10
     CAT_SCRATCH_DAMAGE = 50
     CAT_POUNCE_MAX_DISTANCE_SQUARED = 9
-    CAT_POUNCE_ADJACENT_DAMAGE_PERCENT = 50
     CAT_DIG_ADDITIONAL_COOLDOWN = 5
     HEALTH_GRAB_THRESHOLD = 0
     RAT_KING_UPGRADE_CHEESE_COST = 50

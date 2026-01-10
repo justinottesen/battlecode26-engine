@@ -3,7 +3,6 @@ from battlecode import *
 import random
 from enum import Enum
 
-# Globals - translated from static Java fields
 class State(Enum):
     INITIALIZE = 1
     FIND_CHEESE = 2
@@ -74,7 +73,7 @@ def run_rat_king():
     squeaks = rc.read_squeaks(rc.get_round_num())
 
     for msg in squeaks:
-        raw_squeak = msg.get_bytes()
+        raw_squeak = msg.bytes
 
         if get_squeak_type(raw_squeak) != SqueakType.CHEESE_MINE:
             continue
@@ -90,8 +89,8 @@ def run_rat_king():
 
         rc.write_shared_array(2 * num_mines + 2, first_int)
         rc.write_shared_array(2 * num_mines + 3, last_int)
-        print("Writing to shared array:", first_int, last_int)
-        print("Cheese mine located at:", get_x(encoded_loc), get_y(encoded_loc))
+        log("Writing to shared array:", first_int, last_int)
+        log("Cheese mine located at:", get_x(encoded_loc), get_y(encoded_loc))
 
         num_mines += 1
 
@@ -118,16 +117,16 @@ def run_find_cheese():
     nearby_infos = rc.sense_nearby_map_infos()
 
     for info in nearby_infos:
-        if info.get_cheese_amount() > 0:
-            to_cheese = rc.get_location().direction_to(info.get_map_location())
+        if info.cheese_amount > 0:
+            to_cheese = direction_to(rc.get_location(), info.location)
 
             if rc.can_turn(to_cheese):
                 rc.turn(to_cheese)
                 break
-        elif info.has_cheese_mine():
+        elif info.has_cheese_mine:
             global mine_loc
-            mine_loc = info.get_map_location()
-            print("Found cheese mine at", mine_loc)
+            mine_loc = info.location
+            log("Found cheese mine at", mine_loc)
 
     for dir in directions:
         loc = rc.get_location().add(dir)
@@ -143,7 +142,7 @@ def run_find_cheese():
         move_random()
     elif target_cheese_mine_loc is not None:
         rc.set_indicator_string(f"Going to cheese mine at {target_cheese_mine_loc}")
-        to_target = rc.get_location().direction_to(target_cheese_mine_loc)
+        to_target = direction_to(rc.get_location(), target_cheese_mine_loc)
         next_loc = rc.get_location().add(to_target)
 
         if rc.can_turn(to_target):
@@ -162,7 +161,7 @@ def run_return_to_king():
     global current_state, explore_when_finding_cheese
 
     king_loc = MapLocation(rc.read_shared_array(0), rc.read_shared_array(1))
-    to_king = rc.get_location().direction_to(king_loc)
+    to_king = direction_to(rc.get_location(), king_loc)
     next_loc = rc.get_location().add(to_king)
 
     if rc.can_turn(to_king):
@@ -181,17 +180,17 @@ def run_return_to_king():
         explore_when_finding_cheese = rand.choice([True, False]) and rand.choice([True, False])
 
     if rc.can_sense_location(king_loc):
-        if king_loc.distance_squared_to(rc.get_location()) <= 16 and mine_loc is not None:
+        if distance_squared_to(king_loc, rc.get_location()) <= 16 and mine_loc is not None:
             rc.squeak(get_squeak(SqueakType.CHEESE_MINE, to_integer(mine_loc)))
 
-        king_locations = rc.sense_nearby_robots(king_loc, 8, rc.get_team())
+        king_locations: list[RobotInfo] = rc.sense_nearby_robots(king_loc, 8, rc.get_team())
 
         for robot_info in king_locations:
-            if robot_info.get_type().is_rat_king_type():
-                actual_king_loc = robot_info.get_location()
+            if robot_info.type.is_rat_king_type():
+                actual_king_loc = robot_info.location
 
                 if rc.can_transfer_cheese(actual_king_loc, raw_cheese):
-                    print(f"Transferred {raw_cheese} cheese to king at {king_loc}: I'm at {rc.get_location()}")
+                    log(f"Transferred {raw_cheese} cheese to king at {king_loc}: I'm at {rc.get_location()}")
                     rc.transfer_cheese(actual_king_loc, raw_cheese)
                     current_state = State.FIND_CHEESE
                     explore_when_finding_cheese = rand.choice([True, False]) and rand.choice([True, False])
@@ -207,10 +206,10 @@ def run_build_traps():
         cat_traps = rand.choice([True, False])
 
         if cat_traps and rc.can_place_cat_trap(loc):
-            print("Built cat trap at", loc)
+            log("Built cat trap at", loc)
             rc.place_cat_trap(loc)
         elif rc.can_place_rat_trap(loc):
-            print("Built rat trap at", loc)
+            log("Built rat trap at", loc)
             rc.place_rat_trap(loc)
 
     if rand.random() < 0.1:
@@ -225,7 +224,7 @@ def run_explore_and_attack():
     squeaks = rc.read_squeaks(rc.get_round_num())
 
     for msg in squeaks:
-        raw_squeak = msg.get_bytes()
+        raw_squeak = msg.bytes
 
         if get_squeak_type(raw_squeak) != SqueakType.CAT_FOUND:
             continue
@@ -263,11 +262,11 @@ def run_explore_and_attack():
     if rand.random() < 0.1:
         current_state = State.BUILD_TRAPS
 
-    nearby_enemies = rc.sense_nearby_robots(rc.get_type().get_vision_radius_squared(), rc.get_team().opponent())
-    nearby_cats = rc.sense_nearby_robots(rc.get_type().get_vision_radius_squared(), Team.NEUTRAL)
+    nearby_enemies = rc.sense_nearby_robots(..., rc.get_type().vision_cone_radius_squared, rc.get_team().opponent())
+    nearby_cats = rc.sense_nearby_robots(..., rc.get_type().vision_cone_radius_squared, Team.NEUTRAL)
 
     for enemy in nearby_enemies:
-        if enemy.get_type().is_rat_king_type():
+        if enemy.type.is_rat_king_type():
             current_state = State.RETURN_TO_KING_THEN_EXPLORE
 
     num_enemies = len(nearby_enemies)
@@ -276,14 +275,13 @@ def run_explore_and_attack():
         rc.squeak(get_squeak(SqueakType.ENEMY_COUNT, num_enemies))
 
     if len(nearby_cats) > 0:
-        if rc.get_location().distance_squared_to(nearby_cats[0].get_location()) >= 17:
-            rc.set_indicator_string(f"Found a cat at {nearby_cats[0].get_location()}")
-            to_cat = rc.get_location().direction_to(nearby_cats[0].get_location())
-            print(to_cat.ordinal)
-            rc.squeak(get_squeak(SqueakType.CAT_FOUND, to_cat.ordinal))
+        if distance_squared_to(rc.get_location(), nearby_cats[0].location) >= 17:
+            rc.set_indicator_string(f"Found a cat at {nearby_cats[0].location}")
+            to_cat = direction_to(rc.get_location(), nearby_cats[0].location)
+            rc.squeak(get_squeak(SqueakType.CAT_FOUND, to_cat.ordinal()))
         else:
             rc.set_indicator_string("Cat is too close! Running away!")
-            away = rc.get_location().direction_to(nearby_cats[0].get_location()).opposite()
+            away = direction_to(rc.get_location(), nearby_cats[0].location).opposite()
             if rc.can_turn(away):
                 rc.turn(away)
 
@@ -294,27 +292,27 @@ def run_explore_and_attack():
                 rc.move(away)
 
 
-def to_integer(loc):
+def to_integer(loc: MapLocation) -> int:
     return (loc.x << 6) | loc.y
 
 
-def get_first_int(loc):
+def get_first_int(loc: int) -> int:
     return loc % 1024
 
 
-def get_last_int(loc):
+def get_last_int(loc: int) -> int:
     return loc >> 10
 
 
-def get_x(encoded_loc):
+def get_x(encoded_loc: int) -> int:
     return encoded_loc >> 6
 
 
-def get_y(encoded_loc):
+def get_y(encoded_loc: int) -> int:
     return encoded_loc % 64
 
 
-def get_squeak(type_, value):
+def get_squeak(type_: SqueakType, value: int) -> int:
     if type_ == SqueakType.ENEMY_RAT_KING:
         return (1 << 12) | value
     if type_ == SqueakType.ENEMY_COUNT:
@@ -326,16 +324,18 @@ def get_squeak(type_, value):
     return value
 
 
-def get_squeak_type(raw_squeak):
+def get_squeak_type(raw_squeak: int):
     return squeak_types[raw_squeak >> 12]
 
 
-def get_squeak_value(raw_squeak):
+def get_squeak_value(raw_squeak: int):
     return raw_squeak % 4096
 
 
 def turn():
-    global current_state, turns_since_carry
+    global rand, current_state, num_rats_spawned, turns_since_carry, \
+        directions, mine_loc, num_mines, mine_locs, \
+        explore_when_finding_cheese, target_cheese_mine_loc
 
     try:
         if rc.get_type().is_rat_king_type():
@@ -366,8 +366,8 @@ def turn():
                     current_state = State.EXPLORE_AND_ATTACK
 
     except GameActionException as e:
-        print("GameActionException in bot:")
-        print(e)
+        log("GameActionException in bot:")
+        log(e)
     except Exception as e:
-        print("Exception in bot:")
-        print(e)
+        log("Exception in bot:")
+        log(e)

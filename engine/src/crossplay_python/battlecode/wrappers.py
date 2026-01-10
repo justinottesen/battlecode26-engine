@@ -293,7 +293,7 @@ class RobotController:
             return _wait(_m.RC_SENSE_NEARBY_MAP_INFOS__LOC_INT, [center, radius_squared])
     
     @staticmethod
-    def sense_nearby_robots(center: MapLocation = ..., radius_squared: int = ..., team: Team = ...):
+    def sense_nearby_robots(center: MapLocation = ..., radius_squared: int = ..., team: Team = ...) -> list[RobotInfo]:
         """
         Possible parameter combinations:
         - sense_nearby_robots()
@@ -361,8 +361,8 @@ class RobotController:
 rc = RobotController
 
 
-def log(message):
-    return _wait(_m.LOG, [message])
+def log(*messages) -> None:
+    return _wait(_m.LOG, [" ".join(map(str, messages))])
 
 
 def bottom_left_distance_squared_to(loc1: MapLocation, loc2: MapLocation) -> int:

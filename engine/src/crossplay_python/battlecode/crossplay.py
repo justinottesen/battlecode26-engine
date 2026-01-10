@@ -3,6 +3,7 @@ import struct
 import json
 import time
 from enum import Enum
+from collections import deque
 from .classes import *
 
 # Connection constants
@@ -164,7 +165,7 @@ class CrossPlayClient:
         try:
             self.sock.sendall(struct.pack(">I", length))
             self.sock.sendall(json_bytes)
-            print("Json bytes sent:", struct.pack(">I", length) + json_bytes)
+            # print("Json bytes sent:", struct.pack(">I", length) + json_bytes)
         except Exception as e:
             raise CrossPlayException(f"Failed to send data: {e}")
 
@@ -200,6 +201,8 @@ class CrossPlayClient:
 
 # Global client instance
 _client = CrossPlayClient()
+# _spawn_queue: deque[tuple[Team, int]] = deque()
+_destroy_queue: deque[int] = deque()
 
 
 def connect():
@@ -263,53 +266,73 @@ def make_json(obj):
 
 
 def parse(json):
-    if json is None:
-        return None
-    
-    if isinstance(json, dict) and "type" in json:
-        obj_type = object_types[json["type"]]
-    
-        match obj_type:
-            case CrossPlayObjectType.THROWN_GAME_ACTION_EXCEPTION:
-                raise GameActionException(exception_types[json["etype"]], json["msg"])
-            case CrossPlayObjectType.DIRECTION:
-                return directions[json["val"]]
-            case CrossPlayObjectType.TEAM:
-                return teams[json["val"]]
-            case CrossPlayObjectType.MAP_LOCATION:
-                return MapLocation(json["x"], json["y"])
-            case CrossPlayObjectType.UNIT_TYPE:
-                return unit_types[json["val"]]
-            case CrossPlayObjectType.TRAP_TYPE:
-                return trap_types[json["val"]]
-            case CrossPlayObjectType.MESSAGE:
-                return Message(json["bytes"], json["sid"], json["round"], json["loc"])
-            case CrossPlayObjectType.ROBOT_INFO:
-                return RobotInfo(
-                    json["id"],
-                    teams[json["team"]],
-                    unit_types[json["ut"]],
-                    json["hp"],
-                    parse(json["loc"]),
-                    directions[json["dir"]],
-                    json["chir"],
-                    json["ch"],
-                    parse(json["carry"]),
-                )
-            case CrossPlayObjectType.MAP_INFO:
-                return MapInfo(
-                    parse(json["loc"]),
-                    json["pass"],
-                    json["wall"],
-                    json["dirt"],
-                    json["ch"],
-                    trap_types[json["trap"]],
-                    json["cm"],
-                )
-            case _:
-                raise CrossPlayException("Unknown object type received from server: " + str(obj_type))
-    else:
-        return json
+    while True:  # so that as many robots as necessary can be destroyed, but usually return after one iteration
+        if json is None:
+            return None
+        
+        if isinstance(json, dict) and "type" in json:
+            raw_type = json["type"]
+
+            if raw_type == "destroy_bot":
+                _destroy_queue.append(json["id"])
+                send_null()
+                json = _client.receive_json()
+                continue
+            # elif raw_type == "spawn_bot":
+                # _spawn_queue.append((teams[json["team"]], json["id"]))
+                # send_null()
+                # _client.receive_json()  # consume the extra null response
+                # return None
+            elif isinstance(raw_type, int):
+                obj_type = object_types[raw_type]
+        
+                match obj_type:
+                    case CrossPlayObjectType.THROWN_GAME_ACTION_EXCEPTION:
+                        raise GameActionException(exception_types[json["etype"]], json["msg"])
+                    case CrossPlayObjectType.DIRECTION:
+                        return directions[json["val"]]
+                    case CrossPlayObjectType.TEAM:
+                        return teams[json["val"]]
+                    case CrossPlayObjectType.MAP_LOCATION:
+                        return MapLocation(json["x"], json["y"])
+                    case CrossPlayObjectType.UNIT_TYPE:
+                        return unit_types[json["val"]]
+                    case CrossPlayObjectType.TRAP_TYPE:
+                        return trap_types[json["val"]]
+                    case CrossPlayObjectType.MESSAGE:
+                        return Message(json["bytes"], json["sid"], json["round"], json["loc"])
+                    case CrossPlayObjectType.ROBOT_INFO:
+                        return RobotInfo(
+                            json["id"],
+                            parse(json["team"]),
+                            parse(json["ut"]),
+                            json["hp"],
+                            parse(json["loc"]),
+                            parse(json["dir"]),
+                            json["chir"],
+                            json["ch"],
+                            parse(json["carry"]),
+                        )
+                    case CrossPlayObjectType.MAP_INFO:
+                        return MapInfo(
+                            parse(json["loc"]),
+                            json["pass"],
+                            json["wall"],
+                            json["dirt"],
+                            json["ch"],
+                            parse(json["trap"]),
+                            json["cm"],
+                        )
+                    case _:
+                        raise CrossPlayException("Unknown object type received from server: "
+                                                + str(obj_type))
+            else:
+                raise CrossPlayException("Invalid object type received from server: "
+                                        + str(raw_type))
+        elif isinstance(json, list):
+            return [parse(item) for item in json]
+        else:
+            return json
 
 
 def send_wait_and_parse(method: CrossPlayMethod, params=None):
