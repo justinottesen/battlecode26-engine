@@ -1,5 +1,5 @@
 
-from battlecode import *
+from battlecode26 import *
 
 directions = [
     Direction.NORTH,

@@ -8,7 +8,7 @@ Read more at the Battlecode website: https://play.battlecode.org.
 
 # set 'SETUPTOOLS_SCM_PRETEND_VERSION=' to manually set the version number when building
 
-setup(name='battlecode',
+setup(name='battlecode26',
       description='Battlecode 2026 crossplay engine.',
       author='Battlecode',
       long_description=long_description,

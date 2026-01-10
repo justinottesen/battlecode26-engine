@@ -4,9 +4,9 @@ from subprocess import Popen
 import sys
 import traceback
 
-from battlecode.classes import GameActionException
-from battlecode.runner import RobotRunner
-from battlecode.crossplay import (
+from battlecode26.classes import GameActionException
+from battlecode26.runner import RobotRunner
+from battlecode26.crossplay import (
     BYTECODE_LIMIT,
     CrossPlayException,
     receive,
@@ -17,7 +17,7 @@ from battlecode.crossplay import (
     CrossPlayMethod,
     _destroy_queue,
 )
-from battlecode.wrappers import _GAME_METHODS, Team
+from battlecode26.wrappers import _GAME_METHODS, Team
 
 DETACHED_PROCESS = 0x00000008
 CROSSPLAY_PYTHON_DIR = "example-bots/src/crossplay_python"  # TODO change for scaffold
