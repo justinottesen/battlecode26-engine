@@ -247,7 +247,7 @@ public class GameConstants {
     public static final int THROW_DURATION = 4;
 
     /**
-     * Incurred cooldown for throwing up a rat
+     * Incurred cooldown for throwing a rat
      */
     public static final int THROW_RAT_COOLDOWN = 20;
 
