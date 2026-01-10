@@ -10,7 +10,6 @@ import org.objectweb.asm.ClassWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -306,21 +305,22 @@ public final class TeamClassLoaderFactory {
         }
 
         try {
-            URL url = new URI(urlOrRelative).toURL();
+            URL url = new URL(urlOrRelative);
 
             if (url.getProtocol().equals("file")) {
-                if (!Paths.get(url.toURI()).toFile().exists()) {
-                    throw new InstrumentationException(MISSING, "Missing file: "+url);
+                try {
+                    if (!Paths.get(url.toURI()).toFile().exists()) {
+                        throw new InstrumentationException(MISSING, "Missing file: "+url);
+                    }
+                    return url;
+                } catch (URISyntaxException e) {
+                    throw new InstrumentationException(MISSING, "Can't parse file: url", e);
                 }
-
-                return url;
             } else {
                 throw new InstrumentationException(MISSING, "Can't load over protocol: "+url.getProtocol());
             }
         } catch (MalformedURLException e) {
             // okay, it might be a local file
-        } catch (URISyntaxException e) {
-            throw new InstrumentationException(MISSING, "Can't parse file: url", e);
         }
 
         try {
