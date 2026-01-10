@@ -877,11 +877,11 @@ public class GameWorld {
 
         for (Team team : List.of(Team.A, Team.B)) {
 
-            float proportion_rat_kings = total_num_rat_kings != 0 ? teamInfo.getNumRatKings(team) / total_num_rat_kings : 0; 
-            float proportion_cheese_transferred = total_amount_cheese_transferred != 0 ? teamInfo.getCheeseTransferred(team) / total_amount_cheese_transferred : 0;
-            float proportion_cat_damage = total_amount_cat_damage != 0 ? teamInfo.getDamageToCats(team) / total_amount_cat_damage : 0;
+            float proportion_rat_kings = total_num_rat_kings != 0 ? (float)teamInfo.getNumRatKings(team) / total_num_rat_kings : 0.0f; 
+            float proportion_cheese_transferred = total_amount_cheese_transferred != 0 ? (float)teamInfo.getCheeseTransferred(team) / total_amount_cheese_transferred : 0.0f;
+            float proportion_cat_damage = total_amount_cat_damage != 0 ? (float)teamInfo.getDamageToCats(team) / total_amount_cat_damage : 0.0f;
 
-            int points = (int) (cat_weight * 100 * (proportion_cat_damage) + king_weight * 100 * proportion_rat_kings
+            int points = (int) (cat_weight * 100 * proportion_cat_damage + king_weight * 100 * proportion_rat_kings
                     + cheese_transfer_weight * 100 * proportion_cheese_transferred);
             this.teamInfo.addPoints(team, points);
             teamPoints.add(points);
