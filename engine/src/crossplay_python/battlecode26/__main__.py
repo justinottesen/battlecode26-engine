@@ -4,9 +4,9 @@ from subprocess import Popen
 import sys
 import traceback
 
-from battlecode26.classes import GameActionException
-from battlecode26.runner import RobotRunner
-from battlecode26.crossplay import (
+from .classes import GameActionException
+from .runner import RobotRunner
+from .crossplay import (
     BYTECODE_LIMIT,
     CrossPlayException,
     receive,
@@ -17,7 +17,7 @@ from battlecode26.crossplay import (
     CrossPlayMethod,
     _destroy_queue,
 )
-from battlecode26.wrappers import _GAME_METHODS, Team
+from .wrappers import _GAME_METHODS, Team
 
 DETACHED_PROCESS = 0x00000008
 TEAM_NAMES = {Team.A: "A", Team.B: "B", Team.NEUTRAL: "N"}
