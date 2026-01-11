@@ -44,7 +44,7 @@ def is_adjacent_to(loc1: MapLocation, loc2: MapLocation) -> bool:
 def is_within_distance_squared(loc1: MapLocation, loc2: MapLocation, distance_squared: int, theta: float = 360, use_bottom_left: bool = False) -> bool:
     pass
 
-def get_all_type_locations(unit_type: UnitType, center: MapLocation) -> list[MapLocation]
+def get_all_type_locations(unit_type: UnitType, center: MapLocation) -> list[MapLocation]:
     pass
 
 # use the alias "rc" for conciseness in your bot.py file when using RobotController methods
