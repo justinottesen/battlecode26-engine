@@ -1139,10 +1139,24 @@ public final class RobotControllerImpl implements RobotController {
                 this.gameWorld.getTeamInfo().addCheese(this.getTeam(), currentRobot.getCheese());
                 currentRobot.addCheese(-currentRobot.getCheese());
 
+                if (currentRobot.isCarryingRobot()) {
+                    // you steal the cheese of the robot they are carrying if it's an enemy,
+                    // or just add it to your global cheese if it's an ally
+                    InternalRobot robotBeingCarried = currentRobot.getRobotBeingCarried();
+                    this.gameWorld.getTeamInfo().addCheese(this.getTeam(), robotBeingCarried.getCheese());
+                    robotBeingCarried.addCheese(-robotBeingCarried.getCheese());
+                    robotBeingCarried.addHealth(-robotBeingCarried.getHealth());
+                }
+
                 // all robots in the 3x3 including enemies die
                 currentRobot.addHealth(-currentRobot.getHealth());
             }
             this.gameWorld.addRobot(this.adjacentLocation(d), this.robot);
+        }
+
+        if (this.robot.isCarryingRobot()) {
+            InternalRobot robotBeingCarried = this.robot.getRobotBeingCarried();
+            robotBeingCarried.addHealth(-robotBeingCarried.getHealth());
         }
 
         this.gameWorld.getTeamInfo().addCheese(this.getTeam(), -GameConstants.RAT_KING_UPGRADE_CHEESE_COST);
