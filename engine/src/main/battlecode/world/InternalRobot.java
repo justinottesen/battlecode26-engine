@@ -70,6 +70,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private MapLocation catTargetLoc;
     private int catTurns;
     private RobotInfo catTarget;
+    private int catTurnsStuck;
 
     /**
      * Create a new internal representation of a robot
@@ -136,6 +137,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
 
         this.catTurns = 0;
+        this.catTurnsStuck = 0;
     }
 
     // ******************************************
@@ -1135,6 +1137,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         }
         else if (this.type == UnitType.CAT) {
             int[] pounceTraj = null;
+            Direction dir;
 
             switch (this.catState) {
                 case EXPLORE:
@@ -1171,19 +1174,25 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         this.catTargetLoc = catWaypoints[currentWaypoint];
                     }
 
-                    this.dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
-                    if (this.dir == null){
-                        this.dir = this.location.directionTo(this.catTargetLoc);
+                    dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
+
+                    if (dir == null) {
+                        dir = this.location.directionTo(this.catTargetLoc);
                     }
 
+                    if (dir != Direction.CENTER && this.catTurnsStuck <= 1) {
+                        this.dir = dir;
+                    }
 
                     if (this.controller.canMove(this.dir)) {
                         try {
                             this.controller.move(this.dir);
+                            this.catTurnsStuck = 0;
                         } catch (GameActionException e) {
                     }
                     } else {
                         boolean isStuck = true;
+
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
@@ -1207,22 +1216,38 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             }
                         }
                         
-                        if (isStuck){
+                        if (isStuck) {
+                            this.catTurnsStuck += 1;
+
                             if (this.controller.canTurn()) {
                                 try {
-                                    if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
-                                    else this.controller.turn(this.dir.rotateLeft());
+                                    if (this.catTurnsStuck <= 2) {
+                                        if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                        else this.controller.turn(this.dir.rotateLeft());
+                                    } else {
+                                        boolean right = this.gameWorld.rand.nextBoolean();
+
+                                        if (right) this.controller.turn(this.dir.rotateRight().rotateRight());
+                                        else this.controller.turn(this.dir.rotateLeft().rotateLeft());
+                                    }
                                 } catch (GameActionException e) {}
                             }
+                        } else {
+                            this.catTurnsStuck = 0;
                         }
                     }
                     break;
 
                 case CHASE:
 
-                    this.dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
-                    if (this.dir == null){
-                        this.dir = this.location.directionTo(this.catTargetLoc);
+                    dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
+                    
+                    if (dir == null) {
+                        dir = this.location.directionTo(this.catTargetLoc);
+                    }
+
+                    if (dir != Direction.CENTER && this.catTurnsStuck <= 1) {
+                        this.dir = dir;
                     }
 
                     if (getCatCornerByChirality().equals(this.catTargetLoc)) {
@@ -1237,9 +1262,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     } else if (this.controller.canMove(this.dir)) {
                         try {
                             this.controller.move(this.dir);
+                            this.catTurnsStuck = 0;
                         } catch (GameActionException e) {}
                     } else {
                         boolean isStuck = true;
+
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
@@ -1260,17 +1287,26 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                     continue;
                                 }
                             }
+                        }
 
-                            if (isStuck){
-                                if (this.controller.canTurn()) {
-                                    try {
+                        if (isStuck) {
+                            this.catTurnsStuck += 1;
+
+                            if (this.controller.canTurn()) {
+                                try {
+                                    if (this.catTurnsStuck <= 2) {
                                         if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
                                         else this.controller.turn(this.dir.rotateLeft());
-                                    } catch (GameActionException e) {
-                                        continue;
+                                    } else {
+                                        boolean right = this.gameWorld.rand.nextBoolean();
+
+                                        if (right) this.controller.turn(this.dir.rotateRight().rotateRight());
+                                        else this.controller.turn(this.dir.rotateLeft().rotateLeft());
                                     }
-                                }
+                                } catch (GameActionException e) {}
                             }
+                        } else {
+                            this.catTurnsStuck = 0;
                         }
                     }
                     break;
@@ -1283,7 +1319,11 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         break;
                     }
 
-                    this.dir = this.dir.rotateLeft().rotateLeft();
+                    if (chirality == 0) {
+                        this.dir = this.dir.rotateLeft().rotateLeft();
+                    } else {
+                        this.dir = this.dir.rotateRight().rotateRight();
+                    }
 
                     nearbyRobots = this.controller.senseNearbyRobots();
 
@@ -1331,27 +1371,32 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     if (this.controller.canAttack(this.catTarget.getLocation())) {
                         try {
                             this.controller.attack(this.catTarget.getLocation());
-                        } catch (GameActionException e) {
-                        }
-
+                        } catch (GameActionException e) {}
                     }
 
-                    this.dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
-                    if (this.dir == null){
-                        this.dir = this.location.directionTo(this.catTargetLoc);
+                    dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
+
+                    if (dir == null) {
+                        dir = this.location.directionTo(this.catTargetLoc);
+                    }
+
+                    if (dir != Direction.CENTER && this.catTurnsStuck <= 1) {
+                        this.dir = dir;
                     }
 
                     // pounce towards target if possible
                     pounceTraj = canPounce(this.catTargetLoc);
+
                     if (canMoveCooldown() && pounceTraj != null) {
                         this.pounce(pounceTraj);
                     } else if (this.controller.canMove(this.dir)) {
                         try {
                             this.controller.move(this.dir);
-                        } catch (GameActionException e) {
-                        }
+                            this.catTurnsStuck = 0;
+                        } catch (GameActionException e) {}
                     } else {
                         boolean isStuck = true;
+
                         for (MapLocation partLoc : this.getAllPartLocations()) {
                             MapLocation nextLoc = partLoc.add(this.dir);
 
@@ -1365,22 +1410,36 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                 }
                             } else if (this.controller.canAttack(nextLoc)) {
                                 try {
-                                    if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
-                                    else this.controller.turn(this.dir.rotateLeft());
+                                    this.controller.attack(nextLoc);
                                 } catch (GameActionException e) {
                                     continue;
                                 }
                             }
                         }
 
-                        if (isStuck){
+                        if (isStuck) {
+                            this.catTurnsStuck += 1;
+
                             try {
-                                if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
-                                else this.controller.turn(this.dir.rotateLeft());
+                                if (this.catTurnsStuck <= 2) {
+                                    if (this.chirality == 0) this.controller.turn(this.dir.rotateRight());
+                                    else this.controller.turn(this.dir.rotateLeft());
+                                } else {
+                                    boolean right = this.gameWorld.rand.nextBoolean();
+
+                                    if (right) this.controller.turn(this.dir.rotateRight().rotateRight());
+                                    else this.controller.turn(this.dir.rotateLeft().rotateLeft());
+                                }
                             } catch (GameActionException e) {}
+                        } else {
+                            this.catTurnsStuck = 0;
                         }
                     }
                     break;
+            }
+
+            if (this.controller.getRoundNum() <= 80) {
+                System.out.println("[" + this.controller.getRoundNum() + "] Cat " + this.ID + " is in state " + this.catState + " at location " + this.getLocation() + " with target " + this.catTargetLoc + " and turns stuck " + this.catTurnsStuck);
             }
         }
 
