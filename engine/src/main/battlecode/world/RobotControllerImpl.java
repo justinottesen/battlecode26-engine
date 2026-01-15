@@ -1414,7 +1414,7 @@ public final class RobotControllerImpl implements RobotController {
             throw new GameActionException(CANT_DO_THAT, "Robots cannot grab themselves");
         }
 
-        if (targetRobot.getLastGrabberId() == this.robot.getID() && targetRobot.getTurnsSinceThrownOrDropped() < GameConstants.CARRY_COOLDOWN_TURNS) {
+        if (targetRobot.getLastGrabberId() == this.robot.getID() && targetRobot.getTurnsSinceThrownOrDropped() < GameConstants.SAME_ROBOT_CARRY_COOLDOWN_TURNS) {
             throw new GameActionException(CANT_DO_THAT, "Target robot was recently carried by this robot");
         }
 
