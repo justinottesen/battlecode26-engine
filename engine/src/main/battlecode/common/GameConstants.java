@@ -181,10 +181,10 @@ public class GameConstants {
     public static final int RAT_KING_UPGRADE_CHEESE_COST = 50;
 
     /** The cheese cost to dig up a tile of dirt */
-    public static final int DIG_DIRT_CHEESE_COST = 10;
+    public static final int DIG_DIRT_CHEESE_COST = 5;
 
     /** The cheese cost to place a tile of dirt */
-    public static final int PLACE_DIRT_CHEESE_COST = 10;
+    public static final int PLACE_DIRT_CHEESE_COST = 3;
 
 
     // *********************************

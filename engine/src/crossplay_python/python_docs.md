@@ -462,13 +462,12 @@ class TrapType(Enum):
     - damage: int
     - stun_time: int
     - action_cooldown: int
-    - spawn_cheese_amount: int
     - max_count: int
     - trigger_radius_squared: int
     """
-    RAT_TRAP = (30, 50, 20, 25, 15, 0, 25, 2)
-    CAT_TRAP = (10, 100, 20, 5, 10, 0, 10, 2)
-    NONE = (0, 0, 0, 0, 0, 0, 0, 0)
+    RAT_TRAP = (30, 50, 20, 15, 25, 2)
+    CAT_TRAP = (10, 100, 20, 10, 10, 2)
+    NONE = (0, 0, 0, 0, 0, 0, 0)
 
     def ordinal(self) -> int:
         """
@@ -562,8 +561,8 @@ class GameConstants:
     CAT_DIG_ADDITIONAL_COOLDOWN = 5
     HEALTH_GRAB_THRESHOLD = 0
     RAT_KING_UPGRADE_CHEESE_COST = 50
-    DIG_DIRT_CHEESE_COST = 10
-    PLACE_DIRT_CHEESE_COST = 10
+    DIG_DIRT_CHEESE_COST = 5
+    PLACE_DIRT_CHEESE_COST = 3
     SHARED_ARRAY_SIZE = 64
     COMM_ARRAY_MAX_VALUE = 1023
     COOLDOWN_LIMIT = 10

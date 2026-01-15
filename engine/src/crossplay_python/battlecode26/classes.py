@@ -189,17 +189,16 @@ _ut_to_index = {ut: index for index, ut in enumerate(_ut_order)}
 
 
 class TrapType(_Enum):
-    RAT_TRAP = (30, 50, 20, 15, 0, 25, 2)
-    CAT_TRAP = (10, 100, 20, 10, 0, 10, 2)
-    NONE = (0, 0, 0, 0, 0, 0, 0)
+    RAT_TRAP = (30, 50, 20, 15, 25, 2)
+    CAT_TRAP = (10, 100, 20, 10, 10, 2)
+    NONE = (0, 0, 0, 0, 0, 0)
 
     def __init__(self, build_cost: int, damage: int, stun_time: int,
-                 action_cooldown: int, spawn_cheese_amount: int, max_count: int, trigger_radius_squared: int):
+                 action_cooldown: int, max_count: int, trigger_radius_squared: int):
         self.build_cost = build_cost
         self.damage = damage
         self.stun_time = stun_time
         self.action_cooldown = action_cooldown
-        self.spawn_cheese_amount = spawn_cheese_amount
         self.max_count = max_count
         self.trigger_radius_squared = trigger_radius_squared
     
@@ -308,8 +307,8 @@ class GameConstants:
     CAT_DIG_ADDITIONAL_COOLDOWN = 5
     HEALTH_GRAB_THRESHOLD = 0
     RAT_KING_UPGRADE_CHEESE_COST = 50
-    DIG_DIRT_CHEESE_COST = 10
-    PLACE_DIRT_CHEESE_COST = 10
+    DIG_DIRT_CHEESE_COST = 5
+    PLACE_DIRT_CHEESE_COST = 3
     SHARED_ARRAY_SIZE = 64
     COMM_ARRAY_MAX_VALUE = 1023
     COOLDOWN_LIMIT = 10
