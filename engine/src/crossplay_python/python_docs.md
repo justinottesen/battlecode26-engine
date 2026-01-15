@@ -1,5 +1,5 @@
 # Battlecode 2026 Python Documentation
-v1.1.4
+v1.1.5
 
 ## Getting Started
 
@@ -24,6 +24,8 @@ The Battlecode match runner restricts which libraries you are allowed to use, be
 ## Battlecode function list
 
 Below is a list of functions you can use to control your team's rats. Most are the same as Java but with camelCase changed to snake\_case, but one key change is that some of the `MapLocation` and `UnitType` methods were made into global functions, while others were kept as methods for those classes. See the Javadoc for detailed explanations of each of these functions. If there is a method supported by the Java engine which is missing here, please let us know in the Battlecode Discord server.
+
+Important: Use `log` instead of `print` for printing debug messages for your bot!
 
 ```python
 def log(*messages) -> None:
@@ -459,15 +461,13 @@ class TrapType(Enum):
     - build_cost: int
     - damage: int
     - stun_time: int
-    - trap_limit: int
     - action_cooldown: int
-    - spawn_cheese_amount: int
     - max_count: int
     - trigger_radius_squared: int
     """
-    RAT_TRAP = (30, 50, 20, 25, 15, 0, 25, 2)
-    CAT_TRAP = (10, 100, 20, 5, 10, 0, 10, 2)
-    NONE = (0, 0, 0, 0, 0, 0, 0, 0)
+    RAT_TRAP = (30, 50, 20, 15, 25, 2)
+    CAT_TRAP = (10, 100, 20, 10, 10, 2)
+    NONE = (0, 0, 0, 0, 0, 0, 0)
 
     def ordinal(self) -> int:
         """
@@ -533,6 +533,8 @@ class GameConstants:
     EXCEPTION_BYTECODE_PENALTY = 500
     INITIAL_TEAM_CHEESE = 2500
     MAX_NUMBER_OF_RAT_KINGS = 5
+    MAX_NUMBER_OF_RAT_KINGS_AFTER_CUTOFF = 2
+    RAT_KING_CUTOFF_ROUND = 1200
     MAX_TEAM_EXECUTION_TIME = 1200000000000
     MOVE_STRAFE_COOLDOWN = 18
     CHEESE_COOLDOWN_PENALTY = 0.01
@@ -549,6 +551,8 @@ class GameConstants:
     BUILD_ROBOT_COST_INCREASE = 10
     NUM_ROBOTS_FOR_COST_INCREASE = 4
     BUILD_DISTANCE_SQUARED = 2
+    RAT_KING_BUILD_DISTANCE_SQUARED = 8
+    ATTACK_DISTANCE_SQUARED = 2
     RAT_KING_ATTACK_DISTANCE_SQUARED = 8
     MESSAGE_ROUND_DURATION = 5
     MAX_MESSAGES_SENT_ROBOT = 1
@@ -561,8 +565,8 @@ class GameConstants:
     CAT_DIG_ADDITIONAL_COOLDOWN = 5
     HEALTH_GRAB_THRESHOLD = 0
     RAT_KING_UPGRADE_CHEESE_COST = 50
-    DIG_DIRT_CHEESE_COST = 10
-    PLACE_DIRT_CHEESE_COST = 10
+    DIG_DIRT_CHEESE_COST = 5
+    PLACE_DIRT_CHEESE_COST = 3
     SHARED_ARRAY_SIZE = 64
     COMM_ARRAY_MAX_VALUE = 1023
     COOLDOWN_LIMIT = 10
@@ -574,6 +578,7 @@ class GameConstants:
     CARRY_COOLDOWN_MULTIPLIER = 1.5
     MAX_CARRY_TOWER_HEIGHT = 2
     MAX_CARRY_DURATION = 10
+    SAME_ROBOT_CARRY_COOLDOWN_TURNS = 2
     THROW_DURATION = 4
     HIT_GROUND_COOLDOWN = 10
     HIT_TARGET_COOLDOWN = 30

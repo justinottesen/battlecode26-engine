@@ -43,6 +43,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
     private int movementCooldownTurns;
     private int turningCooldownTurns;
 
+    private int turnsSinceThrownOrDropped;
+    private int lastGrabberId;
     private InternalRobot robotBeingCarried; // robot being carried by this robot, if any
     private InternalRobot grabbedByRobot; // robot that is carrying this robot, if any
     private Direction thrownDir;
@@ -105,6 +107,8 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.movementCooldownTurns = GameConstants.COOLDOWN_LIMIT;
         this.turningCooldownTurns = GameConstants.COOLDOWN_LIMIT;
 
+        this.turnsSinceThrownOrDropped = GameConstants.GAME_MAX_NUMBER_OF_ROUNDS; // not recently thrown or dropped
+        this.lastGrabberId = -1;
         this.robotBeingCarried = null;
         this.grabbedByRobot = null;
         this.thrownDir = null;
@@ -302,6 +306,14 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
     public boolean isBeingThrown() {
         return thrownDir != null;
+    }
+
+    public int getTurnsSinceThrownOrDropped() {
+        return turnsSinceThrownOrDropped;
+    }
+
+    public int getLastGrabberId() {
+        return lastGrabberId;
     }
 
     public RobotInfo getRobotInfo() {
@@ -562,8 +574,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // Must be an immediate neighbor
         int distSq = this.location.distanceSquaredTo(loc);
 
-        if (!(distSq > 0 && (distSq <= 2 || (this.type == UnitType.RAT_KING
-            && distSq <= GameConstants.RAT_KING_ATTACK_DISTANCE_SQUARED)))) {
+        if (distSq == 0 || distSq > (this.type == UnitType.RAT_KING
+            ? GameConstants.RAT_KING_ATTACK_DISTANCE_SQUARED
+            : GameConstants.ATTACK_DISTANCE_SQUARED)) {
             return;
         }
 
@@ -662,7 +675,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     private void getGrabbed(InternalRobot grabber) {
+        this.turnsSinceThrownOrDropped = 0;
         this.grabbedByRobot = grabber;
+        this.lastGrabberId = grabber.getID();
         this.gameWorld.removeRobot(getLocation());
 
         if (this.isCarryingRobot()) { // If we were carrying a robot, drop it
@@ -689,7 +704,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     private void getThrown(Direction dir) {
-
+        this.turnsSinceThrownOrDropped = 0;
         this.grabbedByRobot = null;
         this.remainingCarriedDuration = 0;
         this.thrownDir = dir;
@@ -710,6 +725,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
             throw new RuntimeException("Cannot drop into impassable terrain");
         }
 
+        this.turnsSinceThrownOrDropped = 0;
         this.grabbedByRobot = null;
         this.remainingCarriedDuration = 0;
         this.setInternalLocationOnly(loc);
@@ -725,6 +741,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void hitGround() {
+        this.turnsSinceThrownOrDropped = 0;
         this.thrownDir = null;
         this.remainingThrowDuration = 0;
 
@@ -734,7 +751,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         this.gameWorld.getMatchMaker().addDamageAction(this.ID, damage);
         this.gameWorld.getMatchMaker().addRatNapAction(this.getID());
 
-        
+
         if (this.health > 0) {
             this.gameWorld.addRobot(this.location, this);
             this.controller.processTrapsAtLocation(this.location);
@@ -1111,6 +1128,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // if rat is being carried or thrown, skip cooldown resets; same for a sleeping
         // cat
         boolean isSleepingCat = this.getType().isCatType() && this.sleepTimeRemaining > 0;
+
         if (!this.isGrabbedByRobot() && !this.isBeingThrown() && !isSleepingCat) {
             this.actionCooldownTurns = Math.max(0, this.actionCooldownTurns - GameConstants.COOLDOWNS_PER_TURN);
             this.turningCooldownTurns = Math.max(0, this.turningCooldownTurns - GameConstants.COOLDOWNS_PER_TURN);
@@ -1122,6 +1140,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
     }
 
     public void processEndOfTurn() {
+        if (!this.isGrabbedByRobot() && !this.isBeingThrown()) {
+            this.turnsSinceThrownOrDropped += 1;
+        }
+
         // eat cheese if rat king
         if (this.type.isRatKingType() && this.gameWorld.getTeamInfo().getNumRatKings(this.getTeam()) > 0) {
             // rat king starves
