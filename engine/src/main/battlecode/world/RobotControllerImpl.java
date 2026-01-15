@@ -72,9 +72,10 @@ public final class RobotControllerImpl implements RobotController {
     // }
 
     private MapInfo getMapInfo(MapLocation loc) throws GameActionException {
+        Team team = this.getTeam();
         GameWorld gw = this.gameWorld;
-        Trap trap = gw.getTrap(loc);
-        TrapType trapType = (trap != null && trap.getTeam() == this.getTeam()) ? trap.getType() : TrapType.NONE;
+        Trap trap = gw.getTrap(loc, team);
+        TrapType trapType = (trap != null) ? trap.getType() : TrapType.NONE;
         MapInfo currentLocInfo = new MapInfo(loc, gw.isPassable(loc), gw.getWall(loc), gw.getDirt(loc),
                 gw.getCheeseAmount(loc), trapType,
                 gw.hasCheeseMine(loc));
@@ -212,9 +213,11 @@ public final class RobotControllerImpl implements RobotController {
                 ? (getLocation().bottomLeftDistanceSquaredTo(loc))
                 : (getLocation().distanceSquaredTo(loc));
 
-        float addDistance = (float) Math.ceil((this.getType().size / (2.0) + Math.sqrt((double) maxRadiusSquared))
-                        * (this.getType().size / 2.0 + Math.sqrt((double) maxRadiusSquared)));
-        if (distance > (addDistance))
+        // float addDistance = (float) Math.ceil((this.getType().size / (2.0) + Math.sqrt((double) maxRadiusSquared))
+        //                 * (this.getType().size / 2.0 + Math.sqrt((double) maxRadiusSquared)));
+        float addDistance = maxRadiusSquared;
+
+        if (distance > addDistance)
             throw new GameActionException(OUT_OF_RANGE,
                     "Target location not within action range");
     }
@@ -304,16 +307,16 @@ public final class RobotControllerImpl implements RobotController {
 
     private void assertCanRemoveRatTrap(MapLocation loc) throws GameActionException {
         UnitType myType = this.robot.getType();
+        Team myTeam = this.getTeam();
 
         assertIsRobotType(myType);
         assertCanActLocation(loc, myType == UnitType.RAT_KING
             ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED
             : GameConstants.BUILD_DISTANCE_SQUARED);
 
-        if (!this.gameWorld.hasRatTrap(loc))
+        if (!this.gameWorld.hasRatTrap(loc, myTeam)) {
             throw new GameActionException(CANT_DO_THAT, "No rat trap to remove at that location!");
-        if (this.gameWorld.getTrap(loc).getTeam() != this.getTeam())
-            throw new GameActionException(CANT_DO_THAT, "Can't remove an enemy team's rat trap!");
+        }
     }
 
     private void assertCanPlaceTrap(MapLocation loc, TrapType trapType) throws GameActionException {
@@ -331,7 +334,7 @@ public final class RobotControllerImpl implements RobotController {
             throw new GameActionException(CANT_DO_THAT, "Can't place trap on a wall or dirt!");
         if (this.gameWorld.getRobot(loc) != null)
             throw new GameActionException(CANT_DO_THAT, "Can't place trap on an occupied tile!");
-        if (this.gameWorld.hasTrap(loc))
+        if (this.gameWorld.hasTrap(loc, this.robot.getTeam()))
             throw new GameActionException(CANT_DO_THAT, "Tile already has a trap!");
         if (this.gameWorld.getTrapCount(trapType, this.robot.getTeam()) >= trapType.maxCount)
             throw new GameActionException(CANT_DO_THAT,
@@ -344,11 +347,16 @@ public final class RobotControllerImpl implements RobotController {
     }
 
     private void assertCanRemoveCatTrap(MapLocation loc) throws GameActionException {
-        assertIsRobotType(this.robot.getType());
-        assertCanActLocation(loc, GameConstants.BUILD_DISTANCE_SQUARED);
+        UnitType myType = this.robot.getType();
 
-        if (!this.gameWorld.hasCatTrap(loc))
+        assertIsRobotType(myType);
+        assertCanActLocation(loc, myType == UnitType.RAT_KING
+            ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED
+            : GameConstants.BUILD_DISTANCE_SQUARED);
+
+        if (!this.gameWorld.hasCatTrap(loc, this.getTeam())) {
             throw new GameActionException(CANT_DO_THAT, "No cat trap to remove at that location!");
+        }
     }
 
     @Override
@@ -379,9 +387,10 @@ public final class RobotControllerImpl implements RobotController {
 
     @Override
     public void removeRatTrap(MapLocation loc) throws GameActionException {
+        Team team = this.getTeam();
         assertCanRemoveRatTrap(loc);
-        Trap trap = this.gameWorld.getTrap(loc);
-        this.gameWorld.removeTrap(loc);
+        Trap trap = this.gameWorld.getTrap(loc, team);
+        this.gameWorld.removeTrap(loc, team);
         this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getLocation(), trap.getTeam());
     }
 
@@ -413,9 +422,10 @@ public final class RobotControllerImpl implements RobotController {
 
     @Override
     public void removeCatTrap(MapLocation loc) throws GameActionException {
+        Team team = this.getTeam();
         assertCanRemoveCatTrap(loc);
-        Trap trap = this.gameWorld.getTrap(loc);
-        this.gameWorld.removeTrap(loc);
+        Trap trap = this.gameWorld.getTrap(loc, team);
+        this.gameWorld.removeTrap(loc, team);
         this.gameWorld.getMatchMaker().addRemoveTrapAction(trap.getLocation(), trap.getTeam());
     }
 
@@ -959,11 +969,12 @@ public final class RobotControllerImpl implements RobotController {
         this.robot.addActionCooldownTurns(type.actionCooldown);
         this.robot.addCheese(-type.buildCost);
 
+        Team team = this.getTeam();
         int trapId = this.gameWorld.idGenerator.nextID();
-        Trap newTrap = new Trap(loc, type, this.getTeam(), trapId);
+        Trap newTrap = new Trap(loc, type, team, trapId);
 
         this.gameWorld.placeTrap(loc, newTrap);
-        this.gameWorld.getMatchMaker().addPlaceTrapAction(trapId, loc, getTeam(), type);
+        this.gameWorld.getMatchMaker().addPlaceTrapAction(trapId, loc, team, type);
     }
 
     // *****************************
@@ -1284,7 +1295,7 @@ public final class RobotControllerImpl implements RobotController {
             throw new GameActionException(CANT_DO_THAT, "Cannot transfer resources to the enemy team!");
         }
         if (!this.robot.getType().isBabyRatType()) {
-            throw new GameActionException(CANT_DO_THAT, "Only rats can transfer cheese!");
+            throw new GameActionException(CANT_DO_THAT, "Only baby rats can transfer cheese!");
         }
         if (!robot.getType().isRatKingType()) {
             throw new GameActionException(CANT_DO_THAT, "Only rat kings can receive cheese!");
