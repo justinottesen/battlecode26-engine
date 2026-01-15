@@ -33,7 +33,7 @@ public class GameWorld {
 
     private int[] cheeseAmounts;
     private InternalRobot[][] robots;
-    private Trap[] trapLocations;
+    private Trap[][] trapLocations;
     private ArrayList<Trap>[] trapTriggers;
     private HashMap<TrapType, int[]> trapCounts; // maps trap type to counts for each team
     private final LiveMap gameMap;
@@ -138,7 +138,7 @@ public class GameWorld {
         this.walls = gm.getWallArray();
         this.dirt = gm.getDirtArray();
         this.cheeseAmounts = gm.getCheeseArray();
-        this.trapLocations = new Trap[numSquares]; // We guarantee that no maps will contain traps at t = 0
+        this.trapLocations = new Trap[2][numSquares]; // We guarantee that no maps will contain traps at t = 0
         this.robots = new InternalRobot[width][height]; // if represented in cartesian, should be height-width, but this
                                                         // should allow us to index x-y
         this.hasRunCheeseMinesThisRound = false;
@@ -534,21 +534,21 @@ public class GameWorld {
     // ****** TRAP METHODS **************
     // ***********************************
 
-    public Trap getTrap(MapLocation loc) {
-        return this.trapLocations[locationToIndex(loc)];
+    public Trap getTrap(MapLocation loc, Team team) {
+        return this.trapLocations[team.ordinal()][locationToIndex(loc)];
     }
 
-    public boolean hasTrap(MapLocation loc) {
-        return (this.trapLocations[locationToIndex(loc)] != null);
+    public boolean hasTrap(MapLocation loc, Team team) {
+        return (this.trapLocations[team.ordinal()][locationToIndex(loc)] != null);
     }
 
-    public boolean hasRatTrap(MapLocation loc) {
-        Trap trap = this.trapLocations[locationToIndex(loc)];
+    public boolean hasRatTrap(MapLocation loc, Team team) {
+        Trap trap = this.trapLocations[team.ordinal()][locationToIndex(loc)];
         return (trap != null && trap.getType() == TrapType.RAT_TRAP);
     }
 
-    public boolean hasCatTrap(MapLocation loc) {
-        Trap trap = this.trapLocations[locationToIndex(loc)];
+    public boolean hasCatTrap(MapLocation loc, Team team) {
+        Trap trap = this.trapLocations[team.ordinal()][locationToIndex(loc)];
         return (trap != null && trap.getType() == TrapType.CAT_TRAP);
     }
 
@@ -557,12 +557,11 @@ public class GameWorld {
     }
 
     public void placeTrap(MapLocation loc, Trap trap) {
-
         TrapType type = trap.getType();
         Team team = trap.getTeam();
 
         int idx = locationToIndex(loc);
-        this.trapLocations[idx] = trap;
+        this.trapLocations[team.ordinal()][idx] = trap;
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) {// set chirality to 0, only rats will be placing traps
             this.trapTriggers[locationToIndex(adjLoc)].add(trap);
@@ -573,17 +572,18 @@ public class GameWorld {
         this.trapCounts.put(type, trapTypeCounts);
     }
 
-    public void removeTrap(MapLocation loc) {
-        Trap trap = this.trapLocations[locationToIndex(loc)];
+    public void removeTrap(MapLocation loc, Team team) {
+        Trap trap = this.trapLocations[team.ordinal()][locationToIndex(loc)];
+
         if (trap == null) {
             return;
         }
+
         TrapType type = trap.getType();
-        Team team = trap.getTeam();
         int[] trapTypeCounts = this.trapCounts.get(type);
         trapTypeCounts[team.ordinal()] -= 1;
         this.trapCounts.put(type, trapTypeCounts);
-        this.trapLocations[locationToIndex(loc)] = null;
+        this.trapLocations[team.ordinal()][locationToIndex(loc)] = null;
 
         for (MapLocation adjLoc : getAllLocationsWithinRadiusSquared(loc, type.triggerRadiusSquared, 0)) { // set chirality to 0, only rats will be removing traps
             this.trapTriggers[locationToIndex(adjLoc)].remove(trap);
@@ -612,7 +612,7 @@ public class GameWorld {
 
         matchMaker.addTrapTriggerAction(trap.getId(), loc, triggeringTeam, type);
 
-        removeTrap(loc);
+        removeTrap(loc, trap.getTeam());
         robot.addHealth(-type.damage);
         // matchMaker.addAction(robot.getID(),
         // FlatHelpers.getTrapActionFromTrapType(type),

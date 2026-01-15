@@ -130,8 +130,12 @@ public class GameConstants {
      */
     public static final int CHEESE_PICK_UP_RADIUS_SQUARED = 2;
 
-    /** The maximum distance from a rat king for building robots */
-    public static final int BUILD_ROBOT_RADIUS_SQUARED = 4;
+    /**
+     * The maximum distance from a rat king for building robots
+     * from the king's center. Effectively only adjacent squares,
+     * since the rat king is 3x3.
+     */
+    public static final int BUILD_ROBOT_RADIUS_SQUARED = 8;
 
     /** The base cheese cost for spawning a rat */
     public static final int BUILD_ROBOT_BASE_COST = 10;
