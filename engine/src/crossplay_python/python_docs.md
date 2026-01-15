@@ -1,5 +1,5 @@
 # Battlecode 2026 Python Documentation
-v1.1.4
+v1.1.5
 
 ## Getting Started
 
@@ -24,6 +24,8 @@ The Battlecode match runner restricts which libraries you are allowed to use, be
 ## Battlecode function list
 
 Below is a list of functions you can use to control your team's rats. Most are the same as Java but with camelCase changed to snake\_case, but one key change is that some of the `MapLocation` and `UnitType` methods were made into global functions, while others were kept as methods for those classes. See the Javadoc for detailed explanations of each of these functions. If there is a method supported by the Java engine which is missing here, please let us know in the Battlecode Discord server.
+
+Important: Use `log` instead of `print` for printing debug messages for your bot!
 
 ```python
 def log(*messages) -> None:
@@ -459,7 +461,6 @@ class TrapType(Enum):
     - build_cost: int
     - damage: int
     - stun_time: int
-    - trap_limit: int
     - action_cooldown: int
     - spawn_cheese_amount: int
     - max_count: int

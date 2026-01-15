@@ -189,16 +189,15 @@ _ut_to_index = {ut: index for index, ut in enumerate(_ut_order)}
 
 
 class TrapType(_Enum):
-    RAT_TRAP = (30, 50, 20, 25, 15, 0, 25, 2)
-    CAT_TRAP = (10, 100, 20, 5, 10, 0, 10, 2)
-    NONE = (0, 0, 0, 0, 0, 0, 0, 0)
+    RAT_TRAP = (30, 50, 20, 15, 0, 25, 2)
+    CAT_TRAP = (10, 100, 20, 10, 0, 10, 2)
+    NONE = (0, 0, 0, 0, 0, 0, 0)
 
-    def __init__(self, build_cost: int, damage: int, stun_time: int, trap_limit: int,
+    def __init__(self, build_cost: int, damage: int, stun_time: int,
                  action_cooldown: int, spawn_cheese_amount: int, max_count: int, trigger_radius_squared: int):
         self.build_cost = build_cost
         self.damage = damage
         self.stun_time = stun_time
-        self.trap_limit = trap_limit
         self.action_cooldown = action_cooldown
         self.spawn_cheese_amount = spawn_cheese_amount
         self.max_count = max_count

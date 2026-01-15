@@ -242,6 +242,13 @@ public class GameConstants {
     public static final int MAX_CARRY_DURATION = 10;
 
     /**
+     * The minimum number of turns after a robot is thrown or dropped before it can be grabbed
+     * again by its most recent grabber. Turns are counted so that the turn on which it is
+     * thrown or dropped is turn 0.
+     */
+    public static final int CARRY_COOLDOWN_TURNS = 2;
+
+    /**
      * The total number turns a rat can travel for while thrown (rats are stunned while thrown)
      */
     public static final int THROW_DURATION = 4;
