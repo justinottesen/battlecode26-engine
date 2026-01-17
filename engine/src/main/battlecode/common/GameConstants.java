@@ -155,6 +155,9 @@ public class GameConstants {
     /** The maximum distance from a robot for building traps or dirt */
     public static final int BUILD_DISTANCE_SQUARED = 2;
 
+    /** The maximum distance from a cat for building traps or dirt, measured from cat center*/
+    public static final float CAT_BUILD_DISTANCE_SQUARED = 4.5f;
+
     /**
      * The maximum distance squared a rat king can build traps or dirt,
      * measured from the king's center. All rats (including rat kings)

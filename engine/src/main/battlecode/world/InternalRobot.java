@@ -931,7 +931,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
             if (crushedRobot != null && (crushedRobot.getID() != this.ID)) {
                 // destroy robot
+                if (crushedRobot.isCarryingRobot()){
+                    InternalRobot carriedRobot = crushedRobot.getRobotBeingCarried();
+                    carriedRobot.addHealth(-carriedRobot.getHealth());
+                }
                 crushedRobot.addHealth(-crushedRobot.getHealth());
+
             }
         }
 
@@ -1264,6 +1269,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                 case CHASE:
 
+                    if (this.catTurns >= 10) {
+                        this.catTurns = 0;
+                        this.catState = CatStateType.EXPLORE;
+                        break;
+                    }
+
                     dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
                     
                     if (dir == null) {
@@ -1279,6 +1290,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     for (MapLocation partLoc : partLocs) {
                         if (partLoc.distanceSquaredTo(this.catTargetLoc) <= 2) {
                             this.catState = CatStateType.SEARCH;
+                            this.catTurns = 0;
                         }
                     }
 
@@ -1337,6 +1349,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             this.catTurnsStuck = 0;
                         }
                     }
+                    this.catTurns += 1;
                     break;
 
                 case SEARCH:
@@ -1369,12 +1382,29 @@ public class InternalRobot implements Comparable<InternalRobot> {
                         this.catTargetLoc = rat.getLocation();
                         this.catTarget = rat;
                         this.catState = CatStateType.ATTACK;
+                        this.catTurns = 0;
                     }
 
                     this.catTurns += 1;
                     break;
 
                 case ATTACK:
+                    
+                    if (this.catTurns == 10) {
+                        if (this.chirality == 0) this.dir = this.dir.rotateRight().rotateRight();
+                        else this.dir = this.dir.rotateLeft().rotateLeft();
+
+                        this.catTurns += 1;
+                        break;
+                    }
+                    else if (this.catTurns == 11){
+                        if (this.chirality == 0) this.dir = this.dir.rotateRight().rotateRight();
+                        else this.dir = this.dir.rotateLeft().rotateLeft();
+
+                        this.catTurns = 0;
+                        this.catState = CatStateType.EXPLORE;
+                        break;
+                    }
 
                     // step 1: try to find the rat it was attacking, if cannot find it go back to
                     // explore
@@ -1391,6 +1421,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                     if (!ratVisible) {
                         this.catState = CatStateType.EXPLORE;
+                        this.catTurns = 0;
                         break;
                     }
 
@@ -1463,6 +1494,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             this.catTurnsStuck = 0;
                         }
                     }
+                    this.catTurns += 1;
                     break;
             }
         }
