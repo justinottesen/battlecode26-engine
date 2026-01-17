@@ -1269,7 +1269,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                 case CHASE:
 
-                    if (this.catTurns >= 8) {
+                    if (this.catTurns >= 10) {
                         this.catTurns = 0;
                         this.catState = CatStateType.EXPLORE;
                         break;
@@ -1389,6 +1389,22 @@ public class InternalRobot implements Comparable<InternalRobot> {
                     break;
 
                 case ATTACK:
+                    
+                    if (this.catTurns == 10) {
+                        if (this.chirality == 0) this.dir = this.dir.rotateRight().rotateRight();
+                        else this.dir = this.dir.rotateLeft().rotateLeft();
+
+                        this.catTurns += 1;
+                        break;
+                    }
+                    else if (this.catTurns == 11){
+                        if (this.chirality == 0) this.dir = this.dir.rotateRight().rotateRight();
+                        else this.dir = this.dir.rotateLeft().rotateLeft();
+
+                        this.catTurns = 0;
+                        this.catState = CatStateType.EXPLORE;
+                        break;
+                    }
 
                     // step 1: try to find the rat it was attacking, if cannot find it go back to
                     // explore
@@ -1405,6 +1421,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                     if (!ratVisible) {
                         this.catState = CatStateType.EXPLORE;
+                        this.catTurns = 0;
                         break;
                     }
 
@@ -1477,6 +1494,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             this.catTurnsStuck = 0;
                         }
                     }
+                    this.catTurns += 1;
                     break;
             }
         }
