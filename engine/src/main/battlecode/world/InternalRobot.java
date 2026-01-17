@@ -931,7 +931,12 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
             if (crushedRobot != null && (crushedRobot.getID() != this.ID)) {
                 // destroy robot
+                if (crushedRobot.isCarryingRobot()){
+                    InternalRobot carriedRobot = crushedRobot.getRobotBeingCarried();
+                    carriedRobot.addHealth(-carriedRobot.getHealth());
+                }
                 crushedRobot.addHealth(-crushedRobot.getHealth());
+
             }
         }
 

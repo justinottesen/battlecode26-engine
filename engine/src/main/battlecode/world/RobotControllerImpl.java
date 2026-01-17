@@ -846,6 +846,10 @@ public final class RobotControllerImpl implements RobotController {
             if (crushedRobot != null && this.getID() != crushedRobot.getID() && this.getType().isCatType()
                     && crushedRobot.getType().isBabyRatType()) {
                 // kill this rat
+                if (crushedRobot.isCarryingRobot()){
+                    InternalRobot carriedRobot = crushedRobot.getRobotBeingCarried();
+                    carriedRobot.addHealth(-carriedRobot.getHealth());
+                }
                 crushedRobot.addHealth(-crushedRobot.getHealth());
             }
             // processTrapsAtLocation(newLoc);
