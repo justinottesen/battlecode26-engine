@@ -205,7 +205,7 @@ public final class RobotControllerImpl implements RobotController {
                     "Target location not within vision range");
     }
 
-    private void assertCanActLocation(MapLocation loc, int maxRadiusSquared) throws GameActionException {
+    private void assertCanActLocation(MapLocation loc, float maxRadiusSquared) throws GameActionException {
         // assumes maxRadiusSquared <= visionRadiusSquared.
         // This handles the angle checking, so we only check distance.
         assertCanSenseLocation(loc);
@@ -239,9 +239,8 @@ public final class RobotControllerImpl implements RobotController {
 
         assertIsActionReady();
         assertIsRobotType(myType);
-        assertCanActLocation(loc, myType == UnitType.RAT_KING
-                ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED
-                : GameConstants.BUILD_DISTANCE_SQUARED);
+        float myBuildRadiusSquared = myType == UnitType.RAT_KING ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED : (myType == UnitType.CAT ? GameConstants.CAT_BUILD_DISTANCE_SQUARED : GameConstants.BUILD_DISTANCE_SQUARED);
+        assertCanActLocation(loc, myBuildRadiusSquared);
 
         // state checks :
         if (this.gameWorld.getTeamInfo().getDirt(this.robot.getTeam()) <= 0)
@@ -263,9 +262,9 @@ public final class RobotControllerImpl implements RobotController {
 
         assertIsActionReady();
         assertIsRobotType(myType);
-        assertCanActLocation(loc, myType == UnitType.RAT_KING
-                ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED
-                : GameConstants.BUILD_DISTANCE_SQUARED);
+
+        float myBuildRadiusSquared = myType == UnitType.RAT_KING ? GameConstants.RAT_KING_BUILD_DISTANCE_SQUARED : (myType == UnitType.CAT ? GameConstants.CAT_BUILD_DISTANCE_SQUARED : GameConstants.BUILD_DISTANCE_SQUARED);
+        assertCanActLocation(loc, myBuildRadiusSquared);
 
         if ((this.robot.getType().isBabyRatType()
                 || this.robot.getType().isRatKingType()) && (this.getAllCheese() < GameConstants.DIG_DIRT_CHEESE_COST))
@@ -847,6 +846,10 @@ public final class RobotControllerImpl implements RobotController {
             if (crushedRobot != null && this.getID() != crushedRobot.getID() && this.getType().isCatType()
                     && crushedRobot.getType().isBabyRatType()) {
                 // kill this rat
+                if (crushedRobot.isCarryingRobot()){
+                    InternalRobot carriedRobot = crushedRobot.getRobotBeingCarried();
+                    carriedRobot.addHealth(-carriedRobot.getHealth());
+                }
                 crushedRobot.addHealth(-crushedRobot.getHealth());
             }
             // processTrapsAtLocation(newLoc);
