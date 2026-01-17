@@ -1253,7 +1253,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
 
                 case ATTACK:
                     this.catTurns += 1; // increment number of turns spent in attack mode
-                    if (this.catTurns > 10){ // only allow attacking for 10 turns
+                    if (this.catTurns > 8){ // only allow attacking for 8 turns
                         //return to exploring
                         this.catTurns = 0;
                         this.catState = CatStateType.EXPLORE;
