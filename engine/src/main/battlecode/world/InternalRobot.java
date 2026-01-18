@@ -880,7 +880,7 @@ public class InternalRobot implements Comparable<InternalRobot> {
         // pounce distnace
         boolean isWithinPounceDistance = (this.getLocation()
                 .bottomLeftDistanceSquaredTo(loc) <= GameConstants.CAT_POUNCE_MAX_DISTANCE_SQUARED);
-        if (!this.gameWorld.isPassable(loc) || !isWithinPounceDistance) {
+        if (!this.gameWorld.getGameMap().onTheMap(loc) || !this.gameWorld.isPassable(loc) || !isWithinPounceDistance) {
             return null;
         }
 
@@ -1189,11 +1189,10 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                 this.controller.turn(random);
                             }
                             catch (GameActionException e){} 
-                            
                         }
                     }
-                    else{
-                        // cat not stuck! let's set our eyes on the next waypoint
+                    else if (this.catTurnsStuck == 0){
+                        // cat not stuck and ready to move! let's set our eyes on the next waypoint
                         MapLocation waypoint = catWaypoints[currentWaypoint];
 
                         if (getCatCornerByChirality().equals(waypoint)) {
@@ -1248,10 +1247,24 @@ public class InternalRobot implements Comparable<InternalRobot> {
                                 }
                             }
                         }
+
+                        // try pouncing out
+                        if (isStuck){
+                            // try pouncing
+                            int[] pounceTraj = null;
+                            MapLocation twoTilesAway = this.getCatCornerByChirality().add(dir).add(dir);
+                            pounceTraj = canPounce(twoTilesAway);
+                            if (canMoveCooldown() && pounceTraj != null) { 
+                                this.pounce(pounceTraj);
+                                isStuck = false;
+                            } 
+                        }
                         
+                        // give up
                         if (isStuck) {
                             this.catTurnsStuck += 1;
-                        } else {
+                        }
+                        else {
                             this.catTurnsStuck = 0;
                         }
                     }
@@ -1325,6 +1338,9 @@ public class InternalRobot implements Comparable<InternalRobot> {
                             // if pounce failed, try moving in the direction of the target
                             else{
                                 dir = this.gameWorld.getBfsDir(getCatCornerByChirality(), this.catTargetLoc, this.chirality);
+                                if (dir == null || dir == Direction.CENTER) {
+                                    dir = this.location.directionTo(this.catTargetLoc);
+                                }
                                 if (this.controller.canMove(this.dir)) {
                                     try {
                                         this.controller.move(this.dir);
